@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  BarChart3, Compass, CheckSquare, Sparkles, Brain, MessageCircle, LogOut, Menu,
+  BarChart3, Compass, CheckSquare, Sparkles, Brain, MessageCircle, LogOut, Menu, View, BookOpen,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,11 @@ import { useState } from "react";
 const navItems = [
   { title: "Painel", icon: BarChart3, path: "/dashboard" },
   { title: "Orientação Vocacional", icon: Compass, path: "/dashboard/vocational" },
+  { title: "Minhas Matérias", icon: BookOpen, path: "/dashboard/subjects" },
   { title: "Desempenho", icon: Brain, path: "/dashboard/performance" },
   { title: "Tarefas", icon: CheckSquare, path: "/dashboard/tasks" },
   { title: "Quizzes", icon: Sparkles, path: "/dashboard/quizzes" },
+  { title: "Realidade Aumentada", icon: View, path: "/dashboard/ar" },
   { title: "Chat IA", icon: MessageCircle, path: "/dashboard/chat" },
 ];
 
