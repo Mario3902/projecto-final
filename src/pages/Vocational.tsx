@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Compass, ArrowRight, RotateCcw } from "lucide-react";
+import { Compass, ArrowRight, RotateCcw, BookOpen } from "lucide-react";
 
 const quizQuestions = [
   {
@@ -27,6 +28,7 @@ const careerResults = [
 ];
 
 const Vocational = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [finished, setFinished] = useState(false);
@@ -69,9 +71,12 @@ const Vocational = () => {
             ))}
           </div>
 
-          <div className="text-center">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button onClick={restart} variant="outline" className="gap-2">
               <RotateCcw className="h-4 w-4" /> Refazer quiz
+            </Button>
+            <Button onClick={() => navigate("/dashboard/subjects")} className="gradient-primary text-primary-foreground gap-2">
+              <BookOpen className="h-4 w-4" /> Selecionar matérias
             </Button>
           </div>
         </div>

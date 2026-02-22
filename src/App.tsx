@@ -12,6 +12,8 @@ import Tasks from "./pages/Tasks";
 import Quizzes from "./pages/Quizzes";
 import ChatAI from "./pages/ChatAI";
 import Vocational from "./pages/Vocational";
+import AugmentedReality from "./pages/AugmentedReality";
+import SubjectSelection from "./pages/SubjectSelection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,9 @@ const App = () => (
           <Route path="/dashboard/quizzes" element={<Quizzes />} />
           <Route path="/dashboard/chat" element={<ChatAI />} />
           <Route path="/dashboard/vocational" element={<Vocational />} />
+          <Route path="/dashboard/ar" element={<AugmentedReality />} />
+          <Route path="/dashboard/subjects" element={<SubjectSelection />} />
+          <Route path="*" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
