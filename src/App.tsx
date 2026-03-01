@@ -11,6 +11,7 @@ import Performance from "./pages/Performance";
 import Tasks from "./pages/Tasks";
 import Quizzes from "./pages/Quizzes";
 import ChatAI from "./pages/ChatAI";
+import SalaIA from "./pages/SalaIA";
 import Vocational from "./pages/Vocational";
 import AugmentedReality from "./pages/AugmentedReality";
 import SubjectSelection from "./pages/SubjectSelection";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/dashboard/tasks" element={<Tasks />} />
           <Route path="/dashboard/quizzes" element={<Quizzes />} />
           <Route path="/dashboard/chat" element={<ChatAI />} />
+          <Route path="/dashboard/sala-ia" element={<SalaIA />} />
           <Route path="/dashboard/vocational" element={<Vocational />} />
           <Route path="/dashboard/ar" element={<AugmentedReality />} />
           <Route path="/dashboard/subjects" element={<SubjectSelection />} />

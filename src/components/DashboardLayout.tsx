@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  BarChart3, Compass, CheckSquare, Sparkles, Brain, MessageCircle, LogOut, Menu, View, BookOpen,
+  BarChart3, Compass, CheckSquare, Sparkles, Brain, MessageCircle, LogOut, Menu, View, BookOpen, Bot,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,9 @@ const navItems = [
   { title: "Desempenho", icon: Brain, path: "/dashboard/performance" },
   { title: "Tarefas", icon: CheckSquare, path: "/dashboard/tasks" },
   { title: "Quizzes", icon: Sparkles, path: "/dashboard/quizzes" },
-  { title: "Realidade Aumentada", icon: View, path: "/dashboard/ar" },
+  { title: "Ambientes 3D interativos", icon: View, path: "/dashboard/ar" },
   { title: "Chat IA", icon: MessageCircle, path: "/dashboard/chat" },
+  { title: "Sala IA", icon: Bot, path: "/dashboard/sala-ia" },
 ];
 
 const DashboardLayout = ({ children }: { children: ReactNode }) => {
@@ -27,9 +28,8 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
     <div className="flex min-h-screen w-full bg-background">
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full z-40 bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 flex flex-col ${
-          collapsed ? "w-16" : "w-64"
-        }`}
+        className={`fixed left-0 top-0 h-full z-40 bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-300 flex flex-col ${collapsed ? "w-16" : "w-64"
+          }`}
       >
         <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
           {!collapsed && <Logo size="sm" showText />}
@@ -50,11 +50,10 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  }`}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
                 {!collapsed && <span>{item.title}</span>}
