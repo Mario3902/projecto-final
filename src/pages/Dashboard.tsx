@@ -5,40 +5,50 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 
-const performanceData = [
-  { materia: "Mat", nota: 85 },
-  { materia: "Port", nota: 72 },
-  { materia: "Fís", nota: 68 },
-  { materia: "Quím", nota: 78 },
-  { materia: "Bio", nota: 90 },
-  { materia: "His", nota: 82 },
-];
-
-const quickActions = [
-  { title: "Orientação Vocacional", desc: "Descubra sua carreira ideal", icon: Compass, path: "/dashboard/vocational", color: "gradient-warm" },
-  { title: "Desempenho", desc: "Veja seu progresso", icon: Brain, path: "/dashboard/performance", color: "gradient-primary" },
-  { title: "Tarefas", desc: "Organize seus estudos", icon: CheckSquare, path: "/dashboard/tasks", color: "gradient-cool" },
-  { title: "Quizzes", desc: "Teste seus conhecimentos", icon: Sparkles, path: "/dashboard/quizzes", color: "gradient-primary" },
-  { title: "Chat IA", desc: "Tire suas dúvidas", icon: MessageCircle, path: "/dashboard/chat", color: "gradient-warm" },
-];
-
-const todayTasks = [
-  { title: "Revisar capítulo 5 de Matemática", done: true },
-  { title: "Fazer exercícios de Física", done: false },
-  { title: "Ler texto de Português", done: false },
-  { title: "Estudar fórmulas de Química", done: false },
-];
+import { useGame } from "@/context/GameContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { xp, level, tasks, quizzesCompleted, studyHours, performanceData, toggleTask } = useGame();
+
+  const averageAvg = performanceData.length > 0
+    ? (performanceData.reduce((acc, curr) => acc + curr.nota, 0) / performanceData.length).toFixed(1)
+    : "0.0";
+
+  const nextLevelXP = level * 100;
+  const currentLevelXP = xp - ((level - 1) * 100);
+  const xpProgress = (currentLevelXP / 100) * 100;
+
+  const quickActions = [
+    { title: "Orientação Vocacional", desc: "Descubra sua carreira ideal", icon: Compass, path: "/dashboard/vocational", color: "gradient-warm" },
+    { title: "Desempenho", desc: "Veja seu progresso", icon: Brain, path: "/dashboard/performance", color: "gradient-primary" },
+    { title: "Tarefas", desc: "Organize seus estudos", icon: CheckSquare, path: "/dashboard/tasks", color: "gradient-cool" },
+    { title: "Quizzes", desc: "Teste seus conhecimentos", icon: Sparkles, path: "/dashboard/quizzes", color: "gradient-primary" },
+    { title: "Chat IA", desc: "Tire suas dúvidas", icon: MessageCircle, path: "/dashboard/chat", color: "gradient-warm" },
+  ];
+
+  const todayTasks = tasks.slice(0, 4);
+  const completedTasksCount = todayTasks.filter((t) => t.done).length;
+  const taskProgress = todayTasks.length > 0 ? (completedTasksCount / todayTasks.length) * 100 : 0;
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Olá, Estudante! 👋</h1>
-          <p className="text-muted-foreground mt-1">Veja seu progresso e continue aprendendo.</p>
+      <div className="space-y-8 animate-fade-in">
+        {/* Header with Level Progress */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Olá, Estudante! 👋</h1>
+            <p className="text-muted-foreground mt-1">Veja seu progresso e continue aprendendo.</p>
+          </div>
+
+          <div className="bg-muted/50 p-4 rounded-xl border border-border w-full md:w-72">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-foreground">Nível {level}</span>
+              <span className="text-xs text-muted-foreground">{currentLevelXP} / 100 XP</span>
+            </div>
+            <Progress value={xpProgress} className="h-2 bg-muted-foreground/20" />
+            <p className="text-xs text-muted-foreground mt-2 text-right">Faltam {100 - currentLevelXP} XP para o próximo nível</p>
+          </div>
         </div>
 
         {/* Stats */}
@@ -50,7 +60,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Média Geral</p>
-                <p className="text-2xl font-bold text-foreground">79.2</p>
+                <p className="text-2xl font-bold text-foreground">{averageAvg}</p>
               </div>
             </CardContent>
           </Card>
@@ -61,7 +71,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Quizzes Feitos</p>
-                <p className="text-2xl font-bold text-foreground">24</p>
+                <p className="text-2xl font-bold text-foreground">{quizzesCompleted}</p>
               </div>
             </CardContent>
           </Card>
@@ -72,7 +82,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Horas de Estudo</p>
-                <p className="text-2xl font-bold text-foreground">42h</p>
+                <p className="text-2xl font-bold text-foreground">{studyHours}h</p>
               </div>
             </CardContent>
           </Card>
@@ -115,30 +125,38 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {todayTasks.map((task, i) => (
-                <label key={i} className="flex items-center gap-3 cursor-pointer group">
-                  <div
-                    className={`h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      task.done
-                        ? "bg-primary border-primary text-primary-foreground"
-                        : "border-border group-hover:border-primary"
-                    }`}
-                  >
-                    {task.done && (
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </div>
-                  <span className={`text-sm ${task.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                    {task.title}
-                  </span>
-                </label>
-              ))}
-              <div className="pt-2">
-                <Progress value={25} className="h-2" />
-                <p className="text-xs text-muted-foreground mt-1">1 de 4 concluídas</p>
-              </div>
+              {todayTasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Não há tarefas criadas.</p>
+              ) : (
+                todayTasks.map((task) => (
+                  <label key={task.id} className="flex items-center gap-3 cursor-pointer group">
+                    <button
+                      onClick={() => toggleTask(task.id)}
+                      className={`h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${task.done
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "border-border group-hover:border-primary"
+                        }`}
+                    >
+                      {task.done && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                    <span onClick={() => toggleTask(task.id)} className={`text-sm select-none flex-1 ${task.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                      {task.title}
+                    </span>
+                  </label>
+                ))
+              )}
+              {todayTasks.length > 0 && (
+                <div className="pt-2">
+                  <Progress value={taskProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {completedTasksCount} de {todayTasks.length} concluídas
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

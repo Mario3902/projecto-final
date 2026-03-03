@@ -16,32 +16,35 @@ import Vocational from "./pages/Vocational";
 import AugmentedReality from "./pages/AugmentedReality";
 import SubjectSelection from "./pages/SubjectSelection";
 import NotFound from "./pages/NotFound";
+import { GameProvider } from "./context/GameContext";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/performance" element={<Performance />} />
-          <Route path="/dashboard/tasks" element={<Tasks />} />
-          <Route path="/dashboard/quizzes" element={<Quizzes />} />
-          <Route path="/dashboard/chat" element={<ChatAI />} />
-          <Route path="/dashboard/sala-ia" element={<SalaIA />} />
-          <Route path="/dashboard/vocational" element={<Vocational />} />
-          <Route path="/dashboard/ar" element={<AugmentedReality />} />
-          <Route path="/dashboard/subjects" element={<SubjectSelection />} />
-          <Route path="*" element={<NotFound />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <GameProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/performance" element={<Performance />} />
+            <Route path="/dashboard/tasks" element={<Tasks />} />
+            <Route path="/dashboard/quizzes" element={<Quizzes />} />
+            <Route path="/dashboard/chat" element={<ChatAI />} />
+            <Route path="/dashboard/sala-ia" element={<SalaIA />} />
+            <Route path="/dashboard/vocational" element={<Vocational />} />
+            <Route path="/dashboard/ar" element={<AugmentedReality />} />
+            <Route path="/dashboard/subjects" element={<SubjectSelection />} />
+            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </GameProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
