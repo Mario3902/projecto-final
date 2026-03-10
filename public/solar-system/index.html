@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🌌 Sistema Solar Interativo</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body,#root{width:100%;height:100%;overflow:hidden;background:#020010;font-family:system-ui,sans-serif}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes zoomDive {
+  from { opacity: 0; transform: scale(0.1); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes rotatePlanet {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px var(--glow-color), 0 0 60px var(--glow-color); }
+  50% { box-shadow: 0 0 40px var(--glow-color), 0 0 100px var(--glow-color), 0 0 160px var(--glow-color); }
+}
+@keyframes shootingStar {
+  0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(400px) translateY(400px) rotate(-45deg); opacity: 0; }
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+@keyframes nebulaDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  33% { transform: translate(30px, -20px) scale(1.05); opacity: 0.2; }
+  66% { transform: translate(-20px, 15px) scale(0.95); opacity: 0.12; }
+}
+@keyframes orbitalPath {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes ringRotate {
+  from { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); }
+}
+@keyframes atmosphereBreath {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.08); opacity: 0.5; }
+}
+@keyframes surfaceScan {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 0%; }
+}
+@keyframes layerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes starFieldMove {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100vh); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn { animation: fadeIn 0.4s ease-out; }
+.animate-fadeInUp { animation: fadeInUp 0.6s ease-out; }
+.animate-slideInRight { animation: slideInRight 0.5s ease-out; }
+.animate-zoomDive { animation: zoomDive 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
+.animate-surfaceScan { animation: surfaceScan 20s linear infinite; }
+
+.planet-3d {
+  animation: rotatePlanet 20s linear infinite;
+  background-size: 200% 100%;
+}
+
+.shooting-star {
+  position: absolute;
+  width: 100px;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.9), transparent);
+  animation: shootingStar 1.5s ease-out forwards;
+}
+
+.nebula {
+  animation: nebulaDrift 25s ease-in-out infinite;
+  filter: blur(60px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #020010;
+}
+
+.glass {
+  background: rgba(10, 10, 40, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.glass-strong {
+  background: rgba(10, 10, 40, 0.85);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.tab-active {
+  background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(168,85,247,0.2));
+  border-color: rgba(99,102,241,0.5);
+  color: white;
+}
+
+.orbit-line {
+  animation: orbitalPath 2s linear infinite;
+}
+
+.atmosphere-glow {
+  animation: atmosphereBreath 4s ease-in-out infinite;
+}
+
+.layer-ring {
+  animation: layerPulse 3s ease-in-out infinite;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.layer-ring:hover {
+  transform: scale(1.08) !important;
+  z-index: 50;
+}
+
+.size-comparison-bar {
+  animation: countUp 0.8s ease-out both;
+}
+
+.tooltip-planet {
+  position: relative;
+}
+.tooltip-planet::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(10,10,40,0.95);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  color: white;
+  font-weight: 500;
+}
+.tooltip-planet:hover::after {
+  opacity: 1;
+}
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState,useCallback,useMemo,useEffect,useRef} = React;
+
+
+
+
+
+
+
+const SUN_DATA = {
+  name: "Sol",
+  description:
+    "O Sol é a estrela central do nosso sistema solar. É uma esfera quase perfeita de plasma quente, com movimento convectivo interno que gera um campo magnético. É de longe a fonte de energia mais importante para a vida na Terra. A cada segundo, o Sol converte cerca de 600 milhões de toneladas de hidrogênio em hélio através da fusão nuclear.",
+  facts: {
+    diameter: "1.392.700 km",
+    temperature: "5.500°C (superfície) / 15 milhões°C (núcleo)",
+    age: "4,6 bilhões de anos",
+    type: "Estrela anã amarela (G2V)",
+    mass: "1,989 × 10³⁰ kg",
+    composition: "73% Hidrogênio, 25% Hélio",
+  },
+  funFact:
+    "O Sol contém 99,86% de toda a massa do sistema solar! A luz do Sol leva cerca de 8 minutos e 20 segundos para chegar à Terra.",
+  layers: [
+    { name: "Núcleo", color: "#ffffff", radius: 25, description: "15 milhões °C - Fusão nuclear de H em He" },
+    { name: "Zona Radiativa", color: "#fff44f", radius: 45, description: "Energia transportada por radiação" },
+    { name: "Zona Convectiva", color: "#ffaa00", radius: 70, description: "Energia transportada por convecção" },
+    { name: "Fotosfera", color: "#ff8800", radius: 85, description: "Superfície visível - 5.500°C" },
+    { name: "Cromosfera", color: "#ff4400", radius: 95, description: "Atmosfera inferior avermelhada" },
+    { name: "Coroa", color: "#ff220040", radius: 100, description: "Atmosfera externa - milhões de °C" },
+  ],
+};
+
+const planets = [
+  {
+    id: "mercury",
+    name: "Mercury",
+    namePt: "Mercúrio",
+    order: 1,
+    color: "#b5b5b5",
+    size: 8,
+    orbitRadius: 70,
+    orbitSpeed: 18,
+    type: "Rochoso",
+    hasAtmosphere: false,
+    compareSizeToEarth: 0.383,
+    atmosphereColor: "transparent",
+    description:
+      "Mercúrio é o menor planeta do sistema solar e o mais próximo do Sol. Sua superfície é coberta por crateras, semelhante à Lua. Apesar de ser o mais próximo do Sol, não é o mais quente — esse título pertence a Vênus. Mercúrio não possui atmosfera significativa para reter calor.",
+    facts: {
+      diameter: "4.879 km",
+      distanceSun: "57,9 milhões km",
+      orbitalPeriod: "88 dias",
+      rotationPeriod: "59 dias",
+      moons: "0",
+      temperature: "-180°C a 430°C",
+      gravity: "3,7 m/s²",
+      atmosphere: "Praticamente inexistente",
+    },
+    funFact: "Um dia em Mercúrio (de nascer do sol a nascer do sol) dura 176 dias terrestres!",
+    gradient: ["#5c5c5c", "#9e9e9e", "#d4d4d4"],
+    texture: "radial-gradient(circle at 30% 25%, #d4d4d4 0%, #9e9e9e 40%, #6b6b6b 70%, #4a4a4a 100%), radial-gradient(circle at 65% 60%, rgba(80,80,80,0.8) 0%, transparent 25%), radial-gradient(circle at 20% 70%, rgba(60,60,60,0.6) 0%, transparent 20%), radial-gradient(circle at 75% 30%, rgba(90,90,90,0.7) 0%, transparent 15%), radial-gradient(circle at 45% 45%, rgba(70,70,70,0.5) 0%, transparent 30%)",
+    surfaceFeatures: [
+      { name: "Cratera Caloris", description: "Uma das maiores crateras de impacto do sistema solar, com 1.550 km de diâmetro", emoji: "💥" },
+      { name: "Planícies Suaves", description: "Vastas planícies formadas por antigos fluxos de lava", emoji: "🏜️" },
+      { name: "Escarpas", description: "Falésias enormes de até 3 km de altura, formadas quando o planeta encolheu", emoji: "⛰️" },
+      { name: "Gelo nos Polos", description: "Depósitos de gelo de água nas sombras permanentes das crateras polares", emoji: "🧊" },
+    ],
+    layers: [
+      { name: "Núcleo de Ferro", color: "#c0c0c0", radius: 60, description: "Enorme núcleo metálico — 85% do raio do planeta" },
+      { name: "Manto", color: "#8b7355", radius: 85, description: "Camada fina de silicatos" },
+      { name: "Crosta", color: "#9e9e9e", radius: 100, description: "Crosta fina e cratera, rica em silicatos" },
+    ],
+    exploration: "A sonda MESSENGER da NASA orbitou Mercúrio de 2011 a 2015, mapeando toda a superfície. A missão BepiColombo (ESA/JAXA) está atualmente a caminho, com chegada prevista para 2025.",
+  },
+  {
+    id: "venus",
+    name: "Venus",
+    namePt: "Vênus",
+    order: 2,
+    color: "#e8cda0",
+    size: 14,
+    orbitRadius: 110,
+    orbitSpeed: 14,
+    type: "Rochoso",
+    hasAtmosphere: true,
+    compareSizeToEarth: 0.949,
+    atmosphereColor: "#e8cda060",
+    description:
+      "Vênus é frequentemente chamado de 'planeta irmão' da Terra devido ao seu tamanho similar. Possui a atmosfera mais densa entre os planetas rochosos, com nuvens de ácido sulfúrico que criam um efeito estufa extremo, tornando-o o planeta mais quente do sistema solar.",
+    facts: {
+      diameter: "12.104 km",
+      distanceSun: "108,2 milhões km",
+      orbitalPeriod: "225 dias",
+      rotationPeriod: "243 dias (retrógrado)",
+      moons: "0",
+      temperature: "462°C (média)",
+      gravity: "8,87 m/s²",
+      atmosphere: "96,5% CO₂, 3,5% Nitrogênio",
+    },
+    funFact: "Vênus gira ao contrário! O Sol nasce no oeste e se põe no leste. Um dia em Vênus é mais longo que um ano em Vênus!",
+    gradient: ["#8b6914", "#c4a35a", "#f0deb8"],
+    texture: "radial-gradient(circle at 35% 30%, #f5e6c8 0%, #e8cda0 30%, #c4a35a 60%, #8b6914 100%), radial-gradient(ellipse at 50% 40%, rgba(245,230,200,0.4) 0%, transparent 50%), radial-gradient(ellipse at 30% 60%, rgba(200,170,80,0.3) 0%, transparent 40%)",
+    surfaceFeatures: [
+      { name: "Ishtar Terra", description: "Continente elevado do tamanho da Austrália com montanhas de até 11 km", emoji: "🏔️" },
+      { name: "Maxwell Montes", description: "A montanha mais alta de Vênus com 11 km de altitude", emoji: "⛰️" },
+      { name: "Vulcões de Escudo", description: "Milhares de vulcões, alguns possivelmente ainda ativos", emoji: "🌋" },
+      { name: "Aracnoides", description: "Estruturas circulares únicas causadas por atividade vulcânica", emoji: "🕸️" },
+    ],
+    layers: [
+      { name: "Núcleo de Ferro", color: "#d4a574", radius: 30, description: "Provavelmente sólido, sem campo magnético significativo" },
+      { name: "Manto de Silicato", color: "#c48c3c", radius: 75, description: "Manto rochoso espesso e quente" },
+      { name: "Crosta", color: "#e8cda0", radius: 90, description: "Crosta basáltica com atividade vulcânica" },
+      { name: "Atmosfera Densa", color: "#f0deb880", radius: 100, description: "96% CO₂ — pressão 90x maior que a Terra" },
+    ],
+    exploration: "A União Soviética pousou várias sondas Venera na superfície entre 1970-1985. A sonda Magellan da NASA mapeou 98% da superfície por radar. A missão VERITAS e DAVINCI da NASA estão planejadas para os anos 2030.",
+  },
+  {
+    id: "earth",
+    name: "Earth",
+    namePt: "Terra",
+    order: 3,
+    color: "#4da6ff",
+    size: 15,
+    orbitRadius: 155,
+    orbitSpeed: 12,
+    type: "Rochoso",
+    hasAtmosphere: true,
+    compareSizeToEarth: 1.0,
+    atmosphereColor: "#4da6ff40",
+    description:
+      "A Terra é o terceiro planeta a partir do Sol e o único corpo celeste conhecido por abrigar vida. Cerca de 71% da superfície é coberta por oceanos de água líquida. Nossa atmosfera rica em oxigênio e o campo magnético protetor tornam a vida possível.",
+    facts: {
+      diameter: "12.742 km",
+      distanceSun: "149,6 milhões km",
+      orbitalPeriod: "365,25 dias",
+      rotationPeriod: "24 horas",
+      moons: "1 (Lua)",
+      temperature: "15°C (média)",
+      gravity: "9,8 m/s²",
+      atmosphere: "78% Nitrogênio, 21% Oxigênio",
+    },
+    funFact: "A Terra é o único planeta que não foi nomeado em homenagem a um deus grego ou romano!",
+    gradient: ["#1a3d6e", "#2d7dd2", "#76d7c4"],
+    texture: "radial-gradient(circle at 35% 30%, #76d7c4 0%, #4da6ff 25%, #2d7dd2 50%, #1a3d6e 80%), radial-gradient(ellipse at 55% 45%, rgba(118,215,196,0.6) 0%, transparent 30%), radial-gradient(ellipse at 25% 55%, rgba(45,125,210,0.5) 0%, transparent 35%), radial-gradient(circle at 70% 35%, rgba(34,139,34,0.4) 0%, transparent 20%), radial-gradient(circle at 40% 70%, rgba(34,100,34,0.3) 0%, transparent 15%)",
+    surfaceFeatures: [
+      { name: "Oceano Pacífico", description: "O maior oceano, cobrindo mais de 30% da superfície terrestre", emoji: "🌊" },
+      { name: "Monte Everest", description: "O ponto mais alto da Terra com 8.849 metros de altitude", emoji: "🏔️" },
+      { name: "Fossa das Marianas", description: "O ponto mais profundo dos oceanos, com 10.994 metros", emoji: "🌀" },
+      { name: "Floresta Amazônica", description: "A maior floresta tropical do mundo, produzindo 20% do oxigênio", emoji: "🌳" },
+    ],
+    layers: [
+      { name: "Núcleo Interno", color: "#ff6b35", radius: 20, description: "Esfera sólida de ferro a 5.400°C" },
+      { name: "Núcleo Externo", color: "#ff8c42", radius: 35, description: "Ferro líquido que gera o campo magnético" },
+      { name: "Manto Inferior", color: "#cc6633", radius: 60, description: "Rocha sólida em convecção lenta" },
+      { name: "Manto Superior", color: "#d4855c", radius: 80, description: "Parcialmente fundido, move as placas tectônicas" },
+      { name: "Crosta", color: "#4da6ff", radius: 95, description: "5-70 km de espessura, oceânica e continental" },
+      { name: "Atmosfera", color: "#87ceeb60", radius: 100, description: "Camada protetora de gases essenciais à vida" },
+    ],
+    exploration: "Temos milhares de satélites orbitando a Terra. A Estação Espacial Internacional (ISS) orbita a 400 km de altitude desde 2000, com astronautas vivendo e trabalhando no espaço continuamente.",
+  },
+  {
+    id: "mars",
+    name: "Mars",
+    namePt: "Marte",
+    order: 4,
+    color: "#e07040",
+    size: 12,
+    orbitRadius: 200,
+    orbitSpeed: 10,
+    type: "Rochoso",
+    hasAtmosphere: true,
+    compareSizeToEarth: 0.532,
+    atmosphereColor: "#e0704020",
+    description:
+      "Marte é conhecido como o 'Planeta Vermelho' devido ao óxido de ferro em sua superfície. Possui a montanha mais alta do sistema solar (Olympus Mons) e um grande sistema de cânions (Valles Marineris). É o principal candidato para colonização humana.",
+    facts: {
+      diameter: "6.779 km",
+      distanceSun: "227,9 milhões km",
+      orbitalPeriod: "687 dias",
+      rotationPeriod: "24h 37min",
+      moons: "2 (Fobos e Deimos)",
+      temperature: "-65°C (média)",
+      gravity: "3,72 m/s²",
+      atmosphere: "95% CO₂, 2,7% Nitrogênio",
+    },
+    funFact: "O Monte Olimpo em Marte tem 21,9 km de altura — quase 2,5 vezes a altura do Monte Everest!",
+    gradient: ["#6b2a0a", "#c85a28", "#f4a460"],
+    texture: "radial-gradient(circle at 35% 30%, #f4a460 0%, #e07040 30%, #c85a28 55%, #6b2a0a 100%), radial-gradient(circle at 55% 50%, rgba(139,69,19,0.5) 0%, transparent 30%), radial-gradient(circle at 30% 65%, rgba(210,105,30,0.4) 0%, transparent 25%), radial-gradient(circle at 70% 25%, rgba(244,164,96,0.3) 0%, transparent 20%), radial-gradient(ellipse at 40% 35%, rgba(255,255,255,0.1) 0%, transparent 25%)",
+    surfaceFeatures: [
+      { name: "Olympus Mons", description: "O maior vulcão do sistema solar com 21,9 km de altura e 600 km de diâmetro", emoji: "🌋" },
+      { name: "Valles Marineris", description: "Sistema de cânions com 4.000 km de comprimento e até 7 km de profundidade", emoji: "🏜️" },
+      { name: "Calotas Polares", description: "Gelo de CO₂ e água nos polos norte e sul", emoji: "🧊" },
+      { name: "Leitos de Rios Secos", description: "Evidências de que água líquida fluiu na superfície bilhões de anos atrás", emoji: "💧" },
+    ],
+    layers: [
+      { name: "Núcleo", color: "#c0392b", radius: 35, description: "Núcleo de ferro parcialmente líquido" },
+      { name: "Manto", color: "#a0522d", radius: 75, description: "Manto de silicato, menos ativo que o da Terra" },
+      { name: "Crosta", color: "#e07040", radius: 95, description: "Crosta espessa rica em basalto e óxido de ferro" },
+      { name: "Atmosfera Fina", color: "#e0704030", radius: 100, description: "Pressão 1% da Terra — muito fina" },
+    ],
+    exploration: "Rovers como Curiosity e Perseverance exploram a superfície. O helicóptero Ingenuity realizou o primeiro voo motorizado em outro planeta. A NASA e SpaceX planejam missões tripuladas para a década de 2030-2040.",
+  },
+  {
+    id: "jupiter",
+    name: "Jupiter",
+    namePt: "Júpiter",
+    order: 5,
+    color: "#c88b3a",
+    size: 35,
+    orbitRadius: 270,
+    orbitSpeed: 7,
+    type: "Gigante Gasoso",
+    hasAtmosphere: true,
+    compareSizeToEarth: 11.21,
+    atmosphereColor: "#c88b3a30",
+    description:
+      "Júpiter é o maior planeta do sistema solar, um gigante gasoso com massa duas vezes maior que todos os outros planetas combinados. Sua Grande Mancha Vermelha é uma tempestade que dura há séculos. Possui um poderoso campo magnético e dezenas de luas.",
+    facts: {
+      diameter: "139.820 km",
+      distanceSun: "778,5 milhões km",
+      orbitalPeriod: "11,86 anos",
+      rotationPeriod: "9h 55min",
+      moons: "95 conhecidas",
+      temperature: "-110°C (topo das nuvens)",
+      gravity: "24,79 m/s²",
+      atmosphere: "90% Hidrogênio, 10% Hélio",
+    },
+    funFact: "A Grande Mancha Vermelha de Júpiter é uma tempestade tão grande que caberia a Terra inteira dentro dela!",
+    gradient: ["#5c3d10", "#c88b3a", "#e8c87a"],
+    texture: "radial-gradient(circle at 35% 30%, #e8c87a 0%, #c88b3a 35%, #a06820 65%, #5c3d10 100%), repeating-linear-gradient(0deg, rgba(200,139,58,0.15) 0px, rgba(200,139,58,0.15) 3px, transparent 3px, transparent 8px), radial-gradient(ellipse at 60% 55%, rgba(180,80,30,0.6) 0%, rgba(180,80,30,0) 15%), radial-gradient(ellipse at 35% 45%, rgba(232,200,122,0.3) 0%, transparent 30%)",
+    surfaceFeatures: [
+      { name: "Grande Mancha Vermelha", description: "Tempestade anticiclônica maior que a Terra, ativa há mais de 350 anos", emoji: "🌀" },
+      { name: "Faixas de Nuvens", description: "Bandas alternadas de ventos de até 620 km/h em direções opostas", emoji: "🌪️" },
+      { name: "Lua Europa", description: "Oceano subterrâneo com potencial para vida, coberto por gelo", emoji: "🌙" },
+      { name: "Lua Io", description: "O corpo mais vulcanicamente ativo do sistema solar", emoji: "🌋" },
+    ],
+    layers: [
+      { name: "Núcleo Rochoso", color: "#8b7355", radius: 15, description: "Núcleo de rocha e metal, 20x a massa da Terra" },
+      { name: "Hidrogênio Metálico", color: "#a08050", radius: 50, description: "Hidrogênio comprimido em estado metálico líquido" },
+      { name: "Hidrogênio Líquido", color: "#c8a860", radius: 75, description: "Camada de hidrogênio e hélio líquidos" },
+      { name: "Atmosfera Gasosa", color: "#e8c87a80", radius: 100, description: "Nuvens de amônia, hidrossulfeto de amônio e água" },
+    ],
+    exploration: "A sonda Juno orbita Júpiter desde 2016, estudando sua composição e campo magnético. A missão Europa Clipper da NASA (lançada em 2024) estudará a lua Europa em busca de condições para vida.",
+  },
+  {
+    id: "saturn",
+    name: "Saturn",
+    namePt: "Saturno",
+    order: 6,
+    color: "#e8d580",
+    size: 30,
+    orbitRadius: 350,
+    orbitSpeed: 5.5,
+    ringColor: "#d4c475",
+    type: "Gigante Gasoso",
+    hasAtmosphere: true,
+    compareSizeToEarth: 9.45,
+    atmosphereColor: "#e8d58030",
+    description:
+      "Saturno é famoso por seu espetacular sistema de anéis, compostos principalmente de partículas de gelo e rocha. É o segundo maior planeta do sistema solar e possui a menor densidade de todos os planetas — flutuaria na água!",
+    facts: {
+      diameter: "116.460 km",
+      distanceSun: "1,434 bilhão km",
+      orbitalPeriod: "29,46 anos",
+      rotationPeriod: "10h 42min",
+      moons: "146 conhecidas",
+      temperature: "-140°C (topo das nuvens)",
+      gravity: "10,44 m/s²",
+      atmosphere: "96% Hidrogênio, 3% Hélio",
+    },
+    funFact: "Saturno é tão leve que flutuaria na água (se existisse uma banheira grande o suficiente)! Sua densidade é menor que a da água.",
+    gradient: ["#8b7930", "#c8b060", "#f0e8a0"],
+    texture: "radial-gradient(circle at 35% 30%, #f0e8a0 0%, #e8d580 30%, #c8b060 55%, #8b7930 100%), repeating-linear-gradient(0deg, rgba(232,213,128,0.1) 0px, rgba(232,213,128,0.1) 2px, transparent 2px, transparent 6px), radial-gradient(ellipse at 45% 50%, rgba(200,176,96,0.3) 0%, transparent 40%)",
+    surfaceFeatures: [
+      { name: "Sistema de Anéis", description: "7 anéis principais compostos de bilhões de partículas de gelo e rocha", emoji: "💍" },
+      { name: "Hexágono do Polo Norte", description: "Padrão hexagonal misterioso de nuvens no polo norte", emoji: "⬡" },
+      { name: "Lua Titã", description: "Única lua com atmosfera densa e lagos de metano líquido", emoji: "🌙" },
+      { name: "Lua Encélado", description: "Gêiseres de água expelidos da crosta gelada — possível oceano subsuperficial", emoji: "💦" },
+    ],
+    layers: [
+      { name: "Núcleo Rochoso", color: "#a08850", radius: 15, description: "Núcleo de rocha e gelo metálico" },
+      { name: "Hidrogênio Metálico", color: "#b8a060", radius: 45, description: "Hidrogênio em estado metálico líquido" },
+      { name: "Hidrogênio Líquido", color: "#d0c070", radius: 75, description: "Hidrogênio e hélio líquidos" },
+      { name: "Atmosfera", color: "#e8d58080", radius: 100, description: "Nuvens de amônia com ventos de até 1.800 km/h" },
+    ],
+    exploration: "A missão Cassini-Huygens (1997-2017) foi uma das mais bem-sucedidas da história. A sonda Huygens pousou em Titã em 2005 — o pouso mais distante já realizado. A missão Dragonfly da NASA enviará um drone para Titã em 2028.",
+  },
+  {
+    id: "uranus",
+    name: "Uranus",
+    namePt: "Urano",
+    order: 7,
+    color: "#72c8d0",
+    size: 22,
+    orbitRadius: 420,
+    orbitSpeed: 4,
+    ringColor: "#5ab0b8",
+    type: "Gigante de Gelo",
+    hasAtmosphere: true,
+    compareSizeToEarth: 4.01,
+    atmosphereColor: "#72c8d030",
+    description:
+      "Urano é um gigante de gelo com uma inclinação axial única de 98°, fazendo-o girar praticamente de lado. Sua cor azul-esverdeada vem do metano em sua atmosfera que absorve a luz vermelha do Sol.",
+    facts: {
+      diameter: "50.724 km",
+      distanceSun: "2,871 bilhões km",
+      orbitalPeriod: "84 anos",
+      rotationPeriod: "17h 14min (retrógrado)",
+      moons: "27 conhecidas",
+      temperature: "-224°C",
+      gravity: "8,69 m/s²",
+      atmosphere: "83% Hidrogênio, 15% Hélio, 2% Metano",
+    },
+    funFact: "Urano gira de lado! Acredita-se que uma colisão com um objeto do tamanho da Terra causou essa inclinação extrema.",
+    gradient: ["#3a8a90", "#5ab8c0", "#a0e8f0"],
+    texture: "radial-gradient(circle at 35% 30%, #b8ecf0 0%, #72c8d0 35%, #5ab0b8 60%, #3a8a90 100%), radial-gradient(ellipse at 50% 50%, rgba(160,232,240,0.2) 0%, transparent 50%)",
+    surfaceFeatures: [
+      { name: "Inclinação Axial", description: "Gira a 98° — estações extremas de 21 anos cada", emoji: "🔄" },
+      { name: "Anéis Escuros", description: "13 anéis finos e escuros, descobertos em 1977", emoji: "💍" },
+      { name: "Lua Miranda", description: "Superfície caótica com penhascos de até 20 km — a mais estranha lua do sistema", emoji: "🌙" },
+      { name: "Campo Magnético Inclinado", description: "Eixo magnético inclinado 59° em relação ao eixo de rotação", emoji: "🧲" },
+    ],
+    layers: [
+      { name: "Núcleo Rochoso", color: "#4a8a90", radius: 20, description: "Núcleo de rocha e gelo sob pressão extrema" },
+      { name: "Manto de Gelo", color: "#5ab0b8", radius: 65, description: "Água, metano e amônia em estado 'quente e denso'" },
+      { name: "Atmosfera de H/He", color: "#72c8d0", radius: 85, description: "Hidrogênio, hélio e metano gasosos" },
+      { name: "Neblina Superior", color: "#a0e8f080", radius: 100, description: "Camada de neblina de metano dando a cor azul" },
+    ],
+    exploration: "Apenas a Voyager 2 visitou Urano, em janeiro de 1986, passando a 81.500 km do topo das nuvens. A NASA está considerando uma missão orbital dedicada (Uranus Orbiter) para a década de 2030.",
+    yearDiscovered: "1781 por William Herschel",
+  },
+  {
+    id: "neptune",
+    name: "Neptune",
+    namePt: "Netuno",
+    order: 8,
+    color: "#3366cc",
+    size: 21,
+    orbitRadius: 485,
+    orbitSpeed: 3,
+    type: "Gigante de Gelo",
+    hasAtmosphere: true,
+    compareSizeToEarth: 3.88,
+    atmosphereColor: "#3366cc30",
+    description:
+      "Netuno é o planeta mais distante do Sol e possui os ventos mais fortes do sistema solar, chegando a 2.100 km/h. Foi o primeiro planeta encontrado por previsão matemática, antes de ser observado por telescópio.",
+    facts: {
+      diameter: "49.528 km",
+      distanceSun: "4,495 bilhões km",
+      orbitalPeriod: "164,8 anos",
+      rotationPeriod: "16h 6min",
+      moons: "16 conhecidas",
+      temperature: "-214°C",
+      gravity: "11,15 m/s²",
+      atmosphere: "80% Hidrogênio, 19% Hélio, 1% Metano",
+    },
+    funFact: "Desde sua descoberta em 1846, Netuno completou apenas uma órbita completa ao redor do Sol — em 2011!",
+    gradient: ["#1a2d6b", "#2850a8", "#5588ee"],
+    texture: "radial-gradient(circle at 35% 30%, #6699ee 0%, #3366cc 30%, #2850a8 55%, #1a2d6b 100%), radial-gradient(ellipse at 55% 45%, rgba(85,136,238,0.4) 0%, transparent 35%), radial-gradient(ellipse at 35% 55%, rgba(40,80,168,0.3) 0%, transparent 30%), radial-gradient(circle at 60% 50%, rgba(100,150,255,0.2) 0%, transparent 20%)",
+    surfaceFeatures: [
+      { name: "Grande Mancha Escura", description: "Tempestade anticiclônica similar à de Júpiter, mas que aparece e desaparece", emoji: "🌀" },
+      { name: "Ventos Supersônicos", description: "Os ventos mais rápidos do sistema solar, até 2.100 km/h", emoji: "🌪️" },
+      { name: "Lua Tritão", description: "A maior lua, com gêiseres de nitrogênio e órbita retrógrada — provavelmente capturada", emoji: "🌙" },
+      { name: "Anéis Fracos", description: "5 anéis finos e escuros, com arcos desiguais de material", emoji: "💍" },
+    ],
+    layers: [
+      { name: "Núcleo Rochoso", color: "#1a2d6b", radius: 20, description: "Núcleo de rocha e gelo, ~1.2x massa da Terra" },
+      { name: "Manto de Gelo", color: "#2850a8", radius: 60, description: "Água, metano e amônia super-comprimidos" },
+      { name: "Atmosfera de H/He", color: "#3366cc", radius: 85, description: "Hidrogênio, hélio e metano" },
+      { name: "Nuvens Superiores", color: "#5588ee80", radius: 100, description: "Cristais de metano formando nuvens cirrus" },
+    ],
+    exploration: "Apenas a Voyager 2 visitou Netuno, em agosto de 1989, descobrindo 6 luas e os anéis do planeta. Não há missões planejadas atualmente, mas cientistas propõem uma sonda orbital Neptune Odyssey.",
+    yearDiscovered: "1846 por Johann Galle, previsto por Urbain Le Verrier",
+  },
+];
+
+
+
+
+
+function Stars() {
+  const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
+  const [counter, setCounter] = useState(0);
+
+  const stars = useMemo(() => {
+    return Array.from({ length: 400 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 2.5 + 0.5,
+      opacity: Math.random() * 0.7 + 0.3,
+      animDelay: Math.random() * 5,
+      animDuration: Math.random() * 3 + 2,
+      isBright: Math.random() < 0.08,
+      color: Math.random() < 0.1 ? "#aaccff" : Math.random() < 0.05 ? "#ffddaa" : "#ffffff",
+    }));
+  }, []);
+
+  const nebulas = useMemo(() => [
+    { x: 15, y: 20, w: 300, h: 200, color: "rgba(100, 50, 180, 0.12)", delay: 0 },
+    { x: 70, y: 60, w: 350, h: 250, color: "rgba(30, 80, 180, 0.1)", delay: 8 },
+    { x: 40, y: 75, w: 280, h: 180, color: "rgba(180, 50, 100, 0.08)", delay: 16 },
+    { x: 80, y: 15, w: 250, h: 200, color: "rgba(50, 150, 120, 0.07)", delay: 12 },
+  ], []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() < 0.4) {
+        const newStar = {
+          id: counter,
+          x: Math.random() * 80,
+          y: Math.random() * 40,
+          delay: 0,
+        };
+        setShootingStars(prev => [...prev.slice(-3), newStar]);
+        setCounter(c => c + 1);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [counter]);
+
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {/* Nebulas */}
+      {nebulas.map((n, i) => (
+        <div
+          key={`nebula-${i}`}
+          className="nebula absolute rounded-full"
+          style={{
+            left: `${n.x}%`,
+            top: `${n.y}%`,
+            width: `${n.w}px`,
+            height: `${n.h}px`,
+            background: `radial-gradient(ellipse, ${n.color}, transparent 70%)`,
+            animationDelay: `${n.delay}s`,
+            transform: "translate(-50%, -50%)",
+          }}
+        />
+      ))}
+
+      {/* Stars */}
+      {stars.map((star) => (
+        <div
+          key={star.id}
+          className={`absolute rounded-full ${star.isBright ? "animate-twinkle" : "animate-pulse"}`}
+          style={{
+            left: `${star.x}%`,
+            top: `${star.y}%`,
+            width: `${star.size}px`,
+            height: `${star.size}px`,
+            opacity: star.opacity,
+            animationDelay: `${star.animDelay}s`,
+            animationDuration: `${star.animDuration}s`,
+            backgroundColor: star.color,
+            boxShadow: star.isBright ? `0 0 ${star.size * 3}px ${star.color}` : "none",
+          }}
+        />
+      ))}
+
+      {/* Shooting stars */}
+      {shootingStars.map((s) => (
+        <div
+          key={s.id}
+          className="shooting-star"
+          style={{
+            left: `${s.x}%`,
+            top: `${s.y}%`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+
+
+
+
+function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
+  const [time, setTime] = useState(0);
+  const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
+  const containerRef = useRef(null);
+  const [center, setCenter] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(1);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const animRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    const updateCenter = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setCenter({ x: rect.width / 2, y: rect.height / 2 });
+        const minDim = Math.min(rect.width, rect.height);
+        setScale(minDim / 1050);
+      }
+    };
+    updateCenter();
+    window.addEventListener("resize", updateCenter);
+    return () => window.removeEventListener("resize", updateCenter);
+  }, []);
+
+  useEffect(() => {
+    if (isPaused) {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      return;
+    }
+    const animate = (timestamp) => {
+      if (lastTimeRef.current) {
+        const delta = (timestamp - lastTimeRef.current) / 1000;
+        setTime(t => t + delta * 0.3);
+      }
+      lastTimeRef.current = timestamp;
+      animRef.current = requestAnimationFrame(animate);
+    };
+    animRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      lastTimeRef.current = 0;
+    };
+  }, [isPaused]);
+
+  const handleMouseMove = (e) => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setMousePos({
+        x: (e.clientX - rect.left - rect.width / 2) * 0.005,
+        y: (e.clientY - rect.top - rect.height / 2) * 0.005,
+      });
+    }
+  };
+
+  const getPlanetPosition = (planet) => {
+    const angle = time * planet.orbitSpeed * 0.06;
+    const r = planet.orbitRadius * scale;
+    return {
+      x: center.x + Math.cos(angle) * r,
+      y: center.y + Math.sin(angle) * r * 0.4,
+      depth: Math.sin(angle),
+    };
+  };
+
+  // Sort planets by depth for proper z-ordering
+  const sortedPlanets = [...planets]
+    .map(p => ({ ...p, pos: getPlanetPosition(p) }))
+    .sort((a, b) => a.pos.depth - b.pos.depth);
+
+  const containerStyle = zoomedPlanet
+    ? {
+        transform: `scale(0.1) rotate(10deg)`,
+        opacity: 0,
+        transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+      }
+    : {
+        transform: `perspective(1500px) rotateX(${2 + mousePos.y}deg) rotateY(${mousePos.x}deg)`,
+        opacity: 1,
+        transition: "transform 0.1s ease-out, opacity 0.5s",
+      };
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full h-full overflow-hidden"
+      onMouseMove={handleMouseMove}
+      style={containerStyle}
+    >
+      {/* Orbit paths */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+        <defs>
+          {planets.map(planet => (
+            <linearGradient key={`grad-${planet.id}`} id={`orbit-grad-${planet.id}`}>
+              <stop offset="0%" stopColor={planet.color} stopOpacity="0.15" />
+              <stop offset="50%" stopColor={planet.color} stopOpacity="0.05" />
+              <stop offset="100%" stopColor={planet.color} stopOpacity="0.15" />
+            </linearGradient>
+          ))}
+        </defs>
+        {planets.map((planet) => (
+          <ellipse
+            key={`orbit-${planet.id}`}
+            cx={center.x}
+            cy={center.y}
+            rx={planet.orbitRadius * scale}
+            ry={planet.orbitRadius * scale * 0.4}
+            fill="none"
+            stroke={hoveredPlanet === planet.id ? `${planet.color}40` : `url(#orbit-grad-${planet.id})`}
+            strokeWidth={hoveredPlanet === planet.id ? 2 : 1}
+            strokeDasharray={hoveredPlanet === planet.id ? "none" : "6 4"}
+            className="orbit-line"
+            style={{ transition: "stroke 0.3s, stroke-width 0.3s" }}
+          />
+        ))}
+      </svg>
+
+      {/* Sun glow layers */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          left: center.x - 120 * scale,
+          top: center.y - 120 * scale,
+          width: 240 * scale,
+          height: 240 * scale,
+          background: "radial-gradient(circle, rgba(255,170,0,0.15) 0%, rgba(255,100,0,0.05) 40%, transparent 70%)",
+          filter: "blur(10px)",
+        }}
+      />
+      <div
+        className="absolute rounded-full pointer-events-none atmosphere-glow"
+        style={{
+          left: center.x - 80 * scale,
+          top: center.y - 80 * scale,
+          width: 160 * scale,
+          height: 160 * scale,
+          background: "radial-gradient(circle, rgba(255,200,0,0.12) 0%, rgba(255,140,0,0.04) 50%, transparent 70%)",
+        }}
+      />
+
+      {/* Sun */}
+      <button
+        onClick={onSunClick}
+        className="absolute cursor-pointer group z-10"
+        style={{
+          left: center.x - 40 * scale,
+          top: center.y - 40 * scale,
+          width: 80 * scale,
+          height: 80 * scale,
+        }}
+      >
+        <div
+          className="w-full h-full rounded-full transition-transform group-hover:scale-110 relative"
+          style={{
+            background: "radial-gradient(circle at 30% 30%, #ffffff, #fff700 20%, #ffcc00 40%, #ffaa00 60%, #ff7700 80%, #ff4400)",
+            boxShadow: `0 0 ${30 * scale}px #ffcc00, 0 0 ${60 * scale}px #ffaa0080, 0 0 ${120 * scale}px #ff660040`,
+          }}
+        >
+          {/* Sun surface texture */}
+          <div
+            className="absolute inset-1 rounded-full opacity-40 planet-3d"
+            style={{
+              background: "repeating-radial-gradient(circle at 40% 40%, transparent 0%, rgba(255,150,0,0.3) 3%, transparent 6%)",
+              mixBlendMode: "overlay",
+            }}
+          />
+          {/* Corona wisps */}
+          <div className="absolute -inset-3 rounded-full opacity-30 animate-pulse"
+            style={{
+              background: "radial-gradient(circle, transparent 45%, rgba(255,200,0,0.2) 55%, transparent 65%)",
+            }}
+          />
+        </div>
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-yellow-300 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap drop-shadow-lg">
+          ☀️ Sol
+        </div>
+      </button>
+
+      {/* Planets */}
+      {sortedPlanets.map((planet) => {
+        const pos = planet.pos;
+        const isHovered = hoveredPlanet === planet.id;
+        const depthScale = 0.7 + (pos.depth + 1) * 0.2;
+        const planetSize = planet.size * scale * depthScale;
+        const depthOpacity = 0.6 + (pos.depth + 1) * 0.25;
+
+        return (
+          <button
+            key={planet.id}
+            className="absolute cursor-pointer group"
+            style={{
+              left: pos.x - planetSize,
+              top: pos.y - planetSize,
+              width: planetSize * 2,
+              height: planetSize * 2,
+              zIndex: Math.round((pos.depth + 1) * 100),
+              transition: "filter 0.3s",
+              transform: isHovered ? "scale(1.35)" : "scale(1)",
+              filter: `brightness(${isHovered ? 1.3 : depthOpacity})`,
+            }}
+            onClick={() => onPlanetClick(planet)}
+            onMouseEnter={() => setHoveredPlanet(planet.id)}
+            onMouseLeave={() => setHoveredPlanet(null)}
+          >
+            {/* Atmosphere glow */}
+            {planet.hasAtmosphere && (
+              <div
+                className="absolute rounded-full atmosphere-glow"
+                style={{
+                  inset: `-${planetSize * 0.2}px`,
+                  background: `radial-gradient(circle, ${planet.atmosphereColor}, transparent 70%)`,
+                  opacity: isHovered ? 0.8 : 0.4,
+                }}
+              />
+            )}
+
+            {/* Planet body */}
+            <div
+              className="w-full h-full rounded-full relative overflow-hidden"
+              style={{
+                background: planet.texture,
+                boxShadow: isHovered
+                  ? `0 0 ${25 * scale}px ${planet.color}80, 0 0 ${50 * scale}px ${planet.color}40, inset -${planetSize * 0.15}px -${planetSize * 0.1}px ${planetSize * 0.3}px rgba(0,0,0,0.5)`
+                  : `0 0 ${8 * scale}px ${planet.color}30, inset -${planetSize * 0.15}px -${planetSize * 0.1}px ${planetSize * 0.3}px rgba(0,0,0,0.5)`,
+                transition: "box-shadow 0.3s",
+              }}
+            >
+              {/* Rotating surface */}
+              <div
+                className="absolute inset-0 rounded-full planet-3d opacity-30"
+                style={{
+                  background: `repeating-linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.05) 25%, transparent 50%)`,
+                  backgroundSize: "200% 100%",
+                  mixBlendMode: "overlay",
+                }}
+              />
+              {/* Specular highlight */}
+              <div
+                className="absolute rounded-full"
+                style={{
+                  top: "8%",
+                  left: "12%",
+                  width: "35%",
+                  height: "25%",
+                  background: "radial-gradient(ellipse, rgba(255,255,255,0.25), transparent)",
+                  filter: "blur(2px)",
+                }}
+              />
+              {/* Terminator shadow */}
+              <div
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: "linear-gradient(100deg, transparent 30%, rgba(0,0,0,0.3) 55%, rgba(0,0,0,0.7) 100%)",
+                }}
+              />
+            </div>
+
+            {/* Ring for Saturn/Uranus */}
+            {planet.ringColor && (
+              <>
+                <div
+                  className="absolute top-1/2 left-1/2 rounded-full pointer-events-none"
+                  style={{
+                    width: planetSize * 3,
+                    height: planetSize * 0.8,
+                    transform: "translate(-50%, -50%) rotateX(75deg)",
+                    background: `linear-gradient(90deg, transparent 5%, ${planet.ringColor}20 15%, ${planet.ringColor}50 30%, ${planet.ringColor}30 50%, ${planet.ringColor}50 70%, ${planet.ringColor}20 85%, transparent 95%)`,
+                    border: `1px solid ${planet.ringColor}30`,
+                    borderRadius: "50%",
+                    boxShadow: `0 0 8px ${planet.ringColor}20`,
+                  }}
+                />
+                <div
+                  className="absolute top-1/2 left-1/2 rounded-full pointer-events-none"
+                  style={{
+                    width: planetSize * 2.4,
+                    height: planetSize * 0.6,
+                    transform: "translate(-50%, -50%) rotateX(75deg)",
+                    border: `1px solid ${planet.ringColor}40`,
+                    borderRadius: "50%",
+                  }}
+                />
+              </>
+            )}
+
+            {/* Name tooltip */}
+            <div
+              className="absolute left-1/2 -translate-x-1/2 font-bold whitespace-nowrap pointer-events-none transition-all duration-300"
+              style={{
+                bottom: -(22 * scale),
+                color: planet.color,
+                opacity: isHovered ? 1 : 0,
+                fontSize: `${Math.max(11, 13 * scale)}px`,
+                textShadow: `0 0 10px ${planet.color}80`,
+                transform: `translateX(-50%) translateY(${isHovered ? 0 : 5}px)`,
+              }}
+            >
+              {planet.namePt}
+              <span className="block text-center text-[9px] opacity-60 font-normal">clique para mergulhar</span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
+
+
+function PlanetList({ onPlanetClick, onSunClick, activePlanet }ListProps) {
+  return (
+    <div className="fixed left-0 top-0 bottom-0 w-16 md:w-[72px] glass-strong z-30 flex flex-col items-center py-4 gap-2.5 overflow-y-auto">
+      {/* Sun */}
+      <button
+        onClick={onSunClick}
+        className="tooltip-planet group relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full transition-all hover:scale-110 cursor-pointer mb-1 flex-shrink-0"
+        data-tooltip="☀️ Sol"
+        style={{
+          background: "radial-gradient(circle at 30% 30%, #ffffff, #fff700 20%, #ffcc00 50%, #ff7700)",
+          boxShadow: "0 0 15px #ffaa0080, 0 0 30px #ff660030",
+        }}
+      >
+        <div className="absolute inset-0 rounded-full animate-pulse" style={{
+          boxShadow: "0 0 20px #ffaa0060",
+        }} />
+      </button>
+
+      <div className="w-8 h-px bg-white/10 my-0.5 flex-shrink-0" />
+
+      {/* Planets */}
+      {planets.map((planet) => {
+        const isActive = activePlanet === planet.id;
+        const btnSize = Math.max(28, Math.min(planet.size * 1.4, 46));
+        return (
+          <button
+            key={planet.id}
+            onClick={() => onPlanetClick(planet)}
+            className="tooltip-planet group relative flex items-center justify-center rounded-full transition-all hover:scale-115 cursor-pointer flex-shrink-0"
+            data-tooltip={planet.namePt}
+            style={{
+              width: `${btnSize}px`,
+              height: `${btnSize}px`,
+              background: planet.texture,
+              boxShadow: isActive
+                ? `0 0 15px ${planet.color}80, 0 0 30px ${planet.color}30`
+                : `0 0 6px ${planet.color}30`,
+              border: isActive ? `2px solid ${planet.color}60` : "1px solid transparent",
+              transform: isActive ? "scale(1.15)" : undefined,
+            }}
+          >
+            {/* Specular */}
+            <div className="absolute rounded-full" style={{
+              top: "10%", left: "15%", width: "30%", height: "20%",
+              background: "radial-gradient(ellipse, rgba(255,255,255,0.2), transparent)",
+            }} />
+            {/* Shadow */}
+            <div className="absolute inset-0 rounded-full" style={{
+              background: "linear-gradient(120deg, transparent 40%, rgba(0,0,0,0.4) 100%)",
+            }} />
+
+            {/* Ring for Saturn/Uranus */}
+            {planet.ringColor && (
+              <div className="absolute top-1/2 left-1/2 rounded-full pointer-events-none" style={{
+                width: `${btnSize * 1.5}px`,
+                height: `${btnSize * 0.35}px`,
+                transform: "translate(-50%, -50%) rotateX(75deg)",
+                border: `1px solid ${planet.ringColor}60`,
+                borderRadius: "50%",
+              }} />
+            )}
+
+            {/* Active indicator */}
+            {isActive && (
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full" style={{
+                backgroundColor: planet.color,
+                boxShadow: `0 0 6px ${planet.color}`,
+              }} />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
+type Tab = "overview" | "structure" | "surface" | "exploration" | "compare";
+
+
+
+function PlanetDive({ planet, showSun, onClose }DiveProps) {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
+  const [expandedFeature, setExpandedFeature] = useState<number | null>(null);
+
+  if (!planet && !showSun) return null;
+
+  const tabs: { id; label; icon }[] = planet ? [
+    { id: "overview", label: "Visão Geral", icon: "🌍" },
+    { id: "structure", label: "Estrutura", icon: "🔬" },
+    { id: "surface", label: "Superfície", icon: "🗺️" },
+    { id: "exploration", label: "Exploração", icon: "🚀" },
+    { id: "compare", label: "Comparar", icon: "📊" },
+  ] : [];
+
+  // Sun view
+  if (showSun) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center animate-zoomDive" style={{ background: "radial-gradient(circle at center, rgba(40,20,0,0.95), rgba(2,0,16,0.98))" }}>
+        {/* Sun ambient glow */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(circle at 35% 45%, rgba(255,170,0,0.15) 0%, transparent 50%)"
+        }} />
+
+        <button onClick={onClose}
+          className="absolute top-6 left-6 z-50 flex items-center gap-2 px-4 py-2.5 glass rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer text-sm font-medium">
+          ← Voltar ao Sistema Solar
+        </button>
+
+        <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 max-w-6xl w-full px-6 max-h-[90vh] overflow-y-auto">
+          {/* Sun visual */}
+          <div className="flex-shrink-0 animate-fadeIn">
+            <div className="relative">
+              <div className="w-48 h-48 md:w-64 md:h-64 rounded-full relative" style={{
+                background: "radial-gradient(circle at 30% 30%, #ffffff, #fff700 20%, #ffcc00 40%, #ffaa00 60%, #ff7700 80%, #ff4400)",
+                boxShadow: "0 0 60px #ffcc00, 0 0 120px #ffaa0060, 0 0 200px #ff660030",
+              }}>
+                <div className="absolute inset-2 rounded-full planet-3d opacity-40" style={{
+                  background: "repeating-radial-gradient(circle, transparent 0%, rgba(255,100,0,0.4) 3%, transparent 6%)",
+                  mixBlendMode: "overlay"
+                }} />
+              </div>
+              {/* Layers diagram for sun */}
+              <div className="mt-8 flex flex-col gap-2">
+                {SUN_DATA.layers.map((layer, i) => (
+                  <div key={i} className="flex items-center gap-3 glass rounded-lg px-3 py-2 animate-fadeInUp" style={{ animationDelay: `${i * 0.1}s` }}>
+                    <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: layer.color, boxShadow: `0 0 8px ${layer.color}` }} />
+                    <div>
+                      <div className="text-white text-xs font-semibold">{layer.name}</div>
+                      <div className="text-gray-400 text-[10px]">{layer.description}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Sun Info */}
+          <div className="flex-1 max-w-xl animate-slideInRight">
+            <h1 className="text-4xl md:text-5xl font-bold text-yellow-400 mb-2">{SUN_DATA.name}</h1>
+            <p className="text-yellow-200/50 text-sm mb-6">Estrela central do Sistema Solar</p>
+            <p className="text-gray-300 leading-relaxed mb-6">{SUN_DATA.description}</p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {Object.entries(SUN_DATA.facts).map(([key, value], i) => {
+                const labels: Record<string, string> = {
+                  diameter: "⭕ Diâmetro", temperature: "🌡️ Temperatura", age: "📅 Idade",
+                  type: "⭐ Tipo", mass: "⚖️ Massa", composition: "🧪 Composição",
+                };
+                return (
+                  <div key={key} className="glass rounded-xl p-3 animate-fadeInUp" style={{ animationDelay: `${i * 0.08}s` }}>
+                    <div className="text-yellow-400/60 text-xs font-medium mb-1">{labels[key] || key}</div>
+                    <div className="text-white text-sm font-semibold">{value}</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="glass rounded-xl p-4" style={{ borderColor: "rgba(255,170,0,0.2)" }}>
+              <div className="text-yellow-400 font-bold text-sm mb-2">💡 Curiosidade</div>
+              <p className="text-gray-300 text-sm leading-relaxed">{SUN_DATA.funFact}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!planet) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 animate-zoomDive" style={{
+      background: `radial-gradient(circle at 30% 50%, ${planet.color}15, rgba(2,0,16,0.98) 60%)`
+    }}>
+      {/* Ambient particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <div key={i} className="absolute rounded-full animate-float" style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            width: `${Math.random() * 3 + 1}px`,
+            height: `${Math.random() * 3 + 1}px`,
+            backgroundColor: `${planet.color}40`,
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${3 + Math.random() * 4}s`,
+          }} />
+        ))}
+      </div>
+
+      {/* Back button */}
+      <button onClick={onClose}
+        className="absolute top-6 left-6 z-50 flex items-center gap-2 px-4 py-2.5 glass rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer text-sm font-medium">
+        ← Voltar ao Sistema Solar
+      </button>
+
+      {/* Planet name header */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-40 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold animate-fadeIn" style={{ color: planet.color, textShadow: `0 0 30px ${planet.color}50` }}>
+          {planet.namePt}
+        </h1>
+        <div className="flex items-center justify-center gap-3 mt-1">
+          <span className="text-gray-400 text-xs">{planet.type}</span>
+          <span className="text-gray-600">•</span>
+          <span className="text-gray-400 text-xs">{planet.order}º planeta</span>
+        </div>
+      </div>
+
+      {/* Content layout */}
+      <div className="flex flex-col lg:flex-row h-full pt-20 pb-4 px-4 lg:px-8 gap-6 overflow-hidden">
+        {/* Left visual */}
+        <div className="flex-shrink-0 flex flex-col items-center justify-center lg:w-[380px]">
+          <div className="relative animate-fadeIn">
+            {/* Outer atmosphere */}
+            {planet.hasAtmosphere && (
+              <div className="absolute rounded-full atmosphere-glow" style={{
+                inset: "-20px",
+                background: `radial-gradient(circle, ${planet.atmosphereColor}, transparent 60%)`,
+              }} />
+            )}
+            {/* Planet */}
+            <div className="w-48 h-48 md:w-60 md:h-60 rounded-full relative overflow-hidden animate-float" style={{
+              background: planet.texture,
+              boxShadow: `0 0 40px ${planet.color}40, 0 0 80px ${planet.color}20, inset -20px -15px 40px rgba(0,0,0,0.5)`,
+            }}>
+              {/* Rotating surface */}
+              <div className="absolute inset-0 rounded-full planet-3d" style={{
+                background: `repeating-linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 20%, transparent 40%)`,
+                backgroundSize: "200% 100%",
+                mixBlendMode: "overlay",
+              }} />
+              {/* Specular */}
+              <div className="absolute rounded-full" style={{
+                top: "10%", left: "15%", width: "30%", height: "20%",
+                background: "radial-gradient(ellipse, rgba(255,255,255,0.2), transparent)",
+                filter: "blur(3px)",
+              }} />
+              {/* Terminator */}
+              <div className="absolute inset-0 rounded-full" style={{
+                background: "linear-gradient(110deg, transparent 35%, rgba(0,0,0,0.3) 55%, rgba(0,0,0,0.7) 100%)",
+              }} />
+            </div>
+
+            {/* Ring */}
+            {planet.ringColor && (
+              <div className="absolute top-1/2 left-1/2 rounded-full pointer-events-none" style={{
+                width: "340px", height: "85px",
+                transform: "translate(-50%, -50%) rotateX(75deg)",
+                background: `linear-gradient(90deg, transparent 5%, ${planet.ringColor}20 15%, ${planet.ringColor}50 30%, ${planet.ringColor}30 50%, ${planet.ringColor}50 70%, ${planet.ringColor}20 85%, transparent 95%)`,
+                border: `1px solid ${planet.ringColor}30`,
+                borderRadius: "50%",
+              }} />
+            )}
+          </div>
+
+          {/* Quick stats below planet */}
+          <div className="mt-6 grid grid-cols-2 gap-2 w-full max-w-[280px]">
+            {[
+              { label: "Diâmetro", value: planet.facts.diameter, icon: "⭕" },
+              { label: "Gravidade", value: planet.facts.gravity, icon: "⬇️" },
+              { label: "Temperatura", value: planet.facts.temperature, icon: "🌡️" },
+              { label: "Luas", value: planet.facts.moons, icon: "🌙" },
+            ].map((stat, i) => (
+              <div key={i} className="glass rounded-lg px-3 py-2 text-center animate-fadeInUp" style={{ animationDelay: `${0.3 + i * 0.1}s` }}>
+                <div className="text-[10px] text-gray-400">{stat.icon} {stat.label}</div>
+                <div className="text-white text-xs font-bold mt-0.5">{stat.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Info panel */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Tabs */}
+          <div className="flex gap-1.5 mb-4 flex-wrap">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => { setActiveTab(tab.id); setExpandedFeature(null); setHoveredLayer(null); }}
+                className={`px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer border ${
+                  activeTab === tab.id ? "tab-active" : "border-transparent text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div className="flex-1 overflow-y-auto pr-2 animate-fadeIn" key={activeTab}>
+            {activeTab === "overview" && (
+              <div className="space-y-4">
+                <p className="text-gray-300 leading-relaxed text-sm">{planet.description}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(planet.facts).map(([key, value], i) => {
+                    const labels: Record<string, string> = {
+                      diameter: "⭕ Diâmetro", distanceSun: "☀️ Distância do Sol",
+                      orbitalPeriod: "🔄 Período Orbital", rotationPeriod: "🌀 Rotação",
+                      moons: "🌙 Luas", temperature: "🌡️ Temperatura",
+                      gravity: "⬇️ Gravidade", atmosphere: "🌫️ Atmosfera",
+                    };
+                    return (
+                      <div key={key} className="glass rounded-xl p-3 animate-fadeInUp hover:bg-white/5 transition-colors" style={{ animationDelay: `${i * 0.06}s` }}>
+                        <div className="text-xs font-medium mb-1" style={{ color: `${planet.color}aa` }}>
+                          {labels[key] || key}
+                        </div>
+                        <div className="text-white text-sm font-semibold">{value}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="glass rounded-xl p-4" style={{ borderColor: `${planet.color}25` }}>
+                  <div className="font-bold text-sm mb-2" style={{ color: planet.color }}>💡 Curiosidade</div>
+                  <p className="text-gray-300 text-sm leading-relaxed">{planet.funFact}</p>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "structure" && (
+              <div className="space-y-6">
+                <p className="text-gray-400 text-sm">Explore as camadas internas de {planet.namePt}. Passe o mouse sobre cada camada para mais detalhes.</p>
+                {/* Interactive layer diagram */}
+                <div className="flex justify-center py-4">
+                  <div className="relative" style={{ width: "240px", height: "240px" }}>
+                    {[...planet.layers].reverse().map((layer, i) => {
+                      const idx = planet.layers.length - 1 - i;
+                      const size = layer.radius * 2.4;
+                      const isHovered = hoveredLayer === idx;
+                      return (
+                        <div
+                          key={i}
+                          className="absolute rounded-full layer-ring cursor-pointer flex items-center justify-center"
+                          style={{
+                            width: `${size}px`,
+                            height: `${size}px`,
+                            left: `${120 - size / 2}px`,
+                            top: `${120 - size / 2}px`,
+                            background: layer.color,
+                            border: isHovered ? `2px solid ${planet.color}` : "1px solid rgba(255,255,255,0.1)",
+                            boxShadow: isHovered ? `0 0 20px ${layer.color}80, inset 0 0 20px rgba(0,0,0,0.3)` : `inset 0 0 20px rgba(0,0,0,0.3)`,
+                            zIndex: planet.layers.length - i,
+                            transition: "transform 0.3s, box-shadow 0.3s, border 0.3s",
+                            opacity: hoveredLayer !== null && !isHovered ? 0.6 : 1,
+                          }}
+                          onMouseEnter={() => setHoveredLayer(idx)}
+                          onMouseLeave={() => setHoveredLayer(null)}
+                        >
+                          {(isHovered || (idx === 0 && hoveredLayer === null)) && (
+                            <span className="text-white text-[9px] font-bold text-center leading-tight drop-shadow-lg px-1" style={{
+                              textShadow: "0 1px 3px rgba(0,0,0,0.8)"
+                            }}>
+                              {layer.name}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Layer descriptions */}
+                <div className="space-y-2">
+                  {planet.layers.map((layer, i) => (
+                    <div
+                      key={i}
+                      className={`glass rounded-xl p-3 transition-all cursor-pointer ${hoveredLayer === i ? "ring-1 bg-white/5" : ""}`}
+                      style={{ borderColor: hoveredLayer === i ? `${planet.color}50` : "transparent" }}
+                      onMouseEnter={() => setHoveredLayer(i)}
+                      onMouseLeave={() => setHoveredLayer(null)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full flex-shrink-0" style={{
+                          background: layer.color,
+                          boxShadow: `0 0 8px ${layer.color}60`
+                        }} />
+                        <div className="flex-1">
+                          <div className="text-white text-sm font-semibold">{layer.name}</div>
+                          <div className="text-gray-400 text-xs">{layer.description}</div>
+                        </div>
+                        <div className="text-gray-500 text-xs">{layer.radius}%</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === "surface" && (
+              <div className="space-y-4">
+                <p className="text-gray-400 text-sm">Características mais notáveis da superfície de {planet.namePt}:</p>
+                {planet.surfaceFeatures.map((feature, i) => (
+                  <div
+                    key={i}
+                    className="glass rounded-xl overflow-hidden cursor-pointer transition-all hover:bg-white/5 animate-fadeInUp"
+                    style={{ animationDelay: `${i * 0.1}s` }}
+                    onClick={() => setExpandedFeature(expandedFeature === i ? null : i)}
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{feature.emoji}</span>
+                        <div className="flex-1">
+                          <h3 className="text-white font-bold text-sm">{feature.name}</h3>
+                          <p className={`text-gray-400 text-xs mt-1 leading-relaxed transition-all ${expandedFeature === i ? "" : "line-clamp-1"}`}>
+                            {feature.description}
+                          </p>
+                        </div>
+                        <span className={`text-gray-500 transition-transform ${expandedFeature === i ? "rotate-180" : ""}`}>▼</span>
+                      </div>
+                    </div>
+                    {expandedFeature === i && (
+                      <div className="px-4 pb-4 animate-fadeIn">
+                        <div className="h-24 rounded-lg overflow-hidden" style={{
+                          background: `linear-gradient(135deg, ${planet.color}20, ${planet.gradient[0]}40, ${planet.gradient[2]}20)`,
+                          border: `1px solid ${planet.color}20`,
+                        }}>
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-5xl">{feature.emoji}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === "exploration" && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="glass rounded-xl p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-3xl">🚀</span>
+                    <h3 className="text-white font-bold text-lg">Exploração Espacial</h3>
+                  </div>
+                  <p className="text-gray-300 text-sm leading-relaxed">{planet.exploration}</p>
+                </div>
+
+                {planet.yearDiscovered && (
+                  <div className="glass rounded-xl p-4">
+                    <div className="text-gray-400 text-xs mb-1">📅 Descoberto</div>
+                    <div className="text-white text-sm font-semibold">{planet.yearDiscovered}</div>
+                  </div>
+                )}
+
+                {/* Timeline visual */}
+                <div className="glass rounded-xl p-4">
+                  <h4 className="text-white text-sm font-bold mb-4">Dados Orbitais</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-400">Distância do Sol</span>
+                        <span className="text-white font-medium">{planet.facts.distanceSun}</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2">
+                        <div className="h-2 rounded-full transition-all duration-1000 size-comparison-bar" style={{
+                          width: `${Math.min((planet.order / 8) * 100, 100)}%`,
+                          background: `linear-gradient(90deg, ${planet.color}, ${planet.gradient[2]})`,
+                        }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-400">Velocidade Orbital</span>
+                        <span className="text-white font-medium">{planet.facts.orbitalPeriod}</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-2">
+                        <div className="h-2 rounded-full transition-all duration-1000 size-comparison-bar" style={{
+                          width: `${Math.max(10, 100 - (planet.order / 8) * 80)}%`,
+                          background: `linear-gradient(90deg, ${planet.gradient[2]}, ${planet.color})`,
+                          animationDelay: "0.3s",
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "compare" && (
+              <div className="space-y-5 animate-fadeIn">
+                <p className="text-gray-400 text-sm">Comparação de {planet.namePt} com a Terra:</p>
+
+                {/* Size comparison */}
+                <div className="glass rounded-xl p-5">
+                  <h4 className="text-white text-sm font-bold mb-4">📏 Comparação de Tamanho</h4>
+                  <div className="flex items-end justify-center gap-8 py-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="rounded-full" style={{
+                        width: `${Math.min(planet.compareSizeToEarth * 80, 160)}px`,
+                        height: `${Math.min(planet.compareSizeToEarth * 80, 160)}px`,
+                        background: planet.texture,
+                        boxShadow: `0 0 20px ${planet.color}40, inset -8px -6px 15px rgba(0,0,0,0.5)`,
+                        minWidth: "30px",
+                        minHeight: "30px",
+                      }} />
+                      <span className="text-xs font-bold" style={{ color: planet.color }}>{planet.namePt}</span>
+                      <span className="text-[10px] text-gray-500">{planet.facts.diameter}</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="rounded-full" style={{
+                        width: "80px",
+                        height: "80px",
+                        background: "radial-gradient(circle at 35% 30%, #76d7c4, #4da6ff, #2d7dd2, #1a3d6e)",
+                        boxShadow: "0 0 20px #4da6ff40, inset -8px -6px 15px rgba(0,0,0,0.5)",
+                      }} />
+                      <span className="text-xs font-bold text-blue-400">Terra</span>
+                      <span className="text-[10px] text-gray-500">12.742 km</span>
+                    </div>
+                  </div>
+                  <div className="text-center mt-2">
+                    <span className="text-white text-sm font-bold">
+                      {planet.compareSizeToEarth > 1
+                        ? `${planet.compareSizeToEarth.toFixed(1)}x maior que a Terra`
+                        : `${(planet.compareSizeToEarth * 100).toFixed(0)}% do tamanho da Terra`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Gravity comparison */}
+                <div className="glass rounded-xl p-5">
+                  <h4 className="text-white text-sm font-bold mb-4">⬇️ Gravidade — Seu Peso</h4>
+                  <p className="text-gray-400 text-xs mb-3">Se você pesa 70 kg na Terra:</p>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="text-blue-400">🌍 Terra</span>
+                        <span className="text-white font-bold">70 kg</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-3">
+                        <div className="h-3 rounded-full bg-blue-500" style={{ width: "100%" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span style={{ color: planet.color }}>{planet.namePt}</span>
+                        <span className="text-white font-bold">
+                          {(70 * parseFloat(planet.facts.gravity.replace(",", ".")) / 9.8).toFixed(1)} kg
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-3">
+                        <div className="h-3 rounded-full size-comparison-bar" style={{
+                          width: `${Math.min((parseFloat(planet.facts.gravity.replace(",", ".")) / 9.8) * 100, 100)}%`,
+                          background: `linear-gradient(90deg, ${planet.color}, ${planet.gradient[2]})`,
+                        }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Day length comparison */}
+                <div className="glass rounded-xl p-5">
+                  <h4 className="text-white text-sm font-bold mb-3">⏰ Comparação de Tempo</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <div className="text-[10px] text-gray-400 mb-1">🔄 Um dia em {planet.namePt}</div>
+                      <div className="text-white text-sm font-bold">{planet.facts.rotationPeriod}</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-3 text-center">
+                      <div className="text-[10px] text-gray-400 mb-1">🌀 Um ano em {planet.namePt}</div>
+                      <div className="text-white text-sm font-bold">{planet.facts.orbitalPeriod}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+const allQuestions[] = [
+  { question: "Qual é o maior planeta do Sistema Solar?", options: ["Saturno", "Júpiter", "Urano", "Netuno"], correct: 1, explanation: "Júpiter é o maior planeta, com diâmetro de 139.820 km — cabem mais de 1.300 Terras dentro dele!", difficulty: "fácil" },
+  { question: "Qual planeta é conhecido como 'Planeta Vermelho'?", options: ["Vênus", "Mercúrio", "Marte", "Júpiter"], correct: 2, explanation: "Marte é chamado de Planeta Vermelho devido ao óxido de ferro (ferrugem) em sua superfície.", difficulty: "fácil" },
+  { question: "Quantas luas a Terra possui?", options: ["0", "1", "2", "3"], correct: 1, explanation: "A Terra possui apenas uma lua natural, chamada simplesmente de Lua.", difficulty: "fácil" },
+  { question: "Qual é o planeta mais quente do Sistema Solar?", options: ["Mercúrio", "Vênus", "Marte", "Júpiter"], correct: 1, explanation: "Apesar de Mercúrio ser mais próximo do Sol, Vênus é mais quente (462°C) por causa de seu efeito estufa extremo.", difficulty: "médio" },
+  { question: "Qual planeta é famoso por seus anéis?", options: ["Júpiter", "Urano", "Saturno", "Netuno"], correct: 2, explanation: "Saturno é famoso por seus anéis espetaculares, compostos de gelo e rocha.", difficulty: "fácil" },
+  { question: "Qual é o menor planeta do Sistema Solar?", options: ["Marte", "Vênus", "Terra", "Mercúrio"], correct: 3, explanation: "Mercúrio é o menor planeta, com apenas 4.879 km de diâmetro.", difficulty: "fácil" },
+  { question: "Quanto tempo a luz do Sol leva para chegar à Terra?", options: ["1 minuto", "~8 minutos", "1 hora", "1 dia"], correct: 1, explanation: "A luz do Sol leva aproximadamente 8 minutos e 20 segundos para percorrer os ~150 milhões de km até a Terra.", difficulty: "médio" },
+  { question: "Qual planeta gira de lado com inclinação de 98°?", options: ["Netuno", "Saturno", "Urano", "Mercúrio"], correct: 2, explanation: "Urano tem uma inclinação axial de 98°, fazendo-o girar praticamente de lado.", difficulty: "médio" },
+  { question: "Qual planeta tem os ventos mais fortes do sistema solar?", options: ["Júpiter", "Saturno", "Urano", "Netuno"], correct: 3, explanation: "Netuno possui os ventos mais fortes do sistema solar, chegando a 2.100 km/h!", difficulty: "difícil" },
+  { question: "Qual é a estrela mais próxima da Terra?", options: ["Alpha Centauri", "Sirius", "Sol", "Betelgeuse"], correct: 2, explanation: "O Sol é a estrela mais próxima da Terra, a cerca de 150 milhões de km.", difficulty: "fácil" },
+  { question: "Qual planeta tem o dia mais curto (rotação mais rápida)?", options: ["Terra", "Marte", "Júpiter", "Saturno"], correct: 2, explanation: "Júpiter tem o dia mais curto: apenas 9 horas e 55 minutos para uma rotação completa!", difficulty: "médio" },
+  { question: "Quantos planetas existem no Sistema Solar?", options: ["7", "8", "9", "10"], correct: 1, explanation: "Existem 8 planetas no Sistema Solar. Plutão foi reclassificado como planeta anão em 2006.", difficulty: "fácil" },
+  { question: "Qual a composição principal do Sol?", options: ["Oxigênio e Carbono", "Ferro e Níquel", "Hidrogênio e Hélio", "Nitrogênio e Oxigênio"], correct: 2, explanation: "O Sol é composto principalmente de Hidrogênio (73%) e Hélio (25%).", difficulty: "médio" },
+  { question: "Qual planeta leva mais tempo para orbitar o Sol?", options: ["Urano", "Saturno", "Netuno", "Júpiter"], correct: 2, explanation: "Netuno leva 164,8 anos terrestres para completar uma órbita ao redor do Sol.", difficulty: "médio" },
+  { question: "Onde fica o maior vulcão do Sistema Solar?", options: ["Terra", "Vênus", "Marte", "Io (lua de Júpiter)"], correct: 2, explanation: "O Monte Olimpo em Marte tem 21,9 km de altura — quase 2,5 vezes o Everest!", difficulty: "difícil" },
+  { question: "Qual lua de Saturno tem lagos de metano líquido?", options: ["Encélado", "Mimas", "Titã", "Réia"], correct: 2, explanation: "Titã é a única lua com atmosfera densa e possui lagos e rios de metano e etano líquidos na superfície.", difficulty: "difícil" },
+  { question: "Qual sonda saiu do sistema solar primeiro?", options: ["Pioneer 10", "Voyager 1", "Voyager 2", "New Horizons"], correct: 1, explanation: "A Voyager 1, lançada em 1977, entrou no espaço interestelar em 2012, sendo o primeiro objeto humano a fazê-lo.", difficulty: "difícil" },
+  { question: "Saturno flutuaria na água. Por quê?", options: ["É feito de gás", "Sua densidade é menor que a da água", "É oco por dentro", "Tem muitos anéis"], correct: 1, explanation: "A densidade média de Saturno é de 0,687 g/cm³, menor que a da água (1 g/cm³), por isso flutuaria!", difficulty: "difícil" },
+];
+
+function Quiz({ onClose }: { onClose: () => void }) {
+  const questions = useMemo(() => {
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 10);
+  }, []);
+
+  const [currentQ, setCurrentQ] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [showResult, setShowResult] = useState(false);
+  const [answered, setAnswered] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+
+  const question = questions[currentQ];
+
+  const handleAnswer = (index) => {
+    if (answered) return;
+    setSelected(index);
+    setAnswered(true);
+    if (index === question.correct) {
+      setScore(s => s + 1);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (newStreak > maxStreak) setMaxStreak(newStreak);
+    } else {
+      setStreak(0);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentQ < questions.length - 1) {
+      setCurrentQ(q => q + 1);
+      setSelected(null);
+      setAnswered(false);
+    } else {
+      setShowResult(true);
+    }
+  };
+
+  const handleRestart = () => {
+    setCurrentQ(0);
+    setSelected(null);
+    setScore(0);
+    setShowResult(false);
+    setAnswered(false);
+    setStreak(0);
+    setMaxStreak(0);
+  };
+
+  const getScoreEmoji = () => {
+    const pct = score / questions.length;
+    if (pct === 1) return "🏆";
+    if (pct >= 0.8) return "🌟";
+    if (pct >= 0.6) return "👍";
+    if (pct >= 0.4) return "📚";
+    return "🔭";
+  };
+
+  const getScoreMessage = () => {
+    const pct = score / questions.length;
+    if (pct === 1) return "Perfeito! Você é um gênio espacial!";
+    if (pct >= 0.8) return "Excelente! Você sabe muito sobre o espaço!";
+    if (pct >= 0.6) return "Bom trabalho! Continue explorando!";
+    if (pct >= 0.4) return "Não desista! O espaço tem muito a ensinar!";
+    return "Explore mais o sistema solar e tente novamente!";
+  };
+
+  const difficultyColor = { fácil: "text-emerald-400", médio: "text-yellow-400", difícil: "text-red-400" };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn" style={{
+      background: "radial-gradient(circle at center, rgba(30,20,60,0.98), rgba(2,0,16,0.99))"
+    }}>
+      <div className="relative glass-strong rounded-2xl max-w-xl w-full shadow-2xl" style={{ borderColor: "rgba(99,102,241,0.2)" }}>
+        <button onClick={onClose}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-lg transition-colors z-10 cursor-pointer">
+          ✕
+        </button>
+
+        <div className="p-8">
+          {showResult ? (
+            <div className="text-center animate-fadeIn">
+              <div className="text-7xl mb-4">{getScoreEmoji()}</div>
+              <h2 className="text-3xl font-bold text-white mb-2">Quiz Completo!</h2>
+              <p className="text-indigo-300 text-lg mb-6">{getScoreMessage()}</p>
+              <div className="glass rounded-2xl p-6 mb-6">
+                <div className="text-5xl font-bold text-white mb-1">{score}/{questions.length}</div>
+                <div className="text-indigo-300">respostas corretas</div>
+                <div className="mt-4 w-full bg-gray-800 rounded-full h-3">
+                  <div className="h-3 rounded-full transition-all duration-1000 ease-out" style={{
+                    width: `${(score / questions.length) * 100}%`,
+                    background: "linear-gradient(90deg, #6366f1, #a855f7, #ec4899)",
+                  }} />
+                </div>
+                {maxStreak > 1 && (
+                  <div className="mt-3 text-yellow-400 text-sm">🔥 Melhor sequência: {maxStreak} acertos seguidos!</div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button onClick={handleRestart}
+                  className="flex-1 py-3 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-colors cursor-pointer">
+                  🔄 Tentar Novamente
+                </button>
+                <button onClick={onClose}
+                  className="flex-1 py-3 px-6 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-colors cursor-pointer">
+                  🪐 Voltar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-indigo-400 text-sm font-medium">
+                  Pergunta {currentQ + 1}/{questions.length}
+                </span>
+                <div className="flex items-center gap-3">
+                  {streak >= 2 && <span className="text-yellow-400 text-sm">🔥 {streak}x</span>}
+                  <span className={`text-xs px-2 py-0.5 rounded-full border border-current ${difficultyColor[question.difficulty]}`}>
+                    {question.difficulty}
+                  </span>
+                  <span className="text-indigo-400 text-sm font-medium">⭐ {score}</span>
+                </div>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-1.5 mb-6">
+                <div className="h-1.5 rounded-full transition-all duration-500" style={{
+                  width: `${((currentQ + 1) / questions.length) * 100}%`,
+                  background: "linear-gradient(90deg, #6366f1, #a855f7)",
+                }} />
+              </div>
+
+              <h3 className="text-xl font-bold text-white mb-6">{question.question}</h3>
+
+              <div className="space-y-2.5 mb-6">
+                {question.options.map((option, i) => {
+                  let classes = "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20";
+                  if (answered) {
+                    if (i === question.correct) classes = "bg-emerald-500/20 border-emerald-500/50";
+                    else if (i === selected && i !== question.correct) classes = "bg-red-500/20 border-red-500/50";
+                    else classes = "bg-white/5 border-white/5 opacity-40";
+                  }
+                  return (
+                    <button key={i} onClick={() => handleAnswer(i)}
+                      className={`w-full text-left p-4 rounded-xl border transition-all text-white ${classes} ${!answered ? "cursor-pointer" : "cursor-default"}`}>
+                      <span className="font-medium text-gray-400 mr-2">{String.fromCharCode(65 + i)}.</span>
+                      {option}
+                      {answered && i === question.correct && <span className="ml-2">✅</span>}
+                      {answered && i === selected && i !== question.correct && <span className="ml-2">❌</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {answered && (
+                <div className="glass rounded-xl p-4 mb-4 animate-fadeInUp" style={{ borderColor: "rgba(99,102,241,0.2)" }}>
+                  <p className="text-indigo-200 text-sm">💡 {question.explanation}</p>
+                </div>
+              )}
+
+              {answered && (
+                <button onClick={handleNext}
+                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-colors cursor-pointer">
+                  {currentQ < questions.length - 1 ? "Próxima Pergunta →" : "Ver Resultado 🏆"}
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+function App() {
+  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [showSun, setShowSun] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isDiving, setIsDiving] = useState(false);
+  const [zoomedPlanet, setZoomedPlanet] = useState<string | null>(null);
+  const [showSpeedControl, setShowSpeedControl] = useState(false);
+
+  const handlePlanetClick = useCallback((planet) => {
+    setZoomedPlanet(planet.id);
+    setTimeout(() => {
+      setSelectedPlanet(planet);
+      setShowSun(false);
+      setIsDiving(true);
+    }, 400);
+  }, []);
+
+  const handleSunClick = useCallback(() => {
+    setZoomedPlanet("sun");
+    setTimeout(() => {
+      setShowSun(true);
+      setSelectedPlanet(null);
+      setIsDiving(true);
+    }, 400);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setIsDiving(false);
+    setSelectedPlanet(null);
+    setShowSun(false);
+    setZoomedPlanet(null);
+  }, []);
+
+  return (
+    <div className="w-screen h-screen bg-gradient-to-b from-[#020010] via-[#050520] to-[#0a0a2e] overflow-hidden relative select-none">
+      {/* Stars Background */}
+      <Stars />
+
+      {/* Title */}
+      {!isDiving && (
+        <div className="absolute top-5 left-1/2 -translate-x-1/2 z-20 text-center animate-fadeIn">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-lg">
+            🌌 Sistema Solar Interativo
+          </h1>
+          <p className="text-gray-500 text-[11px] md:text-xs mt-1.5 font-medium">
+            Clique em qualquer planeta para mergulhar e explorar
+          </p>
+        </div>
+      )}
+
+      {/* Side Planet List */}
+      {!isDiving && (
+        <PlanetList
+          onPlanetClick={handlePlanetClick}
+          onSunClick={handleSunClick}
+          activePlanet={zoomedPlanet}
+        />
+      )}
+
+      {/* Controls */}
+      {!isDiving && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2.5 animate-fadeIn">
+          <button
+            onClick={() => setIsPaused(!isPaused)}
+            className="px-4 py-2.5 glass hover:bg-white/10 text-white rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2"
+          >
+            {isPaused ? "▶️ Continuar" : "⏸️ Pausar"}
+          </button>
+          <button
+            onClick={() => setShowSpeedControl(!showSpeedControl)}
+            className="px-4 py-2.5 glass hover:bg-white/10 text-white rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2"
+          >
+            ⚡ Controles
+          </button>
+          <button
+            onClick={() => setShowQuiz(true)}
+            className="px-4 py-2.5 text-white rounded-full text-xs font-medium transition-all cursor-pointer flex items-center gap-2"
+            style={{
+              background: "linear-gradient(135deg, rgba(99,102,241,0.7), rgba(168,85,247,0.7))",
+              border: "1px solid rgba(99,102,241,0.3)",
+            }}
+          >
+            🧠 Quiz Espacial
+          </button>
+        </div>
+      )}
+
+      {/* Instructions tooltip */}
+      {showSpeedControl && !isDiving && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 glass rounded-xl p-4 max-w-xs animate-fadeInUp">
+          <div className="text-white text-sm font-bold mb-2">🎮 Como usar</div>
+          <ul className="text-gray-300 text-xs space-y-1.5">
+            <li>🖱️ <strong>Clique</strong> em um planeta para mergulhar</li>
+            <li>🔍 Explore <strong>5 abas</strong> de informações</li>
+            <li>🏗️ Veja a <strong>estrutura interna</strong></li>
+            <li>📊 <strong>Compare</strong> com a Terra</li>
+            <li>🧠 Teste seu conhecimento no <strong>Quiz</strong></li>
+            <li>🖱️ Mova o mouse para efeito <strong>parallax 3D</strong></li>
+          </ul>
+          <button onClick={() => setShowSpeedControl(false)} className="mt-3 text-indigo-400 text-xs cursor-pointer hover:text-indigo-300">
+            Fechar ✕
+          </button>
+        </div>
+      )}
+
+      {/* Solar System */}
+      {!isDiving && (
+        <div className="absolute inset-0 pl-16 md:pl-[72px]">
+          <SolarSystem
+            onPlanetClick={handlePlanetClick}
+            onSunClick={handleSunClick}
+            isPaused={isPaused}
+            zoomedPlanet={zoomedPlanet}
+          />
+        </div>
+      )}
+
+      {/* Dive View */}
+      {isDiving && (
+        <PlanetDive
+          planet={selectedPlanet}
+          showSun={showSun}
+          onClose={handleClose}
+        />
+      )}
+
+      {/* Quiz Modal */}
+      {showQuiz && <Quiz onClose={() => setShowQuiz(false)} />}
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

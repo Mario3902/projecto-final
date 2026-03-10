@@ -86,12 +86,12 @@ const Tasks = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold text-foreground">Planeador & Pomodoro 📋</h1>
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold text-foreground">Planeador & Pomodoro 📋</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Sessão Pomodoro */}
-          <Card className="glass-card md:sticky md:top-24 h-fit">
+          <Card className="glass-card h-fit">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {isBreak ? <Coffee className="h-5 w-5 text-warm" /> : <Calendar className="h-5 w-5 text-primary" />}

@@ -2,10 +2,12 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls, Text, RoundedBox, Sphere, Torus, useGLTF, useAnimations } from "@react-three/drei";
 import * as THREE from "three";
-import DashboardLayout from "@/components/DashboardLayout";
+import DesktopLayout from "@/components/DesktopLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RotateCcw, Info } from "lucide-react";
+import { RotateCcw, Info, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import DeviceSelection from "@/components/DeviceSelection";
 
 const scenes = [
   { id: "classroom", name: "Sala de Aula", desc: "Explore uma sala de aula virtual em 3D", emoji: "🏫", category: "" },
@@ -80,7 +82,6 @@ function LittlestTokyoModel() {
   const { actions } = useAnimations(animations, group);
 
   useEffect(() => {
-    // Play the first animation if it exists
     if (actions && Object.keys(actions).length > 0) {
       const firstAction = Object.values(actions)[0];
       firstAction?.reset().fadeIn(0.5).play();
@@ -146,18 +147,40 @@ function SolarScene() {
 
 const AugmentedReality = () => {
   const [activeScene, setActiveScene] = useState("classroom");
+  const [selectedDevice, setSelectedDevice] = useState<"computer" | null>(null);
+  const navigate = useNavigate();
+
+  if (!selectedDevice) {
+    return (
+      <DeviceSelection
+        title="Realidade Aumentada 🌐"
+        description="Escolha como deseja explorar os ambientes 3D interactivos."
+        vrLink="/dashboard/ar"
+        onSelectComputer={() => setSelectedDevice("computer")}
+        onBack={() => navigate(-1)}
+      />
+    );
+  }
 
   return (
-    <DashboardLayout>
+    <DesktopLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Realidade Aumentada 🌐</h1>
             <p className="text-muted-foreground mt-1">Explore ambientes 3D interativos</p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
-            <Info className="h-4 w-4" />
-            Arraste para girar • Scroll para zoom
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
+              <Info className="h-4 w-4" />
+              Arraste para girar • Scroll para zoom
+            </div>
+            <button
+              onClick={() => setSelectedDevice(null)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2 bg-muted/50 rounded-lg"
+            >
+              <ArrowLeft className="w-4 h-4" /> Voltar à Seleção
+            </button>
           </div>
         </div>
 
@@ -168,12 +191,12 @@ const AugmentedReality = () => {
               key={scene.id}
               onClick={() => setActiveScene(scene.id)}
               className={`p-4 rounded-xl border-2 text-left transition-all ${activeScene === scene.id
-                  ? scene.category === "pulsar"
-                    ? "border-purple-500 bg-purple-500/10"
-                    : "border-primary bg-primary/5"
-                  : scene.category === "pulsar"
-                    ? "border-purple-500/40 hover:border-purple-500/70 bg-purple-500/5"
-                    : "border-border hover:border-primary/50 bg-muted/30"
+                ? scene.category === "pulsar"
+                  ? "border-purple-500 bg-purple-500/10"
+                  : "border-primary bg-primary/5"
+                : scene.category === "pulsar"
+                  ? "border-purple-500/40 hover:border-purple-500/70 bg-purple-500/5"
+                  : "border-border hover:border-primary/50 bg-muted/30"
                 }`}
             >
               <div className="flex items-center gap-2">
@@ -230,7 +253,7 @@ const AugmentedReality = () => {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+    </DesktopLayout>
   );
 };
 

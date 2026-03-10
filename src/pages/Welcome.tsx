@@ -20,9 +20,8 @@ const Welcome = () => {
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
 
       <div
-        className={`flex flex-col items-center gap-6 transition-all duration-700 ${
-          phase === "exit" ? "opacity-0 scale-95" : "opacity-100 scale-100"
-        }`}
+        className={`flex flex-col items-center gap-6 transition-all duration-700 ${phase === "exit" ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          }`}
       >
         <div className={`animate-logo-reveal ${phase !== "logo" ? "" : ""}`}>
           <div className="animate-float">
@@ -36,14 +35,13 @@ const Welcome = () => {
         </div>
 
         <div
-          className={`text-center transition-all duration-500 ${
-            phase === "text" || phase === "exit"
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 translate-y-4"
-          }`}
+          className={`text-center transition-all duration-500 ${phase === "text" || phase === "exit"
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 translate-y-4"
+            }`}
         >
           <h1 className="text-5xl font-bold text-primary-foreground mb-3 tracking-tight">
-            Edu<span className="text-primary">Flow</span>
+            Nzi<span className="text-primary">la</span>
           </h1>
           <p className="text-lg text-primary-foreground/70 font-medium">
             Bem-vindo ao futuro do aprendizado! 🚀

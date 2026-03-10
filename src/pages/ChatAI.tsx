@@ -55,7 +55,7 @@ const ChatAI = () => {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-6rem)]">
+      <div className="flex flex-col" style={{ height: "calc(100dvh - 136px)" }}>
         <h1 className="text-2xl font-bold text-foreground mb-4">Chat com IA 🤖</h1>
 
         {/* Messages */}
@@ -72,11 +72,10 @@ const ChatAI = () => {
                 </div>
               )}
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
+                className={`max-w-[75%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${msg.role === "user"
                     ? "gradient-primary text-primary-foreground rounded-br-md"
                     : "bg-muted text-foreground rounded-bl-md"
-                }`}
+                  }`}
               >
                 {msg.content}
               </div>

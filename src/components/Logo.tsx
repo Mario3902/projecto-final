@@ -27,7 +27,7 @@ const Logo = ({ size = "md", showText = true }: LogoProps) => {
       </div>
       {showText && (
         <span className={`${textSizeMap[size]} font-bold tracking-tight text-foreground`}>
-          Edu<span className="text-primary">Flow</span>
+          Nzi<span className="text-primary">la</span>
         </span>
       )}
     </div>
