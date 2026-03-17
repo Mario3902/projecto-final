@@ -5,27 +5,27 @@ import { TrendingUp, TrendingDown, Minus, Edit3, Save, X, User, BookOpen, Gradua
 
 // (Data arrays remain unchanged)
 const monthlyData = [
-  { mes: "Set", nota: 65 },
-  { mes: "Out", nota: 70 },
-  { mes: "Nov", nota: 68 },
-  { mes: "Dez", nota: 75 },
-  { mes: "Jan", nota: 79 },
-  { mes: "Fev", nota: 82 },
+  { mes: "Set", nota: 13 },
+  { mes: "Out", nota: 14 },
+  { mes: "Nov", nota: 15 },
+  { mes: "Dez", nota: 14 },
+  { mes: "Jan", nota: 16 },
+  { mes: "Fev", nota: 17 },
 ];
 
 const subjects = [
-  { name: "Biologia", score: 90, trend: "up" },
-  { name: "Matemática", score: 85, trend: "up" },
-  { name: "História", score: 82, trend: "stable" },
-  { name: "Química", score: 78, trend: "up" },
-  { name: "Português", score: 72, trend: "down" },
-  { name: "Física", score: 68, trend: "down" },
+  { name: "Biologia", score: 18, trend: "up" },
+  { name: "Matemática", score: 17, trend: "up" },
+  { name: "História", score: 15, trend: "stable" },
+  { name: "Química", score: 16, trend: "up" },
+  { name: "Português", score: 13, trend: "down" },
+  { name: "Física", score: 14, trend: "down" },
 ];
 
 const pieData = [
-  { name: "Excelente (>85)", value: 2, color: "#4ade80" },
-  { name: "Bom (70-85)", value: 2, color: "#eab308" },
-  { name: "Atenção (<70)", value: 2, color: "#ef4444" },
+  { name: "Excelente (>16)", value: 2, color: "#4ade80" },
+  { name: "Bom (10-16)", value: 3, color: "#eab308" },
+  { name: "Atenção (<10)", value: 1, color: "#ef4444" },
 ];
 
 const TrendIcon = ({ trend }: { trend: string }) => {
@@ -196,7 +196,7 @@ const Profile = () => {
                 <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e2e26" />
                   <XAxis dataKey="mes" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} domain={[50, 100]} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} domain={[0, 20]} tickLine={false} axisLine={false} />
                   <Tooltip
                     contentStyle={{ backgroundColor: "#0e1710", border: "1px solid #1e2e26", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
                     itemStyle={{ color: "#fff", fontWeight: "bold" }}
@@ -249,10 +249,37 @@ const Profile = () => {
               </div>
               <div className="flex items-end gap-1">
                 <p className="text-3xl font-black text-white">{sub.score}</p>
-                <span className="text-xs text-slate-500 font-bold mb-1 pb-0.5">/ 100</span>
+                <span className="text-xs text-slate-500 font-bold mb-1 pb-0.5">/ 20</span>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* ── VOCATIONAL AI ── */}
+        <h3 className="text-lg font-bold text-white mt-8 mb-4">Orientação Vocacional IA</h3>
+        <div className="bg-gradient-to-br from-[#141e16] to-[#1e2e26] border border-[#254238]/80 p-6 rounded-3xl shadow-lg relative overflow-hidden group">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#4ade80]/15 rounded-full blur-2xl group-hover:bg-[#4ade80]/25 transition-colors duration-500" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-[#4ade80]/20 rounded-2xl flex items-center justify-center text-[#4ade80] shadow-[0_0_15px_rgba(74,222,128,0.15)] border border-[#4ade80]/30 shrink-0">
+                <Bot className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-white mb-0.5">Descobre a tua vocação</h4>
+                <p className="text-[11px] font-bold text-[#4ade80] uppercase tracking-wider">Análise de IA Especializada</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-slate-300 leading-relaxed mb-6">
+              A Inteligência Artificial acompanha o teu progresso em tempo real e através de Quizzes Inteligentes avalia a tua inclinação para diferentes áreas profissionais com base no teu perfil e resultados.
+            </p>
+            
+            <Link to="/dashboard/quizzes" className="w-full bg-[#0e1710] hover:bg-[#4ade80] text-[#4ade80] hover:text-[#0e1710] border border-[#4ade80]/50 font-bold text-sm py-4 rounded-2xl flex items-center justify-center gap-2 transition-all group/btn">
+              Gerar Quiz Vocacional 
+              <Bot className="h-4 w-4 opacity-70 group-hover/btn:opacity-100 transition-opacity" />
+            </Link>
+          </div>
         </div>
       </div>
 

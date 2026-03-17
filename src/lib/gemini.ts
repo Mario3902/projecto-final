@@ -104,6 +104,26 @@ export const generateQuiz = async (
     }
 };
 
+// Utility: Generate Vocational Questions
+export const generateVocationalQuestions = async (
+    userProfile: string,
+    numQuestions: number = 5
+) => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-vocational-questions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userProfile, numQuestions }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.questions ?? null;
+    } catch (error: any) {
+        console.error("Vocational Questions Error:", error);
+        return null;
+    }
+};
+
 // Utility: Vocational Advice
 export const getVocationalAdvice = async (
     answers: string[],
@@ -117,7 +137,7 @@ export const getVocationalAdvice = async (
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        return data.careers ?? null;
+        return data.advice ?? null;
     } catch (error: any) {
         console.error("Vocational Error:", error);
         return null;

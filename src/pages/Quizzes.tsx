@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { 
   CheckCircle2, XCircle, ArrowRight, SkipForward, RotateCcw, Timer, Sparkles, BookOpen,
-  Flame, User, Zap, Play, Calculator, FlaskConical, BookA, Home, Trophy, Briefcase
+  Flame, User, Zap, Play, Calculator, FlaskConical, BookA, Home, Trophy, Briefcase, Bot
 } from "lucide-react";
 import { useGame } from "@/context/GameContext";
-import { generateQuiz } from "@/lib/gemini";
+import { generateQuiz, generateVocationalQuestions, getVocationalAdvice } from "@/lib/gemini";
 
 // Simple web audio beep generator
 const playTone = (freq: number, type: OscillatorType, duration: number) => {
@@ -51,11 +51,18 @@ const Quizzes = () => {
   const [finished, setFinished] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [isVocational, setIsVocational] = useState(false);
+  const [vocationalResult, setVocationalResult] = useState<any>(null);
 
   // Read user course data from localStorage
   const courseData = (() => {
     const stored = localStorage.getItem("nzila_course_data");
     return stored ? JSON.parse(stored) : null;
+  })();
+  
+  const userProfile = (() => {
+    const stored = localStorage.getItem("nzila_profile");
+    return stored ? JSON.parse(stored) : { course: "Geral", year: "N/A", goal: "Descobrir a vocação" };
   })();
 
   const subjects = courseData?.subjects.map((s: any) => ({
@@ -82,6 +89,8 @@ const Quizzes = () => {
       const result = await generateQuiz(title, context, numQuestions);
       if (result && Array.isArray(result) && result.length > 0) {
         setQuestions(result);
+        setIsVocational(false);
+        setVocationalResult(null);
         setCurrent(0);
         setSelected(null);
         setAnswered(false);
@@ -94,6 +103,33 @@ const Quizzes = () => {
       }
     } catch {
       setLoadError("Erro ao gerar o quiz. Verifica a tua conexão.");
+    }
+    setIsLoadingQuiz(false);
+  };
+
+  const startVocationalQuiz = async () => {
+    setIsLoadingQuiz(true);
+    setLoadError(null);
+    setSelectedSubject("Teste Vocacional");
+    try {
+      const contextString = `Área: ${userProfile.course || 'Geral'}, Ano: ${userProfile.year || '12º'}, Objetivo: ${userProfile.goal || 'Carreira'}`;
+      const result = await generateVocationalQuestions(contextString, 7);
+      if (result && Array.isArray(result) && result.length > 0) {
+        setQuestions(result);
+        setIsVocational(true);
+        setVocationalResult(null);
+        setCurrent(0);
+        setSelected(null);
+        setAnswered(false);
+        setScore(0);
+        setFinished(false);
+        setAnswers([]);
+        setTimeLeft(30);
+      } else {
+        setLoadError("A IA não conseguiu gerar o teste vocacional. Tente novamente.");
+      }
+    } catch {
+      setLoadError("Erro ao processar as questões vocacionais.");
     }
     setIsLoadingQuiz(false);
   };
@@ -126,21 +162,42 @@ const Quizzes = () => {
     const question = questions[current];
     setSelected(idx);
     setAnswered(true);
-    if (idx === question.correct) {
-      setScore((s) => s + 1);
-      playTone(600, "sine", 0.3);
+    if (!isVocational) {
+      if (idx === question.correct) {
+        setScore((s) => s + 1);
+        playTone(600, "sine", 0.3);
+      } else {
+        playTone(200, "sawtooth", 0.4);
+      }
     } else {
-      playTone(200, "sawtooth", 0.4);
+      playTone(400, "sine", 0.1);
     }
     setAnswers((a) => [...a, idx]);
   };
 
-  const next = () => {
+  const next = async () => {
     const question = questions[current];
     if (current + 1 >= questions.length) {
-      const finalScore = score + (selected === question.correct ? 1 : 0);
-      setFinished(true);
-      completeQuiz(finalScore, questions.length);
+      if (!isVocational) {
+        const finalScore = score + (selected === question.correct ? 1 : 0);
+        setFinished(true);
+        completeQuiz(finalScore, questions.length);
+      } else {
+        setIsLoadingQuiz(true);
+        try {
+          // Extrair respostas selecionadas (os textos) para enviar
+          const finalAnswers = [...answers].map((ansIdx, i) => 
+            ansIdx !== null ? questions[i].options[ansIdx as number] : "Sem resposta"
+          );
+          const contextString = `Área: ${userProfile.course || 'Geral'}, Ano: ${userProfile.year || '12º Ano'}`;
+          const advice = await getVocationalAdvice(finalAnswers, contextString);
+          setVocationalResult(advice);
+          setFinished(true);
+        } catch {
+          setLoadError("A IA não conseguiu analisar o perfil vocacional nesta ocasião.");
+        }
+        setIsLoadingQuiz(false);
+      }
     } else {
       setCurrent((c) => c + 1);
       setSelected(null);
@@ -164,6 +221,8 @@ const Quizzes = () => {
     setFinished(false);
     setAnswers([]);
     setTimeLeft(30);
+    setIsVocational(false);
+    setVocationalResult(null);
   };
 
   const bottomNavItems = [
@@ -174,8 +233,66 @@ const Quizzes = () => {
     { title: "Perfil", path: "/dashboard/performance", icon: User },
   ];
 
-  // ── Finished Screen ──────────────────────────────────────────────────────────
-  if (finished && questions.length > 0) {
+  // ── Finished Screen (Vocational) ─────────────────────────────────────────────
+  if (finished && isVocational && vocationalResult) {
+    return (
+      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-20">
+        <div className="max-w-md mx-auto w-full p-6 animate-slide-up mt-6 relative z-10">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[250px] h-[150px] bg-[#60a5fa]/20 blur-[80px] -z-10 rounded-full" />
+          
+          <div className="text-center mb-6">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#1a261d] to-[#1e2e26] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#60a5fa]/30 shadow-[0_0_40px_rgba(96,165,250,0.25)]">
+               <Sparkles className="h-10 w-10 text-[#60a5fa]" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Relatório Vocacional</h1>
+            <p className="text-[13px] text-slate-300 leading-relaxed font-medium">
+              Com base nas tuas respostas e perfil, a IA determinou a tua verdadeira inclinação.
+            </p>
+          </div>
+
+          <div className="bg-[#141e16] border border-[#283854] rounded-[24px] p-6 mb-6 shadow-xl shadow-[#0e1710]">
+            <h2 className="text-sm font-bold text-[#60a5fa] mb-3 flex items-center gap-2">
+               <User className="h-4 w-4" /> A tua Inclinação Principal
+            </h2>
+            <p className="text-[14px] font-medium text-slate-200 leading-relaxed mb-6">
+              {vocationalResult.inclination}
+            </p>
+
+            <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+               <BookOpen className="h-3.5 w-3.5" /> O teu Foco de Estudo Ideal
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {vocationalResult.focusSubjects?.map((sub: string, i: number) => (
+                <span key={i} className="bg-[#1e2e26] border border-[#254238] text-[#4ade80] px-3.5 py-1.5 rounded-full text-xs font-bold">
+                  {sub}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <h2 className="text-lg font-bold text-white mb-4 ml-2">Caminhos a Seguir</h2>
+          <div className="space-y-3 mb-8">
+            {vocationalResult.careers?.map((car: any, i: number) => (
+              <div key={i} className="bg-gradient-to-r from-[#141e16] to-[#1e2e26] border border-[#254238]/60 p-5 rounded-3xl flex items-start gap-4 shadow-lg hover:border-[#60a5fa]/40 transition-colors">
+                 <div className="text-3xl shrink-0 drop-shadow-md">{car.icon || "🎓"}</div>
+                 <div className="flex-1 min-w-0">
+                    <h4 className="text-[15px] font-bold text-white leading-tight mb-1">{car.name}</h4>
+                    <p className="text-[12px] text-slate-400 leading-relaxed font-medium">{car.desc}</p>
+                 </div>
+              </div>
+            ))}
+          </div>
+
+          <Button onClick={restart} className="w-full bg-[#60a5fa] hover:bg-[#3b82f6] text-[#0e1710] font-black text-base h-14 rounded-[20px] transition-transform active:scale-95 shadow-[0_10px_30px_rgba(96,165,250,0.2)]">
+            <Home className="h-5 w-5 mr-2" /> Voltar aos Quizzes
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Finished Screen (Standard) ──────────────────────────────────────────────
+  if (finished && !isVocational && questions.length > 0) {
     const pct = Math.round((score / questions.length) * 100);
     return (
       <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-20">
@@ -215,8 +332,8 @@ const Quizzes = () => {
           <div className="w-20 h-20 bg-[#1a261d] border border-[#22c55e]/30 rounded-2xl flex items-center justify-center animate-pulse">
             <Sparkles className="h-10 w-10 text-[#4ade80]" />
           </div>
-          <h2 className="text-2xl font-bold text-white mt-4">A gerar quiz com IA...</h2>
-          <p className="text-base text-slate-400">Criando perguntas exclusivas sobre {selectedSubject} 🤖</p>
+          <h2 className="text-2xl font-bold text-white mt-4">{finished ? "A avaliar o teu futuro..." : "A gerar com IA..."}</h2>
+          <p className="text-base text-slate-400">{finished ? "Criando o teu relatório vocacional minucioso 🧠" : `Criando perguntas exclusivas sobre ${selectedSubject} 🤖`}</p>
         </div>
       </div>
     );
@@ -251,11 +368,18 @@ const Quizzes = () => {
                 {question.options.map((opt, idx) => {
                   let style = "bg-[#0e1710] border-slate-800 hover:border-[#4ade80]/50 text-slate-200";
                   if (answered) {
-                    if (idx === question.correct) style = "bg-[#4ade80]/20 border-[#4ade80] text-[#4ade80]";
-                    else if (idx === selected) style = "bg-red-500/10 border-red-500 text-red-500";
-                    else style = "bg-[#0e1710] border-slate-800 text-slate-500 opacity-50";
+                    if (isVocational) {
+                      if (idx === selected) style = "bg-[#60a5fa]/20 border-[#60a5fa] text-[#60a5fa] shadow-[0_5px_15px_rgba(96,165,250,0.1)]";
+                      else style = "bg-[#0e1710] border-slate-800 text-slate-500 opacity-50";
+                    } else {
+                      if (idx === question.correct) style = "bg-[#4ade80]/20 border-[#4ade80] text-[#4ade80]";
+                      else if (idx === selected) style = "bg-red-500/10 border-red-500 text-red-500";
+                      else style = "bg-[#0e1710] border-slate-800 text-slate-500 opacity-50";
+                    }
                   } else if (idx === selected) {
-                    style = "bg-[#4ade80]/10 border-[#4ade80]/50 text-[#4ade80]";
+                    style = isVocational
+                      ? "bg-[#60a5fa]/10 border-[#60a5fa]/50 text-[#60a5fa]"
+                      : "bg-[#4ade80]/10 border-[#4ade80]/50 text-[#4ade80]";
                   }
                   return (
                     <button
@@ -264,7 +388,7 @@ const Quizzes = () => {
                       disabled={answered}
                       className={`w-full text-left px-5 py-4 rounded-xl border-2 font-semibold text-[15px] transition-all ${style}`}
                     >
-                      <span className="mr-3 font-bold opacity-60">{String.fromCharCode(65 + idx)}.</span>
+                      {!isVocational && <span className="mr-3 font-bold opacity-60">{String.fromCharCode(65 + idx)}.</span>}
                       <span>{opt}</span>
                     </button>
                   );
@@ -275,7 +399,7 @@ const Quizzes = () => {
                   <SkipForward className="h-4 w-4" /> Pular
                 </Button>
                 {answered && (
-                  <Button onClick={next} className="bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-bold px-6 rounded-xl gap-1.5 transition-transform active:scale-95">
+                  <Button onClick={next} className={`${isVocational ? "bg-[#60a5fa] hover:bg-[#3b82f6]" : "bg-[#4ade80] hover:bg-[#22c55e]"} text-[#0e1710] font-bold px-6 rounded-xl gap-1.5 transition-transform active:scale-95`}>
                     {current + 1 >= questions.length ? "Ver resultado" : "Próxima"} <ArrowRight className="h-4 w-4" />
                   </Button>
                 )}
@@ -358,6 +482,36 @@ const Quizzes = () => {
               >
                 Iniciar Quiz
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Vocational Assessment */}
+        <div className="mb-8 group cursor-pointer" onClick={startVocationalQuiz}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded border border-[#60a5fa] flex items-center justify-center">
+                <Sparkles className="h-3.5 w-3.5 text-[#60a5fa]" />
+              </div>
+              <h2 className="text-xl font-bold">Orientação Vocacional</h2>
+            </div>
+          </div>
+          
+          <div className="bg-[#141e16] border border-[#283854] hover:border-[#60a5fa]/50 rounded-[32px] p-6 relative overflow-hidden transition-all duration-300">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#60a5fa]/10 rounded-full blur-2xl group-hover:bg-[#60a5fa]/20 transition-colors" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-[#60a5fa]/10 flex items-center justify-center shrink-0 border border-[#60a5fa]/20">
+                  <Bot className="h-7 w-7 text-[#60a5fa]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white mb-0.5">Teste a Tua Inclinação</h3>
+                  <p className="text-[12px] text-slate-400">Análise de IA baseada no teu curso ({userProfile.course})</p>
+                </div>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-[#1e2e26] group-hover:bg-[#60a5fa] flex items-center justify-center transition-colors">
+                <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-[#0e1710]" />
+              </div>
             </div>
           </div>
         </div>
