@@ -16,44 +16,20 @@ const app = fs.readFileSync(path.join(srcDir, 'App.tsx'), 'utf8');
 const css = fs.readFileSync(path.join(srcDir, 'index.css'), 'utf8');
 
 function stripTs(code) {
-    return code
-        .replace(/^export interface[\s\S]*?^}/gm, '')
-        .replace(/^interface[\s\S]*?^}/gm, '')
-        .replace(/export (const|function|default)/g, (m, p1) => p1 === 'default' ? 'export default' : p1)
-        .replace(/: Planet\[\]/g, '')
-        .replace(/: Planet \| null/g, '')
-        .replace(/: Planet/g, '')
-        .replace(/<Planet>/g, '')
-        .replace(/<Planet \| null>/g, '')
-        .replace(/<Tab>/g, '')
-        .replace(/: Tab/g, '')
-        .replace(/: ShootingStar\[\]/g, '')
-        .replace(/: ShootingStar/g, '')
-        .replace(/: SolarSystemProps/g, '')
-        .replace(/: PlanetListProps/g, '')
-        .replace(/: PlanetDiveProps/g, '')
-        .replace(/: Question/g, '')
-        .replace(/: Question\[\]/g, '')
-        .replace(/: ReactNode/g, '')
-        .replace(/: React\.CSSProperties/g, '')
-        .replace(/: React\.MouseEvent/g, '')
-        .replace(/: number/g, '')
-        .replace(/: string/g, '')
-        .replace(/: boolean/g, '')
-        .replace(/\?: string/g, '')
-        .replace(/\?: number/g, '')
-        .replace(/: \{ id: number; x: number; y: number; delay: number;\}/g, '')
-        .replace(/<[A-Z][A-Za-z]*>/g, '')
-        .replace(/import.*from.*;\n/g, '')
-        .replace(/export \{ .* \};\n/g, '')
-        .replace(/from \"\.\.\/data\/planets\"/g, '')
-        .replace(/from \"\.\/data\/planets\"/g, '')
-        .replace(/from \"..\/data\/planets\"/g, '')
-        .replace(/from 'react'/g, '')
-        .replace(/import.*'react'.*;\n/g, '')
-        .replace(/import.*"react".*;\n/g, '')
-        .replace(/as React\./g, 'as "React".')
-        .replace(/React\./g, 'React.');
+    // Remove multi-line or single-line imports
+    let stripped = code.replace(/import\s+[\s\S]*?\s+from\s+['"][^'"]+['"];?/g, '');
+    
+    // Remove side-effect imports like import './index.css';
+    stripped = stripped.replace(/import\s+['"][^'"]+['"];?/g, '');
+    
+    // Remove standalone 'export { ... }'
+    stripped = stripped.replace(/export\s+\{[\s\S]*?\};?/g, '');
+
+    // Replace 'export default' and 'export' with local scopes
+    stripped = stripped.replace(/export\s+default\s+/g, '');
+    stripped = stripped.replace(/export\s+(const|var|let|function|interface|type)\s+/g, '$1 ');
+
+    return stripped;
 }
 
 const cleanCss = css.replace(/@import "tailwindcss";/, '');
@@ -64,6 +40,7 @@ const combined = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🌌 Sistema Solar Interativo</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"><\/script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"><\/script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>
@@ -75,7 +52,7 @@ ${cleanCss}
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel" data-presets="react">
+<script type="text/babel" data-presets="react,typescript">
 const {useState,useCallback,useMemo,useEffect,useRef} = React;
 
 ${stripTs(planets)}

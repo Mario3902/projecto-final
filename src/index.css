@@ -1,9 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
 @layer base {
   :root {
     --background: 210 20% 98%;
@@ -214,4 +213,161 @@ body,
 /* Safe area support for devices with notch / home indicator */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Solar System Component Styles ── */
+
+@keyframes solar-fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes solar-fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes solar-slideInRight {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes solar-zoomDive {
+  from { opacity: 0; transform: scale(0.1); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes solar-rotatePlanet {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+
+@keyframes solar-pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px var(--glow-color), 0 0 60px var(--glow-color); }
+  50% { box-shadow: 0 0 40px var(--glow-color), 0 0 100px var(--glow-color), 0 0 160px var(--glow-color); }
+}
+
+@keyframes solar-shootingStar {
+  0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translateX(400px) translateY(400px) rotate(-45deg); opacity: 0; }
+}
+
+@keyframes solar-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+@keyframes solar-nebulaDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  33% { transform: translate(30px, -20px) scale(1.05); opacity: 0.2; }
+  66% { transform: translate(-20px, 15px) scale(0.95); opacity: 0.12; }
+}
+
+@keyframes solar-orbitalPath {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes solar-atmosphereBreath {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.08); opacity: 0.5; }
+}
+
+@keyframes solar-countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.solar-animate-fadeIn { animation: solar-fadeIn 0.4s ease-out; }
+.solar-animate-fadeInUp { animation: solar-fadeInUp 0.6s ease-out; }
+.solar-animate-slideInRight { animation: solar-slideInRight 0.5s ease-out; }
+.solar-animate-zoomDive { animation: solar-zoomDive 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+.solar-animate-twinkle { animation: solar-twinkle 3s ease-in-out infinite; }
+.solar-animate-float { animation: float 4s ease-in-out infinite; }
+
+.solar-planet-3d {
+  animation: solar-rotatePlanet 20s linear infinite;
+  background-size: 200% 100%;
+}
+
+.solar-shooting-star {
+  position: absolute;
+  width: 100px;
+  height: 1.5px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), transparent);
+  animation: solar-shootingStar 1.5s ease-out forwards;
+}
+
+.solar-nebula {
+  animation: solar-nebulaDrift 25s ease-in-out infinite;
+  filter: blur(60px);
+}
+
+.solar-glass {
+  background: rgba(10, 10, 40, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.solar-glass-strong {
+  background: rgba(10, 10, 40, 0.85);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.solar-tab-active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.2));
+  border-color: rgba(99, 102, 241, 0.5);
+  color: white;
+}
+
+.solar-orbit-line {
+  animation: solar-orbitalPath 2s linear infinite;
+}
+
+.solar-atmosphere-glow {
+  animation: solar-atmosphereBreath 4s ease-in-out infinite;
+}
+
+.solar-layer-ring {
+  animation: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.solar-layer-ring:hover {
+  transform: scale(1.08) !important;
+  z-index: 50;
+}
+
+.solar-size-comparison-bar {
+  animation: solar-countUp 0.8s ease-out both;
+}
+
+.solar-tooltip-planet {
+  position: relative;
+}
+
+.solar-tooltip-planet::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(10, 10, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  color: white;
+  font-weight: 500;
+  z-index: 100;
+}
+
+.solar-tooltip-planet:hover::after {
+  opacity: 1;
 }

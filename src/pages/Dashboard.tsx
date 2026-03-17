@@ -1,12 +1,15 @@
-import { Compass, CheckSquare, Sparkles, MessageCircle, TrendingUp, ChevronRight, Zap, Target, Clock, BookOpen, Bot, View } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { 
+  Sparkles, MessageCircle, TrendingUp, ChevronRight, Zap, Target, 
+  Clock, BookOpen, Bot, View, Home, Check, Trophy, Briefcase, User 
+} from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useGame } from "@/context/GameContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { xp, level, tasks, streak, quizzesCompleted, studyHours, performanceData, toggleTask } = useGame();
+  const location = useLocation();
+  const { xp, level, streak, quizzesCompleted, studyHours, performanceData } = useGame();
 
   const averageAvg = performanceData.length > 0
     ? (performanceData.reduce((acc, curr) => acc + curr.nota, 0) / performanceData.length).toFixed(1)
@@ -16,220 +19,190 @@ const Dashboard = () => {
   const currentLevelXP = xp - ((level - 1) * 100);
   const xpProgress = Math.min((currentLevelXP / 100) * 100, 100);
 
-  const todayTasks = tasks.slice(0, 3);
-  const completedCount = todayTasks.filter((t) => t.done).length;
-  const taskProgress = todayTasks.length > 0 ? (completedCount / todayTasks.length) * 100 : 0;
-
   // Get user name from localStorage if available
   const userName = localStorage.getItem("userName") || "Estudante";
 
+  const bottomNavItems = [
+    { title: "Início", path: "/dashboard", icon: Home },
+    { title: "Cursos", path: "/dashboard/subjects", icon: BookOpen },
+    { title: "Planner", path: "/dashboard/tasks", icon: Check },
+    { title: "IA", path: "/dashboard/chat", icon: Bot },
+    { title: "Perfil", path: "/dashboard/performance", icon: User },
+  ];
+
   return (
-    <DashboardLayout>
-      <div className="space-y-4 animate-fade-in">
-
-        {/* ── Greeting ── */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Bem-vindo</p>
-            <h1 className="text-2xl font-bold text-foreground">Olá, {userName}! 👋</h1>
-          </div>
-          <button className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-lg">
-            <span className="text-white font-black text-sm">{userName[0]?.toUpperCase() || "E"}</span>
-          </button>
-        </div>
-
-        {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="glass-card p-4 rounded-2xl">
-            <div className="flex items-center gap-2 mb-1">
-              <Zap className="h-4 w-4 text-orange-500" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ofensiva</span>
+    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
+      <div className="max-w-md mx-auto w-full px-5 py-6">
+        
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between mb-8 mt-2">
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-full bg-[#1a261d] border-2 border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.15)] flex items-center justify-center overflow-hidden">
+              <span className="text-2xl mt-2">👨🏻‍💼</span>
             </div>
-            <p className="text-3xl font-black text-foreground">{streak} dias</p>
-            <p className="text-xs text-primary mt-0.5">+1 hoje</p>
-          </div>
-          <div className="glass-card p-4 rounded-2xl">
-            <div className="flex items-center gap-2 mb-1">
-              <Target className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pontos XP</span>
+            <div>
+              <p className="text-[#4ade80] text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase mb-0.5">BEM-VINDO</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white m-0">Olá, {userName}!</h1>
             </div>
-            <p className="text-3xl font-black text-foreground">{xp.toLocaleString()}</p>
-            <p className="text-xs text-primary mt-0.5">Nível {level}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-[#141e16] border border-slate-800 px-3 py-1.5 rounded-full">
+              <Zap className="h-3.5 w-3.5 text-orange-500 fill-orange-500" />
+              <span className="text-xs sm:text-sm font-bold text-slate-300">{streak}</span>
+            </div>
           </div>
         </div>
 
-        {/* ── XP Progress ── */}
-        <div className="glass-card p-4 rounded-2xl">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-semibold">Progresso Nível {level}</span>
-            <span className="text-xs text-muted-foreground">{currentLevelXP} / {nextLevelXP} XP</span>
+        {/* ── Main Stats Card ── */}
+        <div className="bg-[#141e16] border border-[#254238]/60 rounded-3xl p-5 mb-6 relative overflow-hidden shadow-lg">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[#4ade80]/5 rounded-bl-full -mr-8 -mt-8"></div>
+          
+          <div className="flex justify-between items-end mb-5 relative z-10">
+            <div>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5 text-[#4ade80]" /> Progresso Geral
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-white">{xp}</span>
+                <span className="text-[#4ade80] text-sm font-bold">XP</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Nível</p>
+              <span className="text-2xl font-black text-white">{level}</span>
+            </div>
           </div>
-          <Progress value={xpProgress} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-1.5">Faltam {Math.max(0, 100 - currentLevelXP)} XP para o próximo nível</p>
+
+          <div className="relative z-10">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-xs font-bold text-slate-300">Rumo ao Nível {level + 1}</span>
+              <span className="text-[10px] font-bold text-[#4ade80] bg-[#4ade80]/10 px-2 py-0.5 rounded-sm">
+                Faltam {Math.max(0, 100 - currentLevelXP)} XP
+              </span>
+            </div>
+            <div className="h-2.5 w-full bg-[#0e1710] rounded-full overflow-hidden flex">
+              <div className="h-full bg-[#4ade80] transition-all duration-300" style={{ width: `${xpProgress}%` }}></div>
+            </div>
+          </div>
         </div>
 
-        {/* ── Quiz Diário Banner ── */}
+        {/* ── Daily Challenge Banner ── */}
         <button
           onClick={() => navigate("/dashboard/quizzes")}
-          className="w-full text-left gradient-primary p-5 rounded-2xl shadow-lg relative overflow-hidden"
+          className="w-full text-left bg-[#4ade80] p-6 rounded-3xl shadow-[0_10px_30px_rgba(74,222,128,0.15)] relative overflow-hidden mb-6 transition-transform active:scale-95 group"
         >
-          <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full" />
-          <div className="absolute -bottom-6 -right-8 w-32 h-32 bg-white/5 rounded-full" />
+          <div className="absolute -top-4 -right-4 w-24 h-24 bg-white/20 rounded-full group-hover:scale-110 transition-transform duration-500" />
+          <div className="absolute -bottom-6 -right-8 w-32 h-32 bg-white/10 rounded-full group-hover:scale-110 transition-transform duration-700" />
+          
           <div className="relative">
-            <p className="text-white/80 text-xs font-semibold uppercase tracking-wider mb-1">✨ Desafio Diário</p>
-            <h2 className="text-white text-xl font-black mb-1">Quiz Diário</h2>
-            <p className="text-white/70 text-sm mb-4">Testa os teus conhecimentos e ganha XP.</p>
+            <p className="text-[#0e1710] text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1">
+              <Sparkles className="h-3 w-3 fill-[#0e1710]" /> Desafio Diário
+            </p>
+            <h2 className="text-[#0e1710] text-[22px] font-black leading-tight mb-2">Quiz do Dia</h2>
+            <p className="text-[#0e1710]/70 text-xs font-bold mb-5 max-w-[200px]">
+              Complete o desafio de hoje e dobre seus pontos de experiência.
+            </p>
+            
             <div className="flex items-center justify-between">
-              <div className="flex gap-2">
-                <span className="bg-white/20 text-white text-xs px-2.5 py-1 rounded-full font-semibold">🎯 {quizzesCompleted} feitos</span>
+              <div className="bg-[#0e1710]/10 backdrop-blur-sm text-[#0e1710] text-xs px-3 py-1.5 rounded-lg font-bold">
+                🎯 {quizzesCompleted} Feitos
               </div>
-              <span className="bg-white text-primary font-bold text-sm px-4 py-2 rounded-xl shadow">Começar</span>
+              <div className="bg-[#0e1710] text-[#4ade80] font-bold text-[13px] px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-1">
+                Iniciar <ChevronRight className="h-4 w-4" />
+              </div>
             </div>
           </div>
         </button>
 
         {/* ── Quick Actions Grid ── */}
-        <div className="grid grid-cols-2 gap-3">
+        <h3 className="text-lg font-bold mb-4">Acesso Rápido</h3>
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <button
             onClick={() => navigate("/dashboard/chat")}
-            className="glass-card p-4 rounded-2xl text-left hover:scale-[1.02] active:scale-[0.98] transition-transform"
+            className="bg-[#141e16] border border-slate-800/60 p-4 rounded-2xl text-left hover:border-[#4ade80]/40 transition-colors group"
           >
-            <div className="w-10 h-10 gradient-cool rounded-xl flex items-center justify-center mb-3">
-              <MessageCircle className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-[#1e2e26] rounded-xl flex items-center justify-center mb-3 group-hover:bg-[#4ade80]/10 transition-colors">
+              <MessageCircle className="h-5 w-5 text-[#4ade80]" />
             </div>
-            <p className="font-bold text-sm text-foreground">Falar com Nzila</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Orientação por IA</p>
-          </button>
-
-          <button
-            onClick={() => navigate("/dashboard/performance")}
-            className="glass-card p-4 rounded-2xl text-left hover:scale-[1.02] active:scale-[0.98] transition-transform"
-          >
-            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center mb-3">
-              <TrendingUp className="h-5 w-5 text-white" />
-            </div>
-            <p className="font-bold text-sm text-foreground">Meu Progresso</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Ver estatísticas</p>
+            <p className="font-bold text-sm text-white mb-0.5">Falar c/ Nzila</p>
+            <p className="text-[10px] text-slate-500 font-medium">Tutor Virtual Inteligente</p>
           </button>
 
           <button
             onClick={() => navigate("/dashboard/sala-ia")}
-            className="glass-card p-4 rounded-2xl text-left hover:scale-[1.02] active:scale-[0.98] transition-transform col-span-1"
+            className="bg-[#141e16] border border-slate-800/60 p-4 rounded-2xl text-left hover:border-[#4ade80]/40 transition-colors group"
           >
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: "linear-gradient(135deg, hsl(174,72%,40%), hsl(45,93%,58%))" }}>
-              <Bot className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-[#1e2e26] rounded-xl flex items-center justify-center mb-3 group-hover:bg-[#4ade80]/10 transition-colors">
+              <Bot className="h-5 w-5 text-purple-400" />
             </div>
-            <p className="font-bold text-sm text-foreground">Sala IA</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Professor virtual 3D</p>
+            <p className="font-bold text-sm text-white mb-0.5">Sala IA</p>
+            <p className="text-[10px] text-slate-500 font-medium">Avatar de Ensino 3D</p>
           </button>
-
+          
           <button
             onClick={() => navigate("/dashboard/ar")}
-            className="glass-card p-4 rounded-2xl text-left hover:scale-[1.02] active:scale-[0.98] transition-transform col-span-1"
+            className="bg-[#141e16] border border-slate-800/60 p-4 rounded-2xl text-left hover:border-[#4ade80]/40 transition-colors group col-span-2"
           >
-            <div className="w-10 h-10 gradient-cool rounded-xl flex items-center justify-center mb-3">
-              <View className="h-5 w-5 text-white" />
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#1e2e26] border border-slate-700/50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-[#4ade80]/10 transition-colors">
+                <View className="h-6 w-6 text-orange-400" />
+              </div>
+              <div>
+                <p className="font-bold text-[15px] text-white mb-0.5">Ambientes em 3D</p>
+                <p className="text-xs text-slate-500 font-medium pt-0.5">Aprende anatomia e sistema solar de forma imersiva.</p>
+              </div>
+              <ChevronRight className="h-5 w-5 text-slate-600 ml-auto" />
             </div>
-            <p className="font-bold text-sm text-foreground">Ambientes 3D</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Realidade aumentada</p>
           </button>
         </div>
 
-        {/* ── Explorar Carreiras ── */}
-        <button
-          onClick={() => navigate("/dashboard/vocational")}
-          className="w-full glass-card p-4 rounded-2xl flex items-center gap-4 hover:scale-[1.01] active:scale-[0.99] transition-transform text-left"
-        >
-          <div className="w-12 h-12 gradient-warm rounded-xl flex items-center justify-center shrink-0">
-            <Compass className="h-6 w-6 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-foreground">Explorar Carreiras</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Descobre caminhos para o teu futuro</p>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
-        </button>
-
-        {/* ── Performance Académica ── */}
-        <div className="glass-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-foreground">Performance Académica</h3>
-            <span className="text-xs bg-primary/15 text-primary px-2.5 py-1 rounded-full font-bold">
-              {Number(averageAvg) >= 85 ? "Excelente" : Number(averageAvg) >= 70 ? "Bom" : "A melhorar"}
-            </span>
-          </div>
-          <Progress value={Number(averageAvg)} className="h-2.5 mb-2" />
-          <div className="flex justify-between items-center">
-            <p className="text-xs text-muted-foreground">Média geral das disciplinas</p>
-            <p className="text-lg font-black text-foreground">{averageAvg}%</p>
-          </div>
-        </div>
-
-        {/* ── Tarefas de Hoje ── */}
-        <div className="glass-card p-4 rounded-2xl">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="h-4 w-4 text-primary" />
-              <h3 className="font-bold text-foreground">Tarefas de Hoje</h3>
+        {/* ── Bottom Mini Stats ── */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-[#141e16] border border-slate-800/60 p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-lg bg-[#1e2e26] flex items-center justify-center">
+                 <Clock className="h-4 w-4 text-[#4ade80]" />
+               </div>
+               <div>
+                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Estudo</p>
+                 <p className="text-lg font-black leading-none">{studyHours}h</p>
+               </div>
             </div>
-            <button
-              onClick={() => navigate("/dashboard/tasks")}
-              className="text-xs text-primary font-semibold"
-            >
-              Ver tudo
-            </button>
           </div>
-          {todayTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-3">Sem tarefas criadas.</p>
-          ) : (
-            <div className="space-y-2">
-              {todayTasks.map((task) => (
-                <div key={task.id} className="flex items-center gap-3">
-                  <button
-                    onClick={() => toggleTask(task.id)}
-                    className={`h-5 w-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${task.done ? "bg-primary border-primary text-white" : "border-border"
-                      }`}
-                  >
-                    {task.done && (
-                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                  <span className={`text-sm flex-1 ${task.done ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                    {task.title}
-                  </span>
-                </div>
-              ))}
-              <div className="pt-2">
-                <Progress value={taskProgress} className="h-1.5" />
-                <p className="text-xs text-muted-foreground mt-1">{completedCount} de {todayTasks.length} concluídas</p>
-              </div>
+          <div className="bg-[#141e16] border border-slate-800/60 p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-8 h-8 rounded-lg bg-[#1e2e26] flex items-center justify-center">
+                 <BookOpen className="h-4 w-4 text-yellow-500" />
+               </div>
+               <div>
+                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Matérias</p>
+                 <p className="text-lg font-black leading-none">{performanceData.length}</p>
+               </div>
             </div>
-          )}
-        </div>
-
-        {/* ── Quick stats row ── */}
-        <div className="grid grid-cols-3 gap-2 pb-2">
-          <div className="glass-card p-3 rounded-xl text-center">
-            <Clock className="h-4 w-4 text-primary mx-auto mb-1" />
-            <p className="text-lg font-black text-foreground">{studyHours}h</p>
-            <p className="text-[10px] text-muted-foreground">Estudo</p>
-          </div>
-          <div className="glass-card p-3 rounded-xl text-center">
-            <Sparkles className="h-4 w-4 text-yellow-500 mx-auto mb-1" />
-            <p className="text-lg font-black text-foreground">{quizzesCompleted}</p>
-            <p className="text-[10px] text-muted-foreground">Quizzes</p>
-          </div>
-          <div className="glass-card p-3 rounded-xl text-center">
-            <BookOpen className="h-4 w-4 text-accent mx-auto mb-1" />
-            <p className="text-lg font-black text-foreground">{performanceData.length}</p>
-            <p className="text-[10px] text-muted-foreground">Matérias</p>
           </div>
         </div>
 
       </div>
-    </DashboardLayout>
+
+      {/* ── Fixed Bottom Navigation ── */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0e1710]/95 backdrop-blur-xl border-t border-[#1a261d] px-6 py-4 flex justify-between items-center z-50">
+        {bottomNavItems.map((item, i) => {
+          const isActive = location.pathname === item.path || (item.title === 'Início' && location.pathname === '/dashboard');
+          return (
+            <Link 
+              key={i} 
+              to={item.path} 
+              className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#4ade80]" : "text-slate-500 hover:text-slate-300"}`}
+            >
+              <item.icon className={`h-[22px] w-[22px] ${isActive ? "stroke-[2.5]" : "stroke-2"}`} />
+              <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#4ade80]" : ""}`}>
+                {item.title}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 };
 

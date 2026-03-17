@@ -4,92 +4,249 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>🌌 Sistema Solar Interativo</title>
+<script src="https://cdn.tailwindcss.com"></script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#root{width:100%;height:100%;overflow:hidden;background:#020010;font-family:system-ui,sans-serif}
-
-
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(60px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-@keyframes zoomDive {
-  from { opacity: 0; transform: scale(0.1); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes rotatePlanet {
-  from { background-position: 0% 50%; }
-  to { background-position: 200% 50%; }
-}
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-12px); }
-}
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px var(--glow-color), 0 0 60px var(--glow-color); }
-  50% { box-shadow: 0 0 40px var(--glow-color), 0 0 100px var(--glow-color), 0 0 160px var(--glow-color); }
-}
-@keyframes shootingStar {
-  0% { transform: translateX(0) translateY(0) rotate(-45deg); opacity: 1; }
-  70% { opacity: 1; }
-  100% { transform: translateX(400px) translateY(400px) rotate(-45deg); opacity: 0; }
-}
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.4); }
-}
-@keyframes nebulaDrift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
-  33% { transform: translate(30px, -20px) scale(1.05); opacity: 0.2; }
-  66% { transform: translate(-20px, 15px) scale(0.95); opacity: 0.12; }
-}
-@keyframes orbitalPath {
-  from { stroke-dashoffset: 20; }
-  to { stroke-dashoffset: 0; }
-}
-@keyframes ringRotate {
-  from { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg); }
-  to { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); }
-}
-@keyframes atmosphereBreath {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.08); opacity: 0.5; }
-}
-@keyframes surfaceScan {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 100% 0%; }
-}
-@keyframes layerPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
-@keyframes starFieldMove {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100vh); }
-}
-@keyframes countUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.animate-fadeIn { animation: fadeIn 0.4s ease-out; }
-.animate-fadeInUp { animation: fadeInUp 0.6s ease-out; }
-.animate-slideInRight { animation: slideInRight 0.5s ease-out; }
-.animate-zoomDive { animation: zoomDive 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
-.animate-surfaceScan { animation: surfaceScan 20s linear infinite; }
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes zoomDive {
+  from {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rotatePlanet {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes pulseGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--glow-color), 0 0 60px var(--glow-color);
+  }
+
+  50% {
+    box-shadow: 0 0 40px var(--glow-color), 0 0 100px var(--glow-color), 0 0 160px var(--glow-color);
+  }
+}
+
+@keyframes shootingStar {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-45deg);
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(400px) translateY(400px) rotate(-45deg);
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+}
+
+@keyframes nebulaDrift {
+
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.15;
+  }
+
+  33% {
+    transform: translate(30px, -20px) scale(1.05);
+    opacity: 0.2;
+  }
+
+  66% {
+    transform: translate(-20px, 15px) scale(0.95);
+    opacity: 0.12;
+  }
+}
+
+@keyframes orbitalPath {
+  from {
+    stroke-dashoffset: 20;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ringRotate {
+  from {
+    transform: translate(-50%, -50%) rotateX(75deg) rotateZ(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg);
+  }
+}
+
+@keyframes atmosphereBreath {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.5;
+  }
+}
+
+@keyframes surfaceScan {
+  0% {
+    background-position: 0% 0%;
+  }
+
+  100% {
+    background-position: 100% 0%;
+  }
+}
+
+@keyframes layerPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes starFieldMove {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-100vh);
+  }
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.5s ease-out;
+}
+
+.animate-zoomDive {
+  animation: zoomDive 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-surfaceScan {
+  animation: surfaceScan 20s linear infinite;
+}
 
 .planet-3d {
   animation: rotatePlanet 20s linear infinite;
@@ -100,7 +257,7 @@ html,body,#root{width:100%;height:100%;overflow:hidden;background:#020010;font-f
   position: absolute;
   width: 100px;
   height: 1.5px;
-  background: linear-gradient(90deg, rgba(255,255,255,0.9), transparent);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), transparent);
   animation: shootingStar 1.5s ease-out forwards;
 }
 
@@ -110,17 +267,32 @@ html,body,#root{width:100%;height:100%;overflow:hidden;background:#020010;font-f
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.25); }
+::-webkit-scrollbar {
+  width: 6px;
+}
 
-html, body, #root {
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: system-ui, -apple-system, sans-serif;
   background: #020010;
 }
@@ -128,17 +300,18 @@ html, body, #root {
 .glass {
   background: rgba(10, 10, 40, 0.6);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
+
 .glass-strong {
   background: rgba(10, 10, 40, 0.85);
   backdrop-filter: blur(30px);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tab-active {
-  background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(168,85,247,0.2));
-  border-color: rgba(99,102,241,0.5);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.2));
+  border-color: rgba(99, 102, 241, 0.5);
   color: white;
 }
 
@@ -154,6 +327,7 @@ html, body, #root {
   animation: layerPulse 3s ease-in-out infinite;
   transition: transform 0.3s, box-shadow 0.3s;
 }
+
 .layer-ring:hover {
   transform: scale(1.08) !important;
   z-index: 50;
@@ -166,14 +340,15 @@ html, body, #root {
 .tooltip-planet {
   position: relative;
 }
+
 .tooltip-planet::after {
   content: attr(data-tooltip);
   position: absolute;
   left: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(10,10,40,0.95);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(10, 10, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 6px 12px;
   border-radius: 8px;
   font-size: 12px;
@@ -184,22 +359,63 @@ html, body, #root {
   color: white;
   font-weight: 500;
 }
+
 .tooltip-planet:hover::after {
   opacity: 1;
 }
-
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel" data-presets="react">
+<script type="text/babel" data-presets="react,typescript">
 const {useState,useCallback,useMemo,useEffect,useRef} = React;
 
+interface PlanetLayer {
+  name: string;
+  color: string;
+  radius: number; // percentage of total
+  description: string;
+}
 
+interface SurfaceFeature {
+  name: string;
+  description: string;
+  emoji: string;
+}
 
-
-
-
+interface Planet {
+  id: string;
+  name: string;
+  namePt: string;
+  order: number;
+  color: string;
+  size: number;
+  orbitRadius: number;
+  orbitSpeed: number;
+  ringColor?: string;
+  description: string;
+  facts: {
+    diameter: string;
+    distanceSun: string;
+    orbitalPeriod: string;
+    rotationPeriod: string;
+    moons: string;
+    temperature: string;
+    gravity: string;
+    atmosphere: string;
+  };
+  funFact: string;
+  gradient: string[];
+  texture: string; // CSS for realistic texture
+  atmosphereColor: string;
+  surfaceFeatures: SurfaceFeature[];
+  layers: PlanetLayer[];
+  exploration: string;
+  compareSizeToEarth: number; // ratio
+  hasAtmosphere: boolean;
+  type: string;
+  yearDiscovered?: string;
+}
 
 const SUN_DATA = {
   name: "Sol",
@@ -225,7 +441,7 @@ const SUN_DATA = {
   ],
 };
 
-const planets = [
+const planets: Planet[] = [
   {
     id: "mercury",
     name: "Mercury",
@@ -572,6 +788,12 @@ const planets = [
 
 
 
+interface ShootingStar {
+  id: number;
+  x: number;
+  y: number;
+  delay: number;
+}
 
 function Stars() {
   const [shootingStars, setShootingStars] = useState<ShootingStar[]>([]);
@@ -601,7 +823,7 @@ function Stars() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (Math.random() < 0.4) {
-        const newStar = {
+        const newStar: ShootingStar = {
           id: counter,
           x: Math.random() * 80,
           y: Math.random() * 40,
@@ -671,10 +893,17 @@ function Stars() {
 
 
 
-function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
+interface SolarSystemProps {
+  onPlanetClick: (planet: Planet) => void;
+  onSunClick: () => void;
+  isPaused: boolean;
+  zoomedPlanet: string | null;
+}
+
+function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }: SolarSystemProps) {
   const [time, setTime] = useState(0);
   const [hoveredPlanet, setHoveredPlanet] = useState<string | null>(null);
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [center, setCenter] = useState({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -700,7 +929,7 @@ function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
       if (animRef.current) cancelAnimationFrame(animRef.current);
       return;
     }
-    const animate = (timestamp) => {
+    const animate = (timestamp: number) => {
       if (lastTimeRef.current) {
         const delta = (timestamp - lastTimeRef.current) / 1000;
         setTime(t => t + delta * 0.3);
@@ -715,7 +944,7 @@ function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
     };
   }, [isPaused]);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent) => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       setMousePos({
@@ -725,7 +954,7 @@ function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
     }
   };
 
-  const getPlanetPosition = (planet) => {
+  const getPlanetPosition = (planet: Planet) => {
     const angle = time * planet.orbitSpeed * 0.06;
     const r = planet.orbitRadius * scale;
     return {
@@ -740,7 +969,7 @@ function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
     .map(p => ({ ...p, pos: getPlanetPosition(p) }))
     .sort((a, b) => a.pos.depth - b.pos.depth);
 
-  const containerStyle = zoomedPlanet
+  const containerStyle: React.CSSProperties = zoomedPlanet
     ? {
         transform: `scale(0.1) rotate(10deg)`,
         opacity: 0,
@@ -980,8 +1209,13 @@ function SolarSystem({ onPlanetClick, onSunClick, isPaused, zoomedPlanet }) {
 
 
 
+interface PlanetListProps {
+  onPlanetClick: (planet: Planet) => void;
+  onSunClick: () => void;
+  activePlanet: string | null;
+}
 
-function PlanetList({ onPlanetClick, onSunClick, activePlanet }ListProps) {
+function PlanetList({ onPlanetClick, onSunClick, activePlanet }: PlanetListProps) {
   return (
     <div className="fixed left-0 top-0 bottom-0 w-16 md:w-[72px] glass-strong z-30 flex flex-col items-center py-4 gap-2.5 overflow-y-auto">
       {/* Sun */}
@@ -1059,18 +1293,24 @@ function PlanetList({ onPlanetClick, onSunClick, activePlanet }ListProps) {
 
 
 
+
+
 type Tab = "overview" | "structure" | "surface" | "exploration" | "compare";
 
+interface PlanetDiveProps {
+  planet: Planet | null;
+  showSun: boolean;
+  onClose: () => void;
+}
 
-
-function PlanetDive({ planet, showSun, onClose }DiveProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+function PlanetDive({ planet, showSun, onClose }: PlanetDiveProps) {
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [hoveredLayer, setHoveredLayer] = useState<number | null>(null);
   const [expandedFeature, setExpandedFeature] = useState<number | null>(null);
 
   if (!planet && !showSun) return null;
 
-  const tabs: { id; label; icon }[] = planet ? [
+  const tabs: { id: Tab; label: string; icon: string }[] = planet ? [
     { id: "overview", label: "Visão Geral", icon: "🌍" },
     { id: "structure", label: "Estrutura", icon: "🔬" },
     { id: "surface", label: "Superfície", icon: "🗺️" },
@@ -1192,7 +1432,7 @@ function PlanetDive({ planet, showSun, onClose }DiveProps) {
 
       {/* Content layout */}
       <div className="flex flex-col lg:flex-row h-full pt-20 pb-4 px-4 lg:px-8 gap-6 overflow-hidden">
-        {/* Left visual */}
+        {/* Left: Planet visual */}
         <div className="flex-shrink-0 flex flex-col items-center justify-center lg:w-[380px]">
           <div className="relative animate-fadeIn">
             {/* Outer atmosphere */}
@@ -1556,8 +1796,15 @@ function PlanetDive({ planet, showSun, onClose }DiveProps) {
 
 
 
+interface Question {
+  question: string;
+  options: string[];
+  correct: number;
+  explanation: string;
+  difficulty: "fácil" | "médio" | "difícil";
+}
 
-const allQuestions[] = [
+const allQuestions: Question[] = [
   { question: "Qual é o maior planeta do Sistema Solar?", options: ["Saturno", "Júpiter", "Urano", "Netuno"], correct: 1, explanation: "Júpiter é o maior planeta, com diâmetro de 139.820 km — cabem mais de 1.300 Terras dentro dele!", difficulty: "fácil" },
   { question: "Qual planeta é conhecido como 'Planeta Vermelho'?", options: ["Vênus", "Mercúrio", "Marte", "Júpiter"], correct: 2, explanation: "Marte é chamado de Planeta Vermelho devido ao óxido de ferro (ferrugem) em sua superfície.", difficulty: "fácil" },
   { question: "Quantas luas a Terra possui?", options: ["0", "1", "2", "3"], correct: 1, explanation: "A Terra possui apenas uma lua natural, chamada simplesmente de Lua.", difficulty: "fácil" },
@@ -1594,7 +1841,7 @@ function Quiz({ onClose }: { onClose: () => void }) {
 
   const question = questions[currentQ];
 
-  const handleAnswer = (index) => {
+  const handleAnswer = (index: number) => {
     if (answered) return;
     setSelected(index);
     setAnswered(true);
@@ -1753,8 +2000,15 @@ function Quiz({ onClose }: { onClose: () => void }) {
 
 
 
+
+
+
+
+
+
+
 function App() {
-  const [selectedPlanet, setSelectedPlanet] = useState(null);
+  const [selectedPlanet, setSelectedPlanet] = useState<Planet | null>(null);
   const [showSun, setShowSun] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -1762,7 +2016,7 @@ function App() {
   const [zoomedPlanet, setZoomedPlanet] = useState<string | null>(null);
   const [showSpeedControl, setShowSpeedControl] = useState(false);
 
-  const handlePlanetClick = useCallback((planet) => {
+  const handlePlanetClick = useCallback((planet: Planet) => {
     setZoomedPlanet(planet.id);
     setTimeout(() => {
       setSelectedPlanet(planet);

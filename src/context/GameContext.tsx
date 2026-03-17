@@ -34,22 +34,42 @@ const defaultPerformance = [
 ];
 
 const defaultTasks = [
-    { id: 1, title: "Revisar capítulo 5 de Matemática", done: true, date: new Date().toISOString().split("T")[0] },
-    { id: 2, title: "Fazer exercícios de Física", done: false, date: new Date().toISOString().split("T")[0] },
-    { id: 3, title: "Ler texto de Português", done: false, date: new Date().toISOString().split("T")[0] },
-    { id: 4, title: "Estudar fórmulas de Química", done: false, date: new Date().toISOString().split("T")[0] },
+    { id: 1, title: "Revisar capítulo 5", done: true, date: new Date().toISOString().split("T")[0] },
+    { id: 2, title: "Fazer exercícios", done: false, date: new Date().toISOString().split("T")[0] },
 ];
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [xp, setXp] = useState(120);
-    const [level, setLevel] = useState(1);
-    const [streak, setStreak] = useState(3);
-    const [tasks, setTasks] = useState<Task[]>(defaultTasks);
-    const [quizzesCompleted, setQuizzesCompleted] = useState(24);
-    const [studyHours, setStudyHours] = useState(42);
-    const [performanceData, setPerformanceData] = useState(defaultPerformance);
+    // Helper to get initial state from localStorage or fallback to default
+    const getInitialState = <T,>(key: string, defaultValue: T): T => {
+        const stored = localStorage.getItem(key);
+        if (stored) {
+            try {
+                return JSON.parse(stored);
+            } catch {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    };
+
+    const [xp, setXp] = useState<number>(() => getInitialState("nzila_xp", 120));
+    const [level, setLevel] = useState<number>(() => getInitialState("nzila_level", 1));
+    const [streak, setStreak] = useState<number>(() => getInitialState("nzila_streak", 3));
+    const [tasks, setTasks] = useState<Task[]>(() => getInitialState("nzila_tasks", defaultTasks));
+    const [quizzesCompleted, setQuizzesCompleted] = useState<number>(() => getInitialState("nzila_quizzes_completed", 0));
+    const [studyHours, setStudyHours] = useState<number>(() => getInitialState("nzila_study_hours", 0));
+    const [performanceData, setPerformanceData] = useState(() => getInitialState("nzila_performance", defaultPerformance));
+
+    // Persist changes to localStorage
+    useEffect(() => { localStorage.setItem("nzila_xp", JSON.stringify(xp)); }, [xp]);
+    useEffect(() => { localStorage.setItem("nzila_level", JSON.stringify(level)); }, [level]);
+    useEffect(() => { localStorage.setItem("nzila_streak", JSON.stringify(streak)); }, [streak]);
+    useEffect(() => { localStorage.setItem("nzila_tasks", JSON.stringify(tasks)); }, [tasks]);
+    useEffect(() => { localStorage.setItem("nzila_quizzes_completed", JSON.stringify(quizzesCompleted)); }, [quizzesCompleted]);
+    useEffect(() => { localStorage.setItem("nzila_study_hours", JSON.stringify(studyHours)); }, [studyHours]);
+    useEffect(() => { localStorage.setItem("nzila_performance", JSON.stringify(performanceData)); }, [performanceData]);
 
     // Calcula o nível com base no XP (100 XP por nível)
     useEffect(() => {

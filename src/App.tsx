@@ -17,6 +17,8 @@ import Vocational from "./pages/Vocational";
 import AugmentedReality from "./pages/AugmentedReality";
 import SubjectSelection from "./pages/SubjectSelection";
 import NotFound from "./pages/NotFound";
+import Ranking from "./pages/Ranking";
+import Carreira from "./pages/Carreira";
 import { GameProvider } from "./context/GameContext";
 
 const queryClient = new QueryClient();
@@ -42,6 +44,8 @@ const App = () => (
             <Route path="/dashboard/vocational" element={<Vocational />} />
             <Route path="/dashboard/ar" element={<AugmentedReality />} />
             <Route path="/dashboard/subjects" element={<SubjectSelection />} />
+            <Route path="/dashboard/ranking" element={<Ranking />} />
+            <Route path="/dashboard/carreira" element={<Carreira />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
