@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -6,6 +6,7 @@ import {
   Upload, FileText, Star, GraduationCap, ArrowLeft, X,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { api } from "@/lib/api";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -89,7 +90,7 @@ const courses = [
 interface Material {
   id: string;
   name: string;
-  type: "prova" | "resumo" | "exercicio" | "outro";
+  type: "proof" | "summary" | "exercises" | "other";
   content: string; // text content or file name
   grade?: number;
   addedAt: string;
@@ -112,10 +113,10 @@ interface CourseData {
 }
 
 const materialTypes = [
-  { id: "prova", label: "Prova / Teste", emoji: "📋" },
-  { id: "resumo", label: "Resumo / Apontamento", emoji: "📄" },
-  { id: "exercicio", label: "Lista de Exercícios", emoji: "✏️" },
-  { id: "outro", label: "Outro Material", emoji: "📎" },
+  { id: "proof", label: "Prova / Teste", emoji: "📋" },
+  { id: "summary", label: "Resumo / Apontamento", emoji: "📄" },
+  { id: "exercises", label: "Lista de Exercícios", emoji: "✏️" },
+  { id: "other", label: "Outro Material", emoji: "📎" },
 ] as const;
 
 const anos = ["10º Ano", "11º Ano", "12º Ano", "1º Ano Univ.", "2º Ano Univ.", "3º Ano Univ."];
@@ -132,136 +133,154 @@ const SubjectSelection = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : null;
   });
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
-  const [selectedAno, setSelectedAno] = useState(anos[0]);
-  const [activeSubjectId, setActiveSubjectId] = useState<string | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const parsed: CourseData = JSON.parse(stored);
-      return parsed.subjects[0]?.id ?? null;
-    }
-    return null;
-  });
+  const [activeSubjectId, setActiveSubjectId] = useState<string | null>(null);
 
-  const [initialStep] = useState<"course" | "subjects" | "detail">(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? "detail" : "course";
-  });
+  const [initialStep] = useState<"detail" | "course">("detail"); // Default to detail
   const [currentStep, setCurrentStep] = useState(initialStep);
 
-  // Material form
-  const [matType, setMatType] = useState<"prova" | "resumo" | "exercicio" | "outro">("resumo");
+  // Sync with Backend
+  const syncWithBackend = async () => {
+    if (!localStorage.getItem("nzila_token")) return;
+    try {
+       // Fetch both existing subjects and the user's profile
+       const [dbSubjects, profile] = await Promise.all([
+         api.getSubjects(),
+         api.getProfile().catch(() => null)
+       ]);
+
+       let subjectsToUse = dbSubjects || [];
+       let userCourseId = "custom";
+       let userCourseName = profile?.course || "O meu Curso";
+
+       // Find the matching course data from our constants based on string similarity
+       const matchedCourse = courses.find(c => 
+         c.name.toLowerCase() === userCourseName.toLowerCase() || 
+         userCourseName.toLowerCase().includes(c.id.toLowerCase())
+       );
+
+       if (matchedCourse) {
+          userCourseId = matchedCourse.id;
+          userCourseName = matchedCourse.name;
+       }
+
+       // ── AUTO ENROLLMENT ──
+       // If no subjects in DB, but the profile has a matched course, create them automatically
+       if (subjectsToUse.length === 0 && matchedCourse) {
+          toast({ title: "A configurar disciplinas do teu curso..." });
+          for (const subj of matchedCourse.subjects) {
+             await api.addSubject(subj.name, subj.emoji);
+          }
+          // Re-fetch now that they are created
+          subjectsToUse = await api.getSubjects();
+          toast({ title: `${subjectsToUse.length} disciplinas carregadas automaticamente!` });
+       }
+
+       if (subjectsToUse && subjectsToUse.length > 0) {
+         // Convert backend format to frontend format
+         const formattedSubjects: SubjectData[] = subjectsToUse.map((s: any) => ({
+           id: s.id.toString(),
+           name: s.name,
+           emoji: s.emoji || "📚",
+           nota: undefined, 
+           materials: s.materials.map((m: any) => ({
+             id: m.id.toString(),
+             name: m.title,
+             type: m.type,
+             content: m.content,
+             addedAt: new Date(m.created_at).toLocaleDateString("pt-PT"),
+             fileName: m.is_link ? m.content : undefined
+           }))
+         }));
+         
+         const parsed: CourseData = { courseId: userCourseId, courseName: userCourseName, ano: profile?.year || anos[0], subjects: formattedSubjects };
+         
+         setCourseData(parsed);
+         if (formattedSubjects.length > 0 && !activeSubjectId) {
+            setActiveSubjectId(formattedSubjects[0].id);
+         }
+         if (currentStep !== "detail") setCurrentStep("detail");
+       } else {
+         // If still no subjects, fall back to manual course selection
+         setCurrentStep("course");
+       }
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Erro ao sincronizar dados", variant: "destructive" });
+    }
+  };
+
+  useEffect(() => {
+    syncWithBackend();
+  }, []);
+
+  const [matType, setMatType] = useState<"proof" | "summary" | "exercises" | "other">("summary");
   const [matContent, setMatContent] = useState("");
-  const [matGrade, setMatGrade] = useState<string>("");
   const [matName, setMatName] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  
+  // Trimestral grades UI
+  const [activeTrimester, setActiveTrimester] = useState<"T1"|"T2"|"T3">("T1");
+  const [customSubName, setCustomSubName] = useState("");
 
   // ── Helpers ────────────────────────────────────────────────────────────────
-
-  const selectedCourse = courses.find((c) => c.id === selectedCourseId);
-
-  const updateCourseData = (updater: (prev: CourseData | null) => CourseData | null) => {
-    setCourseData((prev) => {
-      const next = updater(prev);
-      if (next) localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
-  };
-
-  const toggleSubject = (id: string) =>
-    setSelectedSubjectIds((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
-    );
-
-  const handleConfirmCourse = () => {
-    if (!selectedCourseId) return;
-    setCurrentStep("subjects");
-    setSelectedSubjectIds(selectedCourse?.subjects.map((s) => s.id) ?? []);
-  };
-
-  const handleConfirmSubjects = () => {
-    if (selectedSubjectIds.length === 0) {
-      toast({ title: "Seleciona pelo menos uma disciplina", variant: "destructive" });
-      return;
-    }
-    const subjectsData: SubjectData[] = selectedCourse!.subjects
-      .filter((s) => selectedSubjectIds.includes(s.id))
-      .map((s) => ({ ...s, materials: [] }));
-
-    const newData: CourseData = {
-      courseId: selectedCourseId!,
-      courseName: selectedCourse!.name,
-      subjects: subjectsData,
-      ano: selectedAno,
-    };
-    setCourseData(newData);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
-    setActiveSubjectId(subjectsData[0]?.id ?? null);
-    setCurrentStep("detail");
-    toast({ title: `Curso configurado! ✅`, description: `${subjectsData.length} disciplinas adicionadas.` });
-  };
-
   const activeSubject = courseData?.subjects.find((s) => s.id === activeSubjectId);
 
-  const addMaterial = () => {
+  const addExtraSubject = async () => {
+    if (!customSubName.trim()) return;
+    try {
+      await api.addSubject(customSubName.trim(), "📝");
+      setCustomSubName("");
+      toast({ title: "Disciplina adicionada!" });
+      syncWithBackend();
+    } catch (e) {
+      toast({ title: "Erro ao adicionar disciplina", variant: "destructive" });
+    }
+  };
+
+  const addMaterial = async () => {
     if (!matContent.trim() && !matName.trim() && !matFile) {
       toast({ title: "Adiciona conteúdo, ficheiro ou nome do material", variant: "destructive" });
       return;
     }
-    const newMat: Material = {
-      id: Date.now().toString(),
-      name: matName || matFile?.name || (matType === "prova" ? "Prova sem título" : "Material sem título"),
-      type: matType,
-      content: matContent,
-      grade: matGrade ? Number(matGrade) : undefined,
-      addedAt: new Date().toLocaleDateString("pt-AO"),
-      fileName: matFile?.name,
-    };
-    updateCourseData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        subjects: prev.subjects.map((s) =>
-          s.id === activeSubjectId
-            ? { ...s, materials: [...s.materials, newMat] }
-            : s
-        ),
-      };
-    });
-    setMatContent("");
-    setMatName("");
-    setMatGrade("");
-    setMatFile(null);
-    if (fileRef.current) fileRef.current.value = "";
-    toast({ title: "Material adicionado! 📚", description: `Disponível para Quiz e IA.` });
+    
+    const finalName = matName || matFile?.name || (matType === "proof" ? "Prova sem título" : "Material sem título");
+    
+    try {
+       await api.addMaterial(activeSubjectId!, {
+         title: finalName,
+         type: matType,
+         content: matContent || matFile?.name || "",
+         isLink: !!matFile
+       });
+
+       await syncWithBackend(); // Refresh state
+
+       setMatContent("");
+       setMatName("");
+       setMatFile(null);
+       if (fileRef.current) fileRef.current.value = "";
+       toast({ title: "Material adicionado! 📚", description: `Disponível para Quiz e IA.` });
+
+    } catch(e) { toast({ title: "Erro ao adicionar material ao servidor", variant: "destructive" }); }
   };
 
-  const deleteMaterial = (matId: string) => {
-    updateCourseData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        subjects: prev.subjects.map((s) =>
-          s.id === activeSubjectId
-            ? { ...s, materials: s.materials.filter((m) => m.id !== matId) }
-            : s
-        ),
-      };
-    });
+  const deleteMaterial = async (matId: string) => {
+    try {
+      await api.deleteMaterial(matId);
+      await syncWithBackend();
+      toast({ title: "Material apagado!", variant: "default" });
+    } catch(e){ toast({ title: "Erro ao apagar", variant: "destructive" }); }
   };
 
-  const updateNota = (nota: number) => {
-    updateCourseData((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        subjects: prev.subjects.map((s) =>
-          s.id === activeSubjectId ? { ...s, nota } : s
-        ),
-      };
-    });
+  const saveTrimesterGrade = async (testType: "p1" | "p2", nota: number) => {
+    try {
+      if (isNaN(nota) || nota < 0 || nota > 20) return;
+      await api.saveGrade(Number(activeSubjectId), nota, activeTrimester, testType);
+      toast({ title: "Nota guardada com sucesso!", variant: "default" });
+    } catch(e) {
+      toast({ title: "Erro ao guardar nota", variant: "destructive" });
+    }
   };
 
   const totalMaterials = courseData?.subjects.reduce((a, s) => a + s.materials.length, 0) ?? 0;
@@ -295,182 +314,12 @@ const SubjectSelection = () => {
     </div>
   );
 
-  // ── STEP 1: Course Selection ───────────────────────────────────────────────
-  if (currentStep === "course") {
-    return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
-        <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
-          <div className="mt-2 mb-8">
-            <h3 className="text-[#4ade80] text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase mb-0.5">PERCURSO ACADÉMICO</h3>
-            <h1 className="text-3xl font-bold text-white m-0">Meus Cursos 🎓</h1>
-            <p className="text-sm text-slate-400 mt-2">Escolhe o teu curso para o Nzila personalizar o teu estudo e os quizzes.</p>
-          </div>
-
-          {/* Ano letivo */}
-          <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl mb-6 shadow-lg">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-               <GraduationCap className="h-4 w-4 text-[#4ade80]" /> Ano Letivo
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {anos.map((ano) => (
-                <button
-                  key={ano}
-                  onClick={() => setSelectedAno(ano)}
-                  className={`text-xs px-4 py-2 rounded-full font-bold transition-all ${selectedAno === ano
-                    ? "bg-[#4ade80] text-[#0e1710] shadow-[0_2px_10px_rgba(74,222,128,0.2)]"
-                    : "bg-[#1e2e26] text-slate-300 border border-slate-700/50 hover:bg-[#254238]"
-                    }`}
-                >
-                  {ano}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Course cards */}
-          <div className="space-y-3 mb-8">
-            {courses.map((course) => (
-              <button
-                key={course.id}
-                onClick={() => setSelectedCourseId(course.id)}
-                className={`w-full bg-[#141e16] border p-4 rounded-2xl flex items-center gap-4 text-left transition-all active:scale-[0.98] ${selectedCourseId === course.id
-                  ? "border-[#4ade80] shadow-[0_0_15px_rgba(74,222,128,0.15)] bg-gradient-to-r from-[#4ade80]/10 to-transparent"
-                  : "border-slate-800/60 hover:border-[#4ade80]/40"
-                  }`}
-              >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shrink-0 transition-colors ${selectedCourseId === course.id ? "bg-[#4ade80]/20" : "bg-[#1e2e26]"
-                  }`}>
-                  {course.emoji}
-                </div>
-                <div className="flex-1">
-                  <p className={`font-bold text-[15px] mb-0.5 ${selectedCourseId === course.id ? "text-white" : "text-slate-200"}`}>{course.name}</p>
-                  <p className="text-[11px] text-slate-400 pr-4 leading-tight">{course.desc}</p>
-                  <p className="text-[10px] text-[#4ade80] mt-1.5 font-bold uppercase tracking-wide">{course.subjects.length} disciplinas</p>
-                </div>
-                {selectedCourseId === course.id && (
-                  <div className="w-6 h-6 bg-[#4ade80] rounded-full flex items-center justify-center shrink-0 shadow-lg">
-                    <Check className="h-4 w-4 text-[#0e1710] stroke-[3]" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={handleConfirmCourse}
-            disabled={!selectedCourseId}
-            className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-transform ${selectedCourseId
-              ? "bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] shadow-[0_10px_30px_rgba(74,222,128,0.15)] active:scale-95"
-              : "bg-[#1e2e26] text-slate-500 cursor-not-allowed border border-slate-800"
-              }`}
-          >
-            Continuar <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-        {renderBottomNav()}
-      </div>
-    );
-  }
-
-  // ── STEP 2: Select Subjects ────────────────────────────────────────────────
-  if (currentStep === "subjects") {
-    return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
-        <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
-          <div className="flex items-center gap-4 mb-8 mt-2">
-            <button
-              onClick={() => setCurrentStep("course")}
-              className="w-10 h-10 rounded-2xl bg-[#141e16] border border-slate-800/60 flex items-center justify-center hover:bg-[#1e2e26] transition-colors"
-            >
-              <ArrowLeft className="h-5 w-5 text-slate-300" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-white">Disciplinas</h1>
-              <p className="text-xs text-[#4ade80] font-bold mt-0.5">{selectedCourse?.name} · {selectedAno}</p>
-            </div>
-          </div>
-
-          {/* Selected pills */}
-          {selectedSubjectIds.length > 0 && (
-            <div className="flex flex-wrap gap-2 p-4 bg-[#141e16] border border-[#4ade80]/20 rounded-2xl mb-6 shadow-lg shadow-[#4ade80]/5">
-              {selectedSubjectIds.map((id) => {
-                const sub = selectedCourse?.subjects.find((s) => s.id === id);
-                return sub ? (
-                  <button
-                    key={id}
-                    onClick={() => toggleSubject(id)}
-                    className="flex items-center gap-1.5 text-xs font-bold bg-[#4ade80] text-[#0e1710] px-3 py-1.5 rounded-full hover:bg-red-500 hover:text-white transition-colors group"
-                  >
-                    <span>{sub.emoji}</span> {sub.name} <X className="h-3.5 w-3.5 ml-0.5 opacity-60 group-hover:opacity-100" />
-                  </button>
-                ) : null;
-              })}
-            </div>
-          )}
-
-          {/* Subjects grid */}
-          <div className="grid grid-cols-2 gap-3 mb-8">
-            {selectedCourse?.subjects.map((sub) => {
-              const isSelected = selectedSubjectIds.includes(sub.id);
-              return (
-                <button
-                  key={sub.id}
-                  onClick={() => toggleSubject(sub.id)}
-                  className={`relative p-5 rounded-3xl border-2 text-left transition-all active:scale-95 flex flex-col items-center justify-center text-center ${isSelected
-                    ? "border-[#4ade80] bg-[#4ade80]/10 shadow-[inset_0_0_20px_rgba(74,222,128,0.1)]"
-                    : "border-[#1e2e26] bg-[#141e16] hover:border-[#4ade80]/40"
-                    }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-3 right-3 w-6 h-6 bg-[#4ade80] rounded-full flex items-center justify-center shadow-lg">
-                      <Check className="h-3.5 w-3.5 text-[#0e1710] stroke-[3]" />
-                    </div>
-                  )}
-                  <span className="text-4xl mb-3 drop-shadow-md">{sub.emoji}</span>
-                  <p className={`font-bold text-[13px] leading-tight ${isSelected ? "text-white" : "text-slate-300"}`}>{sub.name}</p>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Custom subject */}
-          <div className="bg-[#141e16] border border-slate-800 p-5 rounded-2xl mb-6 text-center">
-            <p className="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center justify-center gap-2 mb-1.5">
-               Falta alguma Cadeira?
-            </p>
-            <p className="text-[11px] text-slate-500 font-medium">Na próxima etapa poderás adicionar matérias e criar conteúdos extra como preferires.</p>
-          </div>
-
-          <button
-            onClick={handleConfirmSubjects}
-            disabled={selectedSubjectIds.length === 0}
-            className={`w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-transform ${selectedSubjectIds.length > 0
-              ? "bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] shadow-[0_10px_30px_rgba(74,222,128,0.15)] active:scale-95"
-              : "bg-[#1e2e26] text-slate-500 cursor-not-allowed border border-slate-800"
-              }`}
-          >
-            Confirmar {selectedSubjectIds.length} disciplina(s) <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-        {renderBottomNav()}
-      </div>
-    );
-  }
-
-  // ── STEP 3: Detail – manage materials per subject ─────────────────────────
   return (
     <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
       <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-6 mt-2">
-          <button
-            onClick={() => { localStorage.removeItem(STORAGE_KEY); setCourseData(null); setCurrentStep("course"); }}
-            className="w-10 h-10 rounded-2xl bg-[#141e16] border border-slate-800/60 flex items-center justify-center hover:bg-[#1e2e26] transition-colors shrink-0"
-            title="Mudar de curso"
-          >
-            <ArrowLeft className="h-5 w-5 text-slate-300" />
-          </button>
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-bold text-white truncate">{courseData?.courseName}</h1>
             <p className="text-[11px] text-[#4ade80] font-bold uppercase tracking-wider">{courseData?.ano}</p>
@@ -517,35 +366,76 @@ const SubjectSelection = () => {
           ))}
         </div>
 
+        {/* Add Custom Subject */}
+        <div className="flex gap-2 mb-6">
+          <input
+            type="text"
+            placeholder="Adicionar outra disciplina..."
+            value={customSubName}
+            onChange={(e) => setCustomSubName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addExtraSubject()}
+            className="flex-1 bg-[#141e16] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors"
+          />
+          <button
+            onClick={addExtraSubject}
+            disabled={!customSubName.trim()}
+            className="bg-[#4ade80] hover:bg-[#22c55e] disabled:opacity-30 disabled:cursor-not-allowed text-[#0e1710] font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <Plus className="h-4 w-4 stroke-[3]" /> Adicionar
+          </button>
+        </div>
+
         {activeSubject && (
           <div className="animate-slide-up">
-            {/* Nota atual */}
-            <div className="bg-gradient-to-r from-[#141e16] to-[#1a261d] border border-[#254238]/60 p-5 rounded-3xl mb-6 flex justify-between items-center shadow-lg">
-              <div>
-                <p className="text-[10px] font-black text-[#4ade80] uppercase tracking-widest mb-1 flex items-center gap-1.5">
+            {/* Avaliação Trimestral */}
+            <div className="bg-gradient-to-r from-[#141e16] to-[#1a261d] border border-[#254238]/60 p-5 rounded-3xl mb-6 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[10px] font-black text-[#4ade80] uppercase tracking-widest flex items-center gap-1.5">
                   <Star className="h-3.5 w-3.5 fill-[#4ade80]" /> Desempenho
                 </p>
-                <h3 className="text-lg font-bold text-white mb-0.5">{activeSubject.name}</h3>
-                {activeSubject.nota !== undefined && (
-                   <div className="flex items-center gap-2 mt-2">
-                     <p className={`text-[11px] font-bold px-2 py-0.5 rounded-sm ${activeSubject.nota >= 14 ? "bg-[#4ade80]/20 text-[#4ade80]" : activeSubject.nota >= 10 ? "bg-yellow-500/20 text-yellow-500" : "bg-red-500/20 text-red-500"}`}>
-                       {activeSubject.nota >= 14 ? "Aprovado" : activeSubject.nota >= 10 ? "Suficiente" : "Negativo"}
-                     </p>
-                   </div>
-                )}
+                <h3 className="text-lg font-bold text-white">{activeSubject.name}</h3>
               </div>
-              <div className="flex items-end gap-1 bg-[#0e1710] p-1.5 rounded-2xl border border-slate-800">
-                <input
-                  type="number"
-                  min={0}
-                  max={20}
-                  placeholder="-"
-                  value={activeSubject.nota ?? ""}
-                  onChange={(e) => updateNota(Number(e.target.value))}
-                  className="w-12 h-12 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl"
-                />
-                <span className="text-xs text-slate-500 font-bold uppercase pb-3 pr-2 border-l border-slate-800 pl-2">/20</span>
+
+              {/* Trimester Tabs */}
+              <div className="flex gap-2 mb-5">
+                {(["T1","T2","T3"] as const).map(tri => (
+                  <button 
+                    key={tri}
+                    onClick={() => setActiveTrimester(tri)}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${activeTrimester === tri ? "bg-[#4ade80] text-[#0e1710]" : "bg-[#1e2e26] text-slate-400 hover:text-slate-200"}`}
+                  >
+                    {tri === "T1" ? "1º Trim" : tri === "T2" ? "2º Trim" : "3º Trim"}
+                  </button>
+                ))}
               </div>
+
+              {/* Grade Inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#0e1710] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase mb-2 text-center">Prova Prof. 1 (P1)</span>
+                  <div className="flex items-end gap-1">
+                    <input
+                      type="number" min={0} max={20} placeholder="-"
+                      onBlur={(e) => saveTrimesterGrade("p1", Number(e.target.value))}
+                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#4ade80]"
+                    />
+                    <span className="text-xs text-slate-500 font-bold pb-2">/20</span>
+                  </div>
+                </div>
+
+                <div className="bg-[#0e1710] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
+                  <span className="text-[10px] text-slate-500 font-bold uppercase mb-2 text-center">Prova Prof. 2 (P2)</span>
+                  <div className="flex items-end gap-1">
+                    <input
+                      type="number" min={0} max={20} placeholder="-"
+                      onBlur={(e) => saveTrimesterGrade("p2", Number(e.target.value))}
+                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#4ade80]"
+                    />
+                    <span className="text-xs text-slate-500 font-bold pb-2">/20</span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-500 text-center mt-3 font-medium">As notas são guardadas automaticamente ao saíres da caixa de texto.</p>
             </div>
 
             {/* AI hint */}
@@ -575,13 +465,13 @@ const SubjectSelection = () => {
                     <div key={mat.id} className="bg-[#141e16] border border-slate-800/60 p-4 rounded-3xl flex flex-col gap-3 group">
                       <div className="flex items-start gap-4">
                         <div className="w-12 h-12 bg-[#1e2e26] rounded-2xl flex items-center justify-center shrink-0 text-2xl border border-slate-700/50 group-hover:bg-[#4ade80]/10 transition-colors">
-                          {typeInfo.emoji}
+                          {typeInfo?.emoji ?? '📎'}
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
                           <p className="font-bold text-white text-[15px] truncate mb-1">{mat.name}</p>
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[9px] font-bold bg-slate-800 text-slate-300 px-2 py-1 rounded">
-                              {typeInfo.label.toUpperCase()}
+                              {(typeInfo?.label ?? mat.type ?? 'outro').toUpperCase()}
                             </span>
                             <span className="text-[10px] font-medium text-slate-500">{mat.addedAt}</span>
                           </div>
@@ -653,7 +543,7 @@ const SubjectSelection = () => {
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Título do Material</p>
                 <input
                   type="text"
-                  placeholder={matType === "prova" ? "Ex: Exame Nacional 2024" : "Dá um nome ao apontamento..."}
+                  placeholder={matType === "proof" ? "Ex: Exame Nacional 2024" : "Dá um nome ao apontamento..."}
                   value={matName}
                   onChange={(e) => setMatName(e.target.value)}
                   className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors"
@@ -721,9 +611,9 @@ const SubjectSelection = () => {
                 <textarea
                   rows={4}
                   placeholder={
-                    matType === "prova"
+                    matType === "proof"
                       ? "Cola aqui as perguntas do teste se não tiveres PDF..."
-                      : matType === "resumo"
+                      : matType === "summary"
                         ? "Digita ou cola o teu bom e velho resumo..."
                         : "Escreve aqui o texto da matéria..."
                   }
@@ -732,26 +622,6 @@ const SubjectSelection = () => {
                   className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors resize-none mb-1"
                 />
               </div>
-
-              {/* Grade */}
-              {matType === "prova" && (
-                <div>
-                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Classificação Obtida</p>
-                   <div className="flex items-center gap-3 bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-2 focus-within:border-[#4ade80] transition-colors">
-                     <Star className="h-4 w-4 text-slate-500 shrink-0" />
-                     <input
-                       type="number"
-                       min={0}
-                       max={20}
-                       placeholder="Sua nota (0-20)"
-                       value={matGrade}
-                       onChange={(e) => setMatGrade(e.target.value)}
-                       className="flex-1 bg-transparent text-[15px] font-bold text-white outline-none placeholder:text-slate-600 placeholder:font-medium text-center"
-                     />
-                     <span className="text-sm font-bold text-slate-500">/ 20</span>
-                   </div>
-                </div>
-              )}
 
               {/* Submit */}
               <button

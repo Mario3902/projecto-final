@@ -1,57 +1,53 @@
+import { api } from "./api";
+
 // All AI calls go through the local proxy server (port 3001)
 // Uses dynamic hostname so it works both on PC (localhost) and on mobile over local network (e.g. 192.168.x.x)
 const PROXY_URL = `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:3001`;
 
-// Build a rich context string from localStorage so Nzila truly knows the student
-export const buildStudentContext = (): string => {
+// Build a rich context string from real MySQL backend so Nzila truly knows the student
+export const buildStudentContext = async (): Promise<string> => {
     try {
-        const profile = JSON.parse(localStorage.getItem("nzila_profile") || "{}");
-        const courseData = JSON.parse(localStorage.getItem("nzila_course_data") || "{}");
-        const gameRaw = localStorage.getItem("nzila_game_state");
-        const game = gameRaw ? JSON.parse(gameRaw) : {};
+        const [profile, progress, subjects, tasks, performance] = await Promise.all([
+            api.getProfile().catch(() => ({})),
+            api.getProgress().catch(() => ({})),
+            api.getSubjects().catch(() => []),
+            api.getTasks().catch(() => []),
+            api.getPerformance().catch(() => [])
+        ]);
 
         const lines: string[] = [];
 
         // Identity
-        if (profile.name) lines.push(`Nome do aluno: ${profile.name}`);
-        if (courseData.ano || profile.year) lines.push(`Ano escolar: ${courseData.ano || profile.year}`);
-        if (courseData.courseName || profile.course) lines.push(`Curso: ${courseData.courseName || profile.course}`);
-        if (profile.goal) lines.push(`Objetivo do aluno: ${profile.goal}`);
+        if (profile?.name) lines.push(`Nome do aluno: ${profile.name}`);
+        if (profile?.year) lines.push(`Ano escolar: ${profile.year}`);
+        if (profile?.course) lines.push(`Curso: ${profile.course}`);
+        if (profile?.goal) lines.push(`Objetivo do aluno: ${profile.goal}`);
 
         // Gamification / progress
-        if (game.xp !== undefined) lines.push(`XP acumulado: ${game.xp} pontos`);
-        if (game.level !== undefined) lines.push(`Nível actual: ${game.level}`);
-        if (game.streak !== undefined) lines.push(`Sequência de dias estudados: ${game.streak} dias`);
-        if (game.quizzesCompleted !== undefined) lines.push(`Quizzes completados: ${game.quizzesCompleted}`);
-        if (game.studyHours !== undefined) lines.push(`Horas de estudo registadas: ${game.studyHours}h`);
+        if (progress?.xp !== undefined) lines.push(`XP acumulado: ${progress.xp} pontos`);
+        if (progress?.level !== undefined) lines.push(`Nível actual: ${progress.level}`);
+        if (progress?.streak !== undefined) lines.push(`Sequência de dias estudados: ${progress.streak} dias`);
+        if (progress?.study_hours !== undefined) lines.push(`Horas de estudo registadas: ${progress.study_hours}h`);
 
-        // Performance by subject (Angolan 0-20 scale)
-        if (game.subjectPerformance) {
-            const perf = game.subjectPerformance as Record<string, number>;
-            const entries = Object.entries(perf);
-            if (entries.length > 0) {
-                lines.push("Desempenho por disciplina (pontuação 0–20):");
-                entries.forEach(([subj, score]) => {
-                    // Assuming stored score might be 0-100 if generated from quizzes, so we convert it to 0-20 scale:
-                    let score20 = score;
-                    if (score > 20) {
-                        score20 = Math.round((score / 100) * 20);
-                    }
-                    const emoji = score20 >= 18 ? "✅" : score20 >= 10 ? "⚠️" : "❌";
-                    lines.push(`  ${emoji} ${subj}: ${score20}/20`);
-                });
-            }
+        // Performance by subject (from DB)
+        if (performance && performance.grades && performance.grades.length > 0) {
+            lines.push("Desempenho por disciplina (pontuação 0–20):");
+            performance.grades.forEach((g: any) => {
+                const score20 = g.grade;
+                const emoji = score20 >= 18 ? "✅" : score20 >= 10 ? "⚠️" : "❌";
+                lines.push(`  ${emoji} ${g.subject_name}: ${score20}/20`);
+            });
         }
 
         // Subjects enrolled
-        if (courseData.subjects?.length > 0) {
-            lines.push(`Disciplinas inscritas: ${courseData.subjects.map((s: any) => s.name).join(", ")}`);
+        if (subjects && subjects.length > 0) {
+            lines.push(`Disciplinas inscritas: ${subjects.map((s: any) => s.name).join(", ")}`);
         }
 
         // Tasks
-        if (game.tasks?.length > 0) {
-            const done = game.tasks.filter((t: any) => t.completed).length;
-            lines.push(`Tarefas: ${done} concluídas de ${game.tasks.length} total`);
+        if (tasks && tasks.length > 0) {
+            const done = tasks.filter((t: any) => t.is_completed).length;
+            lines.push(`Tarefas: ${done} concluídas de ${tasks.length} total`);
         }
 
         return lines.length > 0
@@ -68,18 +64,33 @@ export const chatWithNzila = async (
     history: { role: "user" | "model"; parts: { text: string }[] }[] = []
 ): Promise<string> => {
     try {
-        const studentContext = buildStudentContext();
+        const studentContext = await buildStudentContext();
+
+        // Sanitize history: Gemini requires first message to be "user" role
+        // and all messages must have non-empty text
+        const cleanHistory = history.filter(m => m.parts?.[0]?.text?.trim());
+        while (cleanHistory.length > 0 && cleanHistory[0].role === "model") {
+            cleanHistory.shift();
+        }
+
         const res = await fetch(`${PROXY_URL}/api/nzila-chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, history, studentContext }),
+            body: JSON.stringify({ message, history: cleanHistory, studentContext }),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
         const data = await res.json();
         return data.response ?? "Erro ao obter resposta.";
     } catch (error: any) {
         console.error("Gemini Chat Error:", error);
-        return "⚠️ O servidor proxy não está a correr. Reinicia o proxy com `node proxy.js` antes de usar o chat.";
+        // Distinguish between network error (proxy down) and API error
+        if (error.message?.includes("Failed to fetch") || error.message?.includes("ERR_CONNECTION")) {
+            return "⚠️ O servidor proxy não está a correr. Reinicia o proxy com `node proxy.js` antes de usar o chat.";
+        }
+        return `⚠️ Erro temporário da IA: ${error.message || 'Tenta novamente em alguns segundos.'}`;
     }
 };
 
@@ -140,6 +151,44 @@ export const getVocationalAdvice = async (
         return data.advice ?? null;
     } catch (error: any) {
         console.error("Vocational Error:", error);
+        return null;
+    }
+};
+
+// Utility: Generate Career Path
+export const generateCareerPath = async (
+    course: string
+) => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-career-path`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ course }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.steps ?? null;
+    } catch (error: any) {
+        console.error("Career Path Error:", error);
+        return null;
+    }
+};
+
+// Utility: Generate Personal Stats
+export const generatePersonalStats = async (
+    profileStats: string
+) => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-personal-stats`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profileStats }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.stats ?? null;
+    } catch (error: any) {
+        console.error("Personal Stats Error:", error);
         return null;
     }
 };

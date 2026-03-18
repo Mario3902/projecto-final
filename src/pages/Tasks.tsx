@@ -14,7 +14,7 @@ interface Task {
 }
 
 const Tasks = () => {
-  const { xp, level, addXP, addStudyTime } = useGame();
+  const { xp, level, addXP, addStudyTime, tasks, toggleTask } = useGame();
   const location = useLocation();
 
   // Pomodoro State
@@ -25,13 +25,6 @@ const Tasks = () => {
   // Filter State
   const [activeFilter, setActiveFilter] = useState("Tudo");
   const filters = ["Tudo", "Estudos", "Vocacional", "Rotina"];
-
-  // Mock Tasks (replacing Context tasks to match design strictly)
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: "Resolver exercícios de Cálculo I", done: false, time: "HOJE • 14:00", xp: 50, icon: "BookOpen" },
-    { id: 2, title: "Revisão do Teste Vocacional", done: false, time: "HOJE • 17:30", xp: 100, icon: "Brain" },
-    { id: 3, title: "Organizar bibliografia", done: true, time: "CONCLUÍDO", xp: 20, icon: "BookA" },
-  ]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -65,16 +58,13 @@ const Tasks = () => {
     return `${m}:${s}`;
   };
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(t => {
-      if (t.id === id && !t.done) {
-        addXP(t.xp, `Tarefa concluída: ${t.title}`);
-        toast.success(`Ganhaste +${t.xp} XP!`);
-        return { ...t, done: true, time: "CONCLUÍDO" };
-      }
-      return t;
-    }));
-  };
+  // Map backend tasks to match expected UI layout visually  
+  const formattedTasks = tasks.map(t => ({
+    ...t,
+    time: t.date || "HOJE • 14:00",
+    xp: 50, // default if no XP stored on task table
+    icon: "BookOpen" 
+  }));
 
   const bottomNavItems = [
     { title: "Início", path: "/dashboard", icon: Home },
@@ -95,7 +85,7 @@ const Tasks = () => {
     { day: "DOM", num: "09", active: false },
   ];
 
-  const pendingTasks = tasks.filter(t => !t.done).length;
+  const pendingTasks = formattedTasks.filter(t => !t.done).length;
 
   return (
     <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
@@ -197,7 +187,7 @@ const Tasks = () => {
           </div>
 
           <div className="space-y-3">
-            {tasks.map(task => (
+            {formattedTasks.map(task => (
               <div 
                 key={task.id} 
                 className={`bg-[#0f172a]/40 border rounded-2xl p-4 flex items-center gap-4 transition-all ${
@@ -208,7 +198,6 @@ const Tasks = () => {
               >
                 <button 
                   onClick={() => toggleTask(task.id)}
-                  disabled={task.done}
                   className={`h-[22px] w-[22px] shrink-0 rounded-[6px] border-[2.5px] flex items-center justify-center transition-colors ${
                     task.done 
                       ? "bg-[#059669] border-[#059669]" 
@@ -229,8 +218,7 @@ const Tasks = () => {
 
                 {!task.done && (
                   <div className="h-10 w-10 rounded-xl bg-[#1e293b] flex items-center justify-center shrink-0">
-                    {task.icon === "BookOpen" && <BookOpen className="h-5 w-5 text-[#10b981]" />}
-                    {task.icon === "Brain" && <Brain className="h-5 w-5 text-[#10b981]" />}
+                     {task.title.toLowerCase().includes('vocacional') ? <Brain className="h-5 w-5 text-[#10b981]" /> : <BookOpen className="h-5 w-5 text-[#10b981]" />}
                   </div>
                 )}
               </div>

@@ -1,11 +1,25 @@
 import { useLocation, Link } from "react-router-dom";
-import { Briefcase, Trophy, BookOpen, User, Home, Lock, CheckCircle2, ChevronRight, Zap } from "lucide-react";
+import { Briefcase, Trophy, BookOpen, User, Home, Lock, CheckCircle2, Zap, BrainCircuit, RefreshCw } from "lucide-react";
 import { useGame } from "@/context/GameContext";
-import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import { generateCareerPath } from "@/lib/gemini";
+import { api } from "@/lib/api";
+
+interface Milestone {
+  id: number;
+  title: string;
+  desc: string;
+  xpReq: number;
+  icon: string;
+  isUnlocked: boolean;
+}
 
 const Carreira = () => {
   const { level, xp } = useGame();
   const location = useLocation();
+
+  const [milestones, setMilestones] = useState<Milestone[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const bottomNavItems = [
     { title: "Início", path: "/dashboard", icon: Home },
@@ -15,17 +29,58 @@ const Carreira = () => {
     { title: "Perfil", path: "/dashboard/performance", icon: User },
   ];
 
-  const MILESTONES = [
-    { id: 1, title: "Desenvolvedor Júnior", desc: "Domínio de Lógica e Algoritmos Básicos", xpReq: 0, icon: "💻", isUnlocked: true },
-    { id: 2, title: "Analista de Sistemas", desc: "Criação de Arquitetura e Bases de Dados", xpReq: 500, icon: "⚙️", isUnlocked: xp >= 500 },
-    { id: 3, title: "Engenheiro de Software", desc: "Sistemas Complexos e Escaláveis", xpReq: 1500, icon: "🚀", isUnlocked: xp >= 1500 },
-    { id: 4, title: "Arquiteto Cloud", desc: "Infraestrutura e DevOps Avançado", xpReq: 3500, icon: "☁️", isUnlocked: xp >= 3500 },
-    { id: 5, title: "Especialista em IA", desc: "Machine Learning e Redes Neurais", xpReq: 6000, icon: "🧠", isUnlocked: xp >= 6000 },
-  ];
+  useEffect(() => {
+    async function loadCareerPath() {
+      try {
+        const cached = localStorage.getItem("nzila_career_path");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          // Atualiza unlocks baseados no XP atual
+          setMilestones(parsed.map((m: Milestone) => ({ ...m, isUnlocked: xp >= m.xpReq })));
+          setIsLoading(false);
+          return;
+        }
 
-  const nextMilestone = MILESTONES.find(m => !m.isUnlocked) || MILESTONES[MILESTONES.length - 1];
-  const currentMilestone = MILESTONES.slice().reverse().find(m => m.isUnlocked) || MILESTONES[0];
-  const progressToNext = nextMilestone.xpReq > currentMilestone.xpReq 
+        const profile = await api.getProfile().catch(() => ({ course: "Geral" }));
+        const course = profile?.course || "Ciências Gerais";
+        
+        const generated = await generateCareerPath(course);
+        
+        if (generated && generated.length > 0) {
+          const xpSteps = [0, 500, 1500, 3500, 6000];
+          const icons = ["🎯", "⚡", "🚀", "👑"]; // Default icons
+          
+          const newMilestones: Milestone[] = generated.map((step: any, idx: number) => ({
+            id: idx + 1,
+            title: step.title,
+            desc: step.description,
+            xpReq: xpSteps[idx] || (idx * 2000), // Fallback if AI generates more steps
+            icon: icons[idx] || "🎓",
+            isUnlocked: xp >= (xpSteps[idx] || (idx * 2000))
+          }));
+          
+          localStorage.setItem("nzila_career_path", JSON.stringify(newMilestones));
+          setMilestones(newMilestones);
+        } else {
+          // Fallback if AI fails
+          setMilestones([
+            { id: 1, title: "Estudante Caloiro", desc: "A começar a jornada", xpReq: 0, icon: "🎓", isUnlocked: true },
+            { id: 2, title: "Aprendiz Focado", desc: "Domínio das bases", xpReq: 500, icon: "📚", isUnlocked: xp >= 500 }
+          ]);
+        }
+      } catch (error) {
+        console.error("Erro a carregar trilha", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCareerPath();
+  }, [xp]);
+
+  const nextMilestone = milestones.find(m => !m.isUnlocked) || milestones[milestones.length - 1];
+  const currentMilestone = milestones.slice().reverse().find(m => m.isUnlocked) || milestones[0];
+  
+  const progressToNext = nextMilestone && currentMilestone && nextMilestone.xpReq > currentMilestone.xpReq 
     ? ((xp - currentMilestone.xpReq) / (nextMilestone.xpReq - currentMilestone.xpReq)) * 100 
     : 100;
 
@@ -65,17 +120,26 @@ const Carreira = () => {
               </div>
             </div>
             <p className="text-[11px] font-bold text-[#0e1710]/70 mt-3 flex items-center gap-1">
-              Faltam {Math.max(0, nextMilestone?.xpReq - xp)} XP para alcançar este nível
+              Faltam {Math.max(0, (nextMilestone?.xpReq || 0) - xp)} XP para alcançar este nível
             </p>
           </div>
         </div>
 
+        {/* Timeline Loading State */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center py-10 opacity-70">
+            <RefreshCw className="h-8 w-8 text-[#4ade80] animate-spin mb-3" />
+            <p className="text-sm text-[#4ade80] font-bold">A inteligência artificial está a desenhar a tua Trilha Pessoal...</p>
+          </div>
+        )}
+
         {/* Timeline */}
-        <div className="px-2">
+        {!isLoading && milestones.length > 0 && (
+          <div className="px-2">
           <h3 className="text-lg font-bold mb-6">Etapas da Trilha</h3>
           
           <div className="relative border-l-2 border-[#1e2e26] ml-6 pb-4 space-y-8">
-            {MILESTONES.map((milestone, idx) => (
+            {milestones.map((milestone, idx) => (
               <div key={milestone.id} className="relative pl-8">
                 {/* Node Icon */}
                 <div 
@@ -96,11 +160,11 @@ const Carreira = () => {
                       : "bg-[#141e16]/50 border-slate-800/50"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className={`font-bold text-[15px] ${milestone.isUnlocked ? "text-white" : "text-slate-400"}`}>
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <h4 className={`font-bold text-[15px] ${milestone.isUnlocked ? "text-white" : "text-slate-400"} leading-tight`}>
                       {milestone.title}
                     </h4>
-                    {milestone.isUnlocked && <CheckCircle2 className="h-4 w-4 text-[#4ade80]" />}
+                    {milestone.isUnlocked && <CheckCircle2 className="h-4 w-4 text-[#4ade80] shrink-0" />}
                   </div>
                   <p className={`text-[12px] leading-relaxed mb-3 ${milestone.isUnlocked ? "text-slate-300" : "text-slate-500"}`}>
                     {milestone.desc}
@@ -117,6 +181,7 @@ const Carreira = () => {
             ))}
           </div>
         </div>
+        )}
 
       </div>
 

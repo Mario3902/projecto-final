@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 interface Task {
     id: number;
@@ -16,60 +17,78 @@ interface GameContextType {
     quizzesCompleted: number;
     studyHours: number;
     performanceData: { materia: string; nota: number }[];
-    addXP: (amount: number, reason: string) => void;
-    addTask: (title: string, date?: string) => void;
-    toggleTask: (id: number) => void;
-    deleteTask: (id: number) => void;
-    completeQuiz: (score: number, total: number) => void;
-    addStudyTime: (minutes: number) => void;
+    addXP: (amount: number, reason: string) => Promise<void>;
+    addTask: (title: string, date?: string) => Promise<void>;
+    toggleTask: (id: number) => Promise<void>;
+    deleteTask: (id: number) => Promise<void>;
+    completeQuiz: (score: number, total: number) => Promise<void>;
+    addStudyTime: (minutes: number) => Promise<void>;
+    isLoading: boolean;
 }
-
-const defaultPerformance = [
-    { materia: "Mat", nota: 85 },
-    { materia: "Port", nota: 72 },
-    { materia: "Fís", nota: 68 },
-    { materia: "Quím", nota: 78 },
-    { materia: "Bio", nota: 90 },
-    { materia: "His", nota: 82 },
-];
-
-const defaultTasks = [
-    { id: 1, title: "Revisar capítulo 5", done: true, date: new Date().toISOString().split("T")[0] },
-    { id: 2, title: "Fazer exercícios", done: false, date: new Date().toISOString().split("T")[0] },
-];
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // Helper to get initial state from localStorage or fallback to default
-    const getInitialState = <T,>(key: string, defaultValue: T): T => {
-        const stored = localStorage.getItem(key);
-        if (stored) {
+    const [xp, setXp] = useState<number>(0);
+    const [level, setLevel] = useState<number>(1);
+    const [streak, setStreak] = useState<number>(0);
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [quizzesCompleted, setQuizzesCompleted] = useState<number>(0);
+    const [studyHours, setStudyHours] = useState<number>(0);
+    const [performanceData, setPerformanceData] = useState<{materia: string; nota: number}[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const loadData = async () => {
+        try {
+            // First load progress
+            const prog = await api.getProgress();
+            setXp(prog.xp);
+            setLevel(prog.level);
+            setStreak(prog.streak);
+            setQuizzesCompleted(prog.quizzes_completed);
+            setStudyHours(prog.study_hours);
+
+            // Load tasks
+            const t = await api.getTasks();
+            setTasks(t);
+
+            // Load performance (simplistic adaptation for Dashboard avg)
+            const perf = await api.getPerformance();
+            const pData = perf.grades.map((g: any) => ({ materia: g.subject_name.substring(0,4), nota: g.grade }));
+            setPerformanceData(pData);
+
+            // Cache profile for Quizzes/Carreira/ChatAI pages
             try {
-                return JSON.parse(stored);
-            } catch {
-                return defaultValue;
-            }
+                const profile = await api.getProfile();
+                localStorage.setItem("nzila_profile", JSON.stringify(profile));
+                localStorage.setItem("userName", profile.name || "Estudante");
+            } catch (e) { console.warn("Profile fetch failed:", e); }
+
+            // Cache subjects for Quizzes "Para Ti" and "Matérias" sections
+            try {
+                const subjects = await api.getSubjects();
+                if (subjects && subjects.length > 0) {
+                    const courseData = { subjects: subjects.map((s: any) => ({ id: s.id, name: s.name, emoji: s.emoji || "📚", materials: [] })) };
+                    localStorage.setItem("nzila_course_data", JSON.stringify(courseData));
+                }
+            } catch (e) { console.warn("Subjects fetch failed:", e); }
+
+        } catch (error) {
+            console.error("Erro ao carregar dados do utilizador do backend", error);
+        } finally {
+            setIsLoading(false);
         }
-        return defaultValue;
     };
 
-    const [xp, setXp] = useState<number>(() => getInitialState("nzila_xp", 120));
-    const [level, setLevel] = useState<number>(() => getInitialState("nzila_level", 1));
-    const [streak, setStreak] = useState<number>(() => getInitialState("nzila_streak", 3));
-    const [tasks, setTasks] = useState<Task[]>(() => getInitialState("nzila_tasks", defaultTasks));
-    const [quizzesCompleted, setQuizzesCompleted] = useState<number>(() => getInitialState("nzila_quizzes_completed", 0));
-    const [studyHours, setStudyHours] = useState<number>(() => getInitialState("nzila_study_hours", 0));
-    const [performanceData, setPerformanceData] = useState(() => getInitialState("nzila_performance", defaultPerformance));
-
-    // Persist changes to localStorage
-    useEffect(() => { localStorage.setItem("nzila_xp", JSON.stringify(xp)); }, [xp]);
-    useEffect(() => { localStorage.setItem("nzila_level", JSON.stringify(level)); }, [level]);
-    useEffect(() => { localStorage.setItem("nzila_streak", JSON.stringify(streak)); }, [streak]);
-    useEffect(() => { localStorage.setItem("nzila_tasks", JSON.stringify(tasks)); }, [tasks]);
-    useEffect(() => { localStorage.setItem("nzila_quizzes_completed", JSON.stringify(quizzesCompleted)); }, [quizzesCompleted]);
-    useEffect(() => { localStorage.setItem("nzila_study_hours", JSON.stringify(studyHours)); }, [studyHours]);
-    useEffect(() => { localStorage.setItem("nzila_performance", JSON.stringify(performanceData)); }, [performanceData]);
+    useEffect(() => {
+        // Simple heuristic: if we have a token, load real data
+        if (localStorage.getItem("nzila_token")) {
+           loadData();
+        } else {
+           // Wait for user to log in/register
+           setIsLoading(false);
+        }
+    }, []);
 
     // Calcula o nível com base no XP (100 XP por nível)
     useEffect(() => {
@@ -83,58 +102,63 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, [xp, level]);
 
-    const addXP = (amount: number, reason: string) => {
-        setXp((prev) => prev + amount);
-        toast(`+${amount} XP: ${reason}`, {
-            icon: "⭐",
-        });
+    const addXP = async (amount: number, reason: string) => {
+        try {
+            const result = await api.addXP(amount);
+            setXp(result.xp);
+            setLevel(result.level);
+            toast(`+${amount} XP: ${reason}`, { icon: "⭐" });
+        } catch (e) { console.error(e); }
     };
 
-    const addTask = (title: string, date?: string) => {
-        setTasks((prev) => [
-            ...prev,
-            {
-                id: Date.now(),
-                title,
-                done: false,
-                date: date || new Date().toISOString().split("T")[0],
-            },
-        ]);
+    const addTask = async (title: string, date?: string) => {
+        try {
+            const task = await api.createTask(title, date);
+            setTasks((prev) => [task, ...prev]);
+        } catch (e) { toast.error("Erro ao guardar tarefa."); }
     };
 
-    const toggleTask = (id: number) => {
-        setTasks((prev) =>
-            prev.map((task) => {
-                if (task.id === id) {
-                    const isCompleting = !task.done;
-                    if (isCompleting) {
-                        // Recompensar XP ao concluir tarefa
-                        setTimeout(() => addXP(10, "Tarefa concluída!"), 300);
-                    }
-                    return { ...task, done: isCompleting };
-                }
-                return task;
-            })
-        );
+    const toggleTask = async (id: number) => {
+        try {
+            const res = await api.toggleTask(id);
+            if (res.done) {
+                 setTimeout(() => addXP(10, "Tarefa concluída!"), 300);
+            }
+            setTasks((prev) =>
+                prev.map((task) => task.id === id ? { ...task, done: res.done } : task)
+            );
+        } catch (e) { toast.error("Erro ao atualizar tarefa."); }
     };
 
-    const deleteTask = (id: number) => {
-        setTasks((prev) => prev.filter((t) => t.id !== id));
+    const deleteTask = async (id: number) => {
+        try {
+            await api.deleteTask(id);
+            setTasks((prev) => prev.filter((t) => t.id !== id));
+        } catch (e) { toast.error("Erro ao apagar tarefa."); }
     };
 
-    const completeQuiz = (score: number, total: number) => {
-        setQuizzesCompleted((prev) => prev + 1);
-
-        // XP baseado na pontuação: max 10 XP
+    const completeQuiz = async (score: number, total: number) => {
+        // Save to backend
         const pct = score / total;
         const earnedXP = Math.max(5, Math.round(pct * 10)); // Mínimo 5, máximo 10
-
-        addXP(earnedXP, `Quiz finalizado com ${Math.round(pct * 100)}% de acerto!`);
+        try {
+            await api.saveQuizResult({
+                subject: "Geral", 
+                score, 
+                total, 
+                xpEarned: earnedXP,
+                isVocational: false
+            });
+            setQuizzesCompleted((prev) => prev + 1);
+            addXP(earnedXP, `Quiz finalizado com ${Math.round(pct * 100)}% de acerto!`);
+        } catch (e) { toast.error("Erro ao guardar resultado."); }
     };
 
-    const addStudyTime = (minutes: number) => {
-        // Converter minutos para horas e adicionar
-        setStudyHours((prev) => Number((prev + minutes / 60).toFixed(1)));
+    const addStudyTime = async (minutes: number) => {
+        try {
+            await api.addStudyTime(minutes);
+            setStudyHours((prev) => Number((prev + minutes / 60).toFixed(1)));
+        } catch (e) { toast.error("Erro ao guardar estudo."); }
     };
 
     return (
@@ -153,6 +177,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 deleteTask,
                 completeQuiz,
                 addStudyTime,
+                isLoading
             }}
         >
             {children}

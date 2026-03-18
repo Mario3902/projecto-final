@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { generateQuiz, generateVocationalQuestions, getVocationalAdvice } from "@/lib/gemini";
+import { api } from "@/lib/api";
 
 // Simple web audio beep generator
 const playTone = (freq: number, type: OscillatorType, duration: number) => {
@@ -36,7 +37,7 @@ interface Question {
 }
 
 const Quizzes = () => {
-  const { completeQuiz, level } = useGame();
+  const { completeQuiz, level, xp, streak: realStreak } = useGame();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -74,12 +75,31 @@ const Quizzes = () => {
     iconColor: "text-[#4ade80]"
   })) ?? [];
 
-  // Specific "Para Ti" quizzes
-  const PARA_TI = [
-    { id: "p1", title: "Lógica e Raciocínio", questions: 15, time: 10, xp: 150, color: "bg-[#254238]", icon: "Σ", iconColor: "text-[#4ade80]", context: "Desafios de lógica matemática e raciocínio abstrato" },
-    { id: "p2", title: "Física Aplicada", questions: 10, time: 12, xp: 200, color: "bg-[#283854]", icon: "◿", iconColor: "text-[#60a5fa]", context: "Física aplicada ao mundo real, mecânica e termodinâmica" },
-    { id: "p3", title: "Geografia de Angola", questions: 20, time: 15, xp: 300, color: "bg-[#453e36]", icon: "🌍", iconColor: "text-[#fbbf24]", context: "Geografia física, política e económica de Angola" },
+  // Dynamic "Para Ti" quizzes based on user's subjects
+  const subjectColors = [
+    { color: "bg-[#254238]", iconColor: "text-[#4ade80]" },
+    { color: "bg-[#283854]", iconColor: "text-[#60a5fa]" },
+    { color: "bg-[#453e36]", iconColor: "text-[#fbbf24]" },
+    { color: "bg-[#4c2d5f]", iconColor: "text-[#a855f7]" },
+    { color: "bg-[#5f2d2d]", iconColor: "text-[#f87171]" },
   ];
+
+  const PARA_TI = subjects.length > 0 
+    ? subjects.slice(0, 3).map((sub: any, idx: number) => ({
+        id: `p${idx+1}`,
+        title: sub.name,
+        questions: 5 + (idx * 5),
+        time: 8 + (idx * 4),
+        xp: 100 + (idx * 50),
+        color: subjectColors[idx % subjectColors.length].color,
+        icon: sub.emoji || "📚",
+        iconColor: subjectColors[idx % subjectColors.length].iconColor,
+        context: sub.promptContext || `Matéria: ${sub.name}`,
+      }))
+    : [
+        { id: "p1", title: `Quiz de ${userProfile.course || 'Geral'}`, questions: 10, time: 10, xp: 150, color: "bg-[#254238]", icon: "🎯", iconColor: "text-[#4ade80]", context: `Perguntas sobre ${userProfile.course || 'conhecimentos gerais'}` },
+        { id: "p2", title: "Raciocínio Lógico", questions: 10, time: 12, xp: 200, color: "bg-[#283854]", icon: "🧩", iconColor: "text-[#60a5fa]", context: "Desafios de lógica e raciocínio abstrato" },
+      ];
 
   const startSpecificQuiz = async (title: string, context: string, numQuestions: number) => {
     setSelectedSubject(title);
@@ -193,6 +213,12 @@ const Quizzes = () => {
           const advice = await getVocationalAdvice(finalAnswers, contextString);
           setVocationalResult(advice);
           setFinished(true);
+          
+          try {
+            await api.saveVocationalResult({ result: advice });
+          } catch(e) {
+            console.error("Erro ao guardar resultado vocacional:", e);
+          }
         } catch {
           setLoadError("A IA não conseguiu analisar o perfil vocacional nesta ocasião.");
         }
@@ -425,7 +451,7 @@ const Quizzes = () => {
           <div className="flex gap-2 sm:gap-3">
             <div className="flex items-center gap-1.5 bg-[#4ade80]/10 text-[#4ade80] border border-[#4ade80]/20 px-3 py-1.5 rounded-full">
               <Flame className="h-3.5 w-3.5 fill-[#4ade80]" />
-              <span className="text-xs sm:text-sm font-bold">7 Dias</span>
+              <span className="text-xs sm:text-sm font-bold">{realStreak} Dias</span>
             </div>
             <div className="h-10 w-10 min-w-10 rounded-full bg-[#1a261d] border border-slate-700 flex items-center justify-center shrink-0 ml-1">
               <User className="h-5 w-5 text-slate-400" />
@@ -433,15 +459,16 @@ const Quizzes = () => {
           </div>
         </div>
 
-        {/* Level Progress */}
+        {/* Level Progress – Real */}
         <div className="bg-[#1a261d] border border-[#254238] rounded-[20px] p-5 mb-8">
           <div className="flex justify-between items-center mb-3">
             <span className="text-[15px] font-semibold text-slate-300">Progresso do Nível</span>
-            <span className="text-[15px] font-bold text-[#4ade80]">Nível {level || 12}</span>
+            <span className="text-[15px] font-bold text-[#4ade80]">Nível {level}</span>
           </div>
           <div className="h-3.5 w-full bg-[#1e2e26] rounded-full overflow-hidden flex">
-            <div className="h-full bg-[#4ade80] rounded-full" style={{ width: "65%" }}></div>
+            <div className="h-full bg-[#4ade80] rounded-full transition-all duration-500" style={{ width: `${Math.min(((xp - ((level - 1) * 100)) / 100) * 100, 100)}%` }}></div>
           </div>
+          <p className="text-[10px] text-slate-500 mt-2 text-right font-bold">{xp} / {level * 100} XP</p>
         </div>
 
         {/* Desafio Adaptativo */}
@@ -455,11 +482,11 @@ const Quizzes = () => {
           
           <div className="bg-[#4ade80] rounded-[32px] p-6 relative overflow-hidden shadow-[0_10px_40px_rgba(74,222,128,0.15)]">
             <div className="pr-12">
-              <h3 className="text-[#0e1710] text-[22px] font-black leading-tight mb-3">Preparação para Engenharia</h3>
+              <h3 className="text-[#0e1710] text-[22px] font-black leading-tight mb-3">Desafio: {userProfile.course || 'Quiz Geral'}</h3>
               <div className="flex items-center gap-2.5 text-[#0e1710] font-bold text-[11px] mb-6 flex-wrap">
-                <span className="bg-[#0e1710]/10 px-2.5 py-1 rounded tracking-wider uppercase">Nível Médio</span>
+                <span className="bg-[#0e1710]/10 px-2.5 py-1 rounded tracking-wider uppercase">Nível {level}</span>
                 <span className="flex items-center gap-1 opacity-70">
-                  <Timer className="h-3 w-3" /> Expira em 04:52
+                  <Timer className="h-3 w-3" /> 10 Questões
                 </span>
               </div>
             </div>
@@ -469,15 +496,9 @@ const Quizzes = () => {
             </div>
 
             <div className="flex items-center justify-between mt-2">
-              <div className="flex -space-x-3">
-                <div className="h-10 w-10 rounded-full bg-[#0e1710] border-2 border-[#4ade80]"></div>
-                <div className="h-10 w-10 rounded-full bg-[#1a261d] border-2 border-[#4ade80]"></div>
-                <div className="h-10 w-10 rounded-full bg-[#94a3b8] border-2 border-[#4ade80] flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-[#0e1710]">+12</span>
-                </div>
-              </div>
+              <p className="text-[#0e1710]/70 text-xs font-bold max-w-[160px]">Quiz gerado por IA com base no teu curso</p>
               <button 
-                onClick={() => startSpecificQuiz("Desafio: Engenharia", "Matemática e Física aplicadas à Engenharia", 10)}
+                onClick={() => startSpecificQuiz(`Desafio: ${userProfile.course || 'Geral'}`, `Perguntas avançadas de nível ${level} sobre o curso de ${userProfile.course || 'conhecimentos gerais'}, focadas nas disciplinas do aluno`, 10)}
                 className="bg-[#0e1710] text-white px-5 py-3 rounded-2xl font-bold text-sm transition-transform active:scale-95"
               >
                 Iniciar Quiz

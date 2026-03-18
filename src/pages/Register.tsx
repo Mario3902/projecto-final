@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { api } from "@/lib/api";
 
 const INTERESTS = [
   "Tecnologia",
@@ -29,6 +30,8 @@ const Register = () => {
   const [age, setAge] = useState("");
   const [grade, setGrade] = useState("10º Ano");
   const [course, setCourse] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedInterests, setSelectedInterests] = useState<string[]>(["Tecnologia"]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,17 +43,43 @@ const Register = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !age || !course || selectedInterests.length === 0) {
-      toast({ title: "Preencha todos os campos e selecione pelo menos um interesse", variant: "destructive" });
+    if (!name || !age || !course || !password || selectedInterests.length === 0) {
+      toast({ title: "Preencha todos os campos obrigatórios.", variant: "destructive" });
       return;
     }
+    if (password.length < 6) {
+      toast({ title: "A password deve ter no mínimo 6 caracteres.", variant: "destructive" });
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast({ title: "As passwords não coincidem.", variant: "destructive" });
+      return;
+    }
+    
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const resp = await api.register({
+        name,
+        age: parseInt(age),
+        grade,
+        course,
+        goal: "Sucesso Académico",
+        interests: selectedInterests,
+        password
+      });
+      
+      localStorage.setItem("nzila_token", resp.token);
+      localStorage.setItem("userName", resp.user.name);
+      
+      toast({ title: "Conta criada com sucesso! 🎉", variant: "default" });
       navigate("/dashboard");
-    }, 800);
+    } catch (err: any) {
+      toast({ title: "Erro no registo", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -127,6 +156,36 @@ const Register = () => {
               className="h-[52px] bg-[#1a233a] border-slate-800 text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-[#0ea5e9] focus-visible:border-[#0ea5e9] rounded-xl text-base px-4"
             />
           </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2.5">
+              <label className="text-sm font-semibold text-slate-200">Password</label>
+              <Input
+                type="password"
+                placeholder="Mín. 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-[52px] bg-[#1a233a] border-slate-800 text-white placeholder:text-slate-500 focus-visible:ring-1 focus-visible:ring-[#0ea5e9] focus-visible:border-[#0ea5e9] rounded-xl text-base px-4"
+              />
+            </div>
+            <div className="space-y-2.5">
+              <label className="text-sm font-semibold text-slate-200">Confirmar</label>
+              <Input
+                type="password"
+                placeholder="Repete a password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={`h-[52px] bg-[#1a233a] border text-white placeholder:text-slate-500 focus-visible:ring-1 rounded-xl text-base px-4 ${
+                  confirmPassword && confirmPassword !== password
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "border-slate-800 focus-visible:ring-[#0ea5e9] focus-visible:border-[#0ea5e9]"
+                }`}
+              />
+            </div>
+          </div>
+          {confirmPassword && confirmPassword !== password && (
+            <p className="text-xs text-red-400 font-medium -mt-3">As passwords não coincidem</p>
+          )}
 
           <div className="space-y-3 pt-2">
             <label className="text-sm font-semibold text-slate-200">Interesses</label>

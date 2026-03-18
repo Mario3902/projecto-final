@@ -1,32 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, TrendingDown, Minus, Edit3, Save, X, User, BookOpen, GraduationCap, Target, Home, Check, Bot, Trophy, Briefcase } from "lucide-react";
-
-// (Data arrays remain unchanged)
-const monthlyData = [
-  { mes: "Set", nota: 13 },
-  { mes: "Out", nota: 14 },
-  { mes: "Nov", nota: 15 },
-  { mes: "Dez", nota: 14 },
-  { mes: "Jan", nota: 16 },
-  { mes: "Fev", nota: 17 },
-];
-
-const subjects = [
-  { name: "Biologia", score: 18, trend: "up" },
-  { name: "Matemática", score: 17, trend: "up" },
-  { name: "História", score: 15, trend: "stable" },
-  { name: "Química", score: 16, trend: "up" },
-  { name: "Português", score: 13, trend: "down" },
-  { name: "Física", score: 14, trend: "down" },
-];
-
-const pieData = [
-  { name: "Excelente (>16)", value: 2, color: "#4ade80" },
-  { name: "Bom (10-16)", value: 3, color: "#eab308" },
-  { name: "Atenção (<10)", value: 1, color: "#ef4444" },
-];
+import { TrendingUp, TrendingDown, Minus, Edit3, Save, X, User, BookOpen, GraduationCap, Target, Home, Check, Bot } from "lucide-react";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const TrendIcon = ({ trend }: { trend: string }) => {
   if (trend === "up") return <TrendingUp className="h-4 w-4 text-[#4ade80]" />;
@@ -34,37 +11,113 @@ const TrendIcon = ({ trend }: { trend: string }) => {
   return <Minus className="h-4 w-4 text-slate-500" />;
 };
 
+
 const Profile = () => {
   const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState(() => {
-    const stored = localStorage.getItem("nzila_profile");
-    const courseData = localStorage.getItem("nzila_course_data");
-    const parsed = stored ? JSON.parse(stored) : {};
-    const parsedCourse = courseData ? JSON.parse(courseData) : {};
-    return {
-      name: parsed.name || "Estudante",
-      course: parsedCourse.courseName || parsed.course || "Ciências e Tecnologias",
-      year: parsedCourse.ano || parsed.year || "12º Ano",
-      goal: parsed.goal || "Entrar na Universidade",
-    };
-  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Data from backend
+  const [profile, setProfile] = useState({ name: "Estudante", course: "", year: "", goal: "" });
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [subjectData, setSubjectData] = useState<any[]>([]);
+  const [pieData, setPieData] = useState([
+    { name: "Excelente (>16)", value: 0, color: "#4ade80" },
+    { name: "Bom (10-16)", value: 0, color: "#eab308" },
+    { name: "Atenção (<10)", value: 0, color: "#ef4444" },
+  ]);
 
   useEffect(() => {
-    const storedName = localStorage.getItem("userName");
-    const storedCourse = localStorage.getItem("userCourse");
-    const storedYear = localStorage.getItem("userYear");
-    const storedGoal = localStorage.getItem("userGoal");
+    async function fetchData() {
+      try {
+        const prof = await api.getProfile();
+        setProfile({
+          name: prof.name || "Estudante",
+          course: prof.course || "Não Definido",
+          year: prof.grade || "12º Ano",
+          goal: prof.goal || "Sucesso Académico",
+        });
 
-    if (storedName) setProfile(prev => ({ ...prev, name: storedName }));
-    if (storedCourse) setProfile(prev => ({ ...prev, course: storedCourse }));
-    if (storedYear) setProfile(prev => ({ ...prev, year: storedYear }));
-    if (storedGoal) setProfile(prev => ({ ...prev, goal: storedGoal }));
+        const perf = await api.getPerformance();
+        const grades = perf.grades || [];
+        
+        // ── TRIMESTRAL AGGREGATION ──
+        const trimStats = { T1: { sum: 0, count: 0 }, T2: { sum: 0, count: 0 }, T3: { sum: 0, count: 0 } };
+        grades.forEach((g: any) => {
+           const t = g.trimester as "T1"|"T2"|"T3";
+           if (t && trimStats[t]) {
+             trimStats[t].sum += parseFloat(g.grade);
+             trimStats[t].count++;
+           }
+        });
+        
+        const chartData = [
+          { mes: "1º Trim", nota: trimStats.T1.count > 0 ? parseFloat((trimStats.T1.sum / trimStats.T1.count).toFixed(1)) : 0 },
+          { mes: "2º Trim", nota: trimStats.T2.count > 0 ? parseFloat((trimStats.T2.sum / trimStats.T2.count).toFixed(1)) : 0 },
+          { mes: "3º Trim", nota: trimStats.T3.count > 0 ? parseFloat((trimStats.T3.sum / trimStats.T3.count).toFixed(1)) : 0 },
+        ];
+        
+        // Only show up to the lowest trimester that exists, or just all 3. Showing all 3 gives a nice fixed X Axis.
+        setMonthlyData(chartData);
+
+        // ── SUBJECT AGGREGATION ──
+        const subjsMap = new Map();
+        grades.forEach((g: any) => {
+          if (!subjsMap.has(g.subject_id)) {
+            subjsMap.set(g.subject_id, {
+              name: g.subject_name,
+              sum: 0,
+              count: 0,
+              trend: "stable"
+            });
+          }
+          const s = subjsMap.get(g.subject_id);
+          s.sum += parseFloat(g.grade);
+          s.count++;
+        });
+        
+        const finalSubjects = Array.from(subjsMap.values()).map(s => ({
+            name: s.name,
+            score: parseFloat((s.sum / s.count).toFixed(1)),
+            trend: "stable"
+        }));
+        setSubjectData(finalSubjects.length > 0 ? finalSubjects : [{ name: "Sem Dados", score: 0, trend: "stable" }]);
+
+        // Build Pie metrics
+        let exc = 0, bom = 0, atencao = 0;
+        finalSubjects.forEach(s => {
+          if (s.score > 16) exc++;
+          else if (s.score >= 10) bom++;
+          else atencao++;
+        });
+        
+        setPieData([
+          { name: "Excelente (>16)", value: exc || 0.1, color: "#4ade80" }, // 0.1 prevents empty render visually
+          { name: "Bom (10-16)", value: bom || 0.1, color: "#eab308" },
+          { name: "Atenção (<10)", value: atencao || 0.1, color: "#ef4444" },
+        ]);
+
+      } catch (e) {
+        console.error("Erro a ler perfil real", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
   }, []);
 
-  const handleSave = () => {
-    localStorage.setItem("nzila_profile", JSON.stringify(profile));
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      await api.updateProfile({
+        course: profile.course,
+        grade: profile.year,
+        goal: profile.goal
+      });
+      setIsEditing(false);
+      toast("Perfil atualizado! 🎉", { icon: "✅" });
+    } catch (e) {
+      toast.error("Erro ao guardar o perfil.");
+    }
   };
 
   const bottomNavItems = [
@@ -239,8 +292,8 @@ const Profile = () => {
 
         <h3 className="text-lg font-bold text-white mb-4">Notas por Matéria</h3>
         <div className="grid grid-cols-2 gap-3">
-          {subjects.map((sub) => (
-            <div key={sub.name} className="flex flex-col justify-between bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 transition-all hover:bg-[#1e2e26]">
+          {subjectData.map((sub, i) => (
+            <div key={i} className="flex flex-col justify-between bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 transition-all hover:bg-[#1e2e26]">
               <div className="flex justify-between items-start mb-3">
                 <p className="font-bold text-slate-200 text-sm leading-tight">{sub.name}</p>
                 <div className="bg-[#0e1710] rounded-full p-1 border border-slate-800 shadow-sm">

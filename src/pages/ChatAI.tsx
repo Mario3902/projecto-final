@@ -3,6 +3,7 @@ import { Send, Bot, User, Home, Check, Trophy, Briefcase, BookOpen } from "lucid
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { chatWithNzila } from "@/lib/gemini";
+import { api } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -30,13 +31,35 @@ const getWelcomeMessage = () => {
 };
 
 const ChatAI = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: getWelcomeMessage() },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+
+  useEffect(() => {
+    async function loadChat() {
+      if (!localStorage.getItem("nzila_token")) return;
+      try {
+        const history = await api.getChatHistory();
+        if (history.length > 0) {
+          // Map DB assistant back to local assistant if needed, though they match
+          setMessages(history.map((m: any) => ({ 
+             role: m.role === "assistant" || m.role === "model" ? "assistant" : "user", 
+             content: m.content 
+          })));
+        } else {
+          // Initialize first welcome message
+          const welcome = getWelcomeMessage();
+          setMessages([{ role: "assistant", content: welcome }]);
+          await api.saveChatMessage({ role: "assistant", content: welcome });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar chat", error);
+      }
+    }
+    loadChat();
+  }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,23 +72,30 @@ const ChatAI = () => {
     setInput("");
     setIsTyping(true);
 
-    // Format history for Gemini
-    const history = messages.slice(1).map(m => ({
-      role: m.role === "user" ? "user" : "model",
-      parts: [{ text: m.content }]
-    })) as { role: "user" | "model", parts: { text: string }[] }[];
+    try {
+      // Save User Message to DB
+      await api.saveChatMessage({ role: "user", content: text.trim() });
 
-    // Fetch response from Gemini
-    const responseText = await chatWithNzila(text.trim(), history);
+      // Format history for Gemini (max 10 interactions to avoid token limits)
+      const recentMessages = messages.slice(-10);
+      const history = recentMessages.filter(m => m.content).map(m => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: [{ text: m.content }]
+      })) as { role: "user" | "model", parts: { text: string }[] }[];
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content: responseText,
-      },
-    ]);
-    setIsTyping(false);
+      // Fetch response from Gemini
+      const responseText = await chatWithNzila(text.trim(), history);
+
+      setMessages((prev) => [...prev, { role: "assistant", content: responseText }]);
+      
+      // Save AI Message to DB
+      await api.saveChatMessage({ role: "assistant", content: responseText });
+
+    } catch (e) {
+      console.error("Erro ao comunicar com a IA", e);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const bottomNavItems = [

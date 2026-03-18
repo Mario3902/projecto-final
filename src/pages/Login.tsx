@@ -1,30 +1,51 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast({ title: "Preencha todos os campos", variant: "destructive" });
+    if (!name || !password) {
+      toast({ title: "Preencha todos os campos obrígatórios.", variant: "destructive" });
       return;
     }
+    
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // In this version the "email" field serves as the user's name for login
+      // as our simplistic backend uses "name" to identify users.
+      const resp = await api.login({ name, password });
+      
+      localStorage.setItem("nzila_token", resp.token);
+      localStorage.setItem("userName", resp.user.name);
+
+      // Fetch and cache the full profile (course, goal, etc.) for other pages
+      try {
+        const profile = await api.getProfile();
+        localStorage.setItem("nzila_profile", JSON.stringify(profile));
+      } catch (e) {
+        console.warn("Perfil não carregado após login:", e);
+      }
+      
+      toast({ title: "Bem-vindo de volta! 👋", variant: "default" });
       navigate("/dashboard");
-    }, 800);
+    } catch (err: any) {
+      toast({ title: "Acesso negado", description: err.message, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,12 +86,12 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                type="email"
-                placeholder="Seu email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text"
+                placeholder="O teu nome de utilizador"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="pl-11 h-12 bg-muted/50 border-border"
               />
             </div>
