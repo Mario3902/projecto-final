@@ -9,6 +9,24 @@ interface Task {
     date: string;
 }
 
+interface PomodoroSession {
+    id: number;
+    subject_id?: number;
+    subject_name: string;
+    topic: string;
+    duration_minutes: number;
+    xp_earned: number;
+    date: string;
+    time: string;
+}
+
+interface PomodoroDayStat {
+    date: string;
+    total_minutes: number;
+    sessions_count: number;
+    total_xp: number;
+}
+
 interface GameContextType {
     xp: number;
     level: number;
@@ -17,12 +35,18 @@ interface GameContextType {
     quizzesCompleted: number;
     studyHours: number;
     performanceData: { materia: string; nota: number }[];
+    pomodoroSessions: PomodoroSession[];
+    pomodoroCalendar: PomodoroDayStat[];
+    pomodoroStats: { total_sessions: number; total_minutes: number; today_sessions: number; today_minutes: number } | null;
+    
     addXP: (amount: number, reason: string) => Promise<void>;
     addTask: (title: string, date?: string) => Promise<void>;
     toggleTask: (id: number) => Promise<void>;
     deleteTask: (id: number) => Promise<void>;
     completeQuiz: (score: number, total: number) => Promise<void>;
     addStudyTime: (minutes: number) => Promise<void>;
+    savePomodoroSession: (subject_id: number | undefined, subject_name: string, topic: string, duration: number, xp: number) => Promise<void>;
+    loadPomodoroData: (date?: string) => Promise<void>;
     isLoading: boolean;
 }
 
@@ -36,6 +60,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [quizzesCompleted, setQuizzesCompleted] = useState<number>(0);
     const [studyHours, setStudyHours] = useState<number>(0);
     const [performanceData, setPerformanceData] = useState<{materia: string; nota: number}[]>([]);
+    
+    const [pomodoroSessions, setPomodoroSessions] = useState<PomodoroSession[]>([]);
+    const [pomodoroCalendar, setPomodoroCalendar] = useState<PomodoroDayStat[]>([]);
+    const [pomodoroStats, setPomodoroStats] = useState<any>(null);
+    
     const [isLoading, setIsLoading] = useState(true);
 
     const loadData = async () => {
@@ -56,6 +85,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const perf = await api.getPerformance();
             const pData = perf.grades.map((g: any) => ({ materia: g.subject_name.substring(0,4), nota: g.grade }));
             setPerformanceData(pData);
+
+            // Load Pomodoro data
+            await loadPomodoroData();
 
             // Cache profile for Quizzes/Carreira/ChatAI pages
             try {
@@ -161,6 +193,37 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (e) { toast.error("Erro ao guardar estudo."); }
     };
 
+    const loadPomodoroData = async (date?: string) => {
+        try {
+            const sessions = await api.getPomodoroSessions(date);
+            if (!date) setPomodoroSessions(sessions);
+            
+            const calendar = await api.getPomodoroCalendar();
+            setPomodoroCalendar(calendar);
+            
+            const stats = await api.getPomodoroStats();
+            setPomodoroStats(stats);
+        } catch (e) { console.error("Erro ao carregar dados pomodoro", e); }
+    };
+
+    const savePomodoroSession = async (subject_id: number | undefined, subject_name: string, topic: string, duration: number, xp: number) => {
+        try {
+            await api.savePomodoroSession({
+                subject_id,
+                subject_name,
+                topic,
+                duration_minutes: duration,
+                xp_earned: xp
+            });
+            await loadPomodoroData(); // Refresh calendar and stats
+            addStudyTime(duration);
+            addXP(xp, "Sessão Pomodoro Concluída!");
+            toast.success("Sessão guardada com sucesso! 🍅");
+        } catch (e) {
+            toast.error("Erro ao guardar sessão.");
+        }
+    };
+
     return (
         <GameContext.Provider
             value={{
@@ -171,12 +234,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 quizzesCompleted,
                 studyHours,
                 performanceData,
+                pomodoroSessions,
+                pomodoroCalendar,
+                pomodoroStats,
                 addXP,
                 addTask,
                 toggleTask,
                 deleteTask,
                 completeQuiz,
                 addStudyTime,
+                savePomodoroSession,
+                loadPomodoroData,
                 isLoading
             }}
         >

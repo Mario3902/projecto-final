@@ -129,3 +129,19 @@ CREATE TABLE IF NOT EXISTS vocational_results (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- -------------------------------------------------------------
+-- 10. SESSÕES POMODORO
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS pomodoro_sessions (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  user_id          INT NOT NULL,
+  subject_id       INT,
+  subject_name     VARCHAR(120) DEFAULT 'Estudo Livre',
+  topic            VARCHAR(255),
+  duration_minutes INT DEFAULT 25,
+  xp_earned        INT DEFAULT 25,
+  completed_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL
+);
+

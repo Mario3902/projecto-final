@@ -209,4 +209,39 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+
+  // Pomodoro
+  savePomodoroSession: async (data: { subject_id?: number; subject_name?: string; topic?: string; duration_minutes: number; xp_earned: number }) => {
+    const res = await fetch(`${API_URL}/pomodoro`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  getPomodoroSessions: async (date?: string) => {
+    let url = `${API_URL}/pomodoro`;
+    if (date) url += `?date=${encodeURIComponent(date)}`;
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  getPomodoroCalendar: async (year?: number, month?: number) => {
+    let url = `${API_URL}/pomodoro/calendar`;
+    const params = new URLSearchParams();
+    if (year) params.append("year", year.toString());
+    if (month) params.append("month", month.toString());
+    if (params.toString()) url += `?${params.toString()}`;
+    
+    const res = await fetch(url, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  getPomodoroStats: async () => {
+    const res = await fetch(`${API_URL}/pomodoro/stats`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 };
+
