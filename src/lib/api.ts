@@ -135,6 +135,15 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+  updateSubject: async (id: number, data: { name?: string; emoji?: string }) => {
+    const res = await fetch(`${API_URL}/subjects/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 
   // Performance
   getPerformance: async () => {
@@ -189,6 +198,15 @@ export const api = {
     const res = await fetch(`${API_URL}/subjects/materials/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  updateMaterial: async (id: string | number, data: { title?: string; type?: string; content?: string }) => {
+    const res = await fetch(`${API_URL}/subjects/materials/${id}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error(await res.text());
     return res.json();

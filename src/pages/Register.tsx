@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { useGame } from "@/context/GameContext";
 
 const INTERESTS = [
   "Tecnologia",
@@ -25,6 +26,7 @@ const INTERESTS = [
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { reloadGameData } = useGame();
   
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -73,6 +75,8 @@ const Register = () => {
       localStorage.setItem("nzila_token", resp.token);
       localStorage.setItem("userName", resp.user.name);
       
+      await reloadGameData();
+
       toast({ title: "Conta criada com sucesso! 🎉", variant: "default" });
       navigate("/dashboard");
     } catch (err: any) {

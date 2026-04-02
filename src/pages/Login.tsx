@@ -7,9 +7,12 @@ import Logo from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 
+import { useGame } from "@/context/GameContext";
+
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { reloadGameData } = useGame();
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -39,6 +42,8 @@ const Login = () => {
         console.warn("Perfil não carregado após login:", e);
       }
       
+      await reloadGameData();
+
       toast({ title: "Bem-vindo de volta! 👋", variant: "default" });
       navigate("/dashboard");
     } catch (err: any) {

@@ -48,6 +48,29 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
+// Update subject (rename, emoji)
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, emoji } = req.body;
+    
+    const fields = [];
+    const values = [];
+    if (name !== undefined)  { fields.push("name = ?");  values.push(name); }
+    if (emoji !== undefined) { fields.push("emoji = ?"); values.push(emoji); }
+    if (fields.length === 0) return res.status(400).json({ error: "Nada para atualizar." });
+    
+    values.push(id, req.user.id);
+    const [result] = await db.query(`UPDATE subjects SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`, values);
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Disciplina não encontrada." });
+    
+    res.json({ success: true, id: parseInt(id), name, emoji });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar disciplina." });
+  }
+});
+
 // Delete subject
 router.delete("/:id", auth, async (req, res) => {
   try {
@@ -79,6 +102,37 @@ router.post("/:subjectId/materials", auth, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao adicionar material." });
+  }
+});
+
+// Update Material
+router.put("/materials/:id", auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, type, content } = req.body;
+    
+    const fields = [];
+    const values = [];
+    if (title !== undefined)   { fields.push("name = ?");    values.push(title); }
+    if (type !== undefined)    { fields.push("type = ?");    values.push(type); }
+    if (content !== undefined) { fields.push("content = ?"); values.push(content); }
+    if (fields.length === 0) return res.status(400).json({ error: "Nada para atualizar." });
+    
+    // Verify ownership through subject -> user
+    values.push(id, req.user.id);
+    const [result] = await db.query(
+      `UPDATE subject_materials sm
+       JOIN subjects s ON sm.subject_id = s.id
+       SET ${fields.map(f => "sm." + f).join(", ")}
+       WHERE sm.id = ? AND s.user_id = ?`,
+      values
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ error: "Material não encontrado." });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao atualizar material." });
   }
 });
 

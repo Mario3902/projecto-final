@@ -47,6 +47,7 @@ interface GameContextType {
     addStudyTime: (minutes: number) => Promise<void>;
     savePomodoroSession: (subject_id: number | undefined, subject_name: string, topic: string, duration: number, xp: number) => Promise<void>;
     loadPomodoroData: (date?: string) => Promise<void>;
+    reloadGameData: () => Promise<void>;
     isLoading: boolean;
 }
 
@@ -90,17 +91,37 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await loadPomodoroData();
 
             // Cache profile for Quizzes/Carreira/ChatAI pages
+            let userProfile = null;
             try {
-                const profile = await api.getProfile();
-                localStorage.setItem("nzila_profile", JSON.stringify(profile));
-                localStorage.setItem("userName", profile.name || "Estudante");
+                userProfile = await api.getProfile();
+                localStorage.setItem("nzila_profile", JSON.stringify(userProfile));
+                localStorage.setItem("userName", userProfile.name || "Estudante");
             } catch (e) { console.warn("Profile fetch failed:", e); }
 
             // Cache subjects for Quizzes "Para Ti" and "Matérias" sections
             try {
                 const subjects = await api.getSubjects();
                 if (subjects && subjects.length > 0) {
-                    const courseData = { subjects: subjects.map((s: any) => ({ id: s.id, name: s.name, emoji: s.emoji || "📚", materials: [] })) };
+                    const formattedSubjects = subjects.map((s: any) => ({ 
+                        id: s.id.toString(), 
+                        name: s.name, 
+                        emoji: s.emoji || "📚", 
+                        materials: s.materials ? s.materials.map((m: any) => ({
+                             id: m.id.toString(),
+                             name: m.title,
+                             type: m.type,
+                             content: m.content,
+                             addedAt: new Date(m.created_at).toLocaleDateString("pt-PT"),
+                             fileName: m.is_link ? m.content : undefined
+                        })) : []
+                    }));
+                    
+                    const courseData = { 
+                        courseId: "custom", 
+                        courseName: userProfile?.course || "O meu Curso", 
+                        ano: userProfile?.year || "10º Ano", 
+                        subjects: formattedSubjects 
+                    };
                     localStorage.setItem("nzila_course_data", JSON.stringify(courseData));
                 }
             } catch (e) { console.warn("Subjects fetch failed:", e); }
@@ -110,6 +131,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const reloadGameData = async () => {
+        setIsLoading(true);
+        await loadData();
     };
 
     useEffect(() => {
@@ -245,6 +271,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 addStudyTime,
                 savePomodoroSession,
                 loadPomodoroData,
+                reloadGameData,
                 isLoading
             }}
         >

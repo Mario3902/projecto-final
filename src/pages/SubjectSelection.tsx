@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
   BookOpen, Check, ChevronRight, Plus, Trash2, Home, Bot, User,
-  Upload, FileText, Star, GraduationCap, ArrowLeft, X,
+  Upload, FileText, Star, GraduationCap, ArrowLeft, X, Edit3, Save,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api";
@@ -191,10 +191,11 @@ const SubjectSelection = () => {
              fileName: m.is_link ? m.content : undefined
            }))
          }));
-         
          const parsed: CourseData = { courseId: userCourseId, courseName: userCourseName, ano: profile?.year || anos[0], subjects: formattedSubjects };
          
          setCourseData(parsed);
+         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+         
          if (formattedSubjects.length > 0 && !activeSubjectId) {
             setActiveSubjectId(formattedSubjects[0].id);
          }
@@ -222,6 +223,11 @@ const SubjectSelection = () => {
   // Trimestral grades UI
   const [activeTrimester, setActiveTrimester] = useState<"T1"|"T2"|"T3">("T1");
   const [customSubName, setCustomSubName] = useState("");
+
+  // Edit Subject Modal State
+  const [editingSubject, setEditingSubject] = useState<{ id: string; name: string; emoji: string } | null>(null);
+  // Edit Material Modal State
+  const [editingMaterial, setEditingMaterial] = useState<{ id: string; name: string; type: string } | null>(null);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
   const activeSubject = courseData?.subjects.find((s) => s.id === activeSubjectId);
@@ -266,11 +272,33 @@ const SubjectSelection = () => {
   };
 
   const deleteMaterial = async (matId: string) => {
+     try {
+       await api.deleteMaterial(matId);
+       await syncWithBackend();
+       toast({ title: "Material apagado!", variant: "default" });
+     } catch(e){ toast({ title: "Erro ao apagar", variant: "destructive" }); }
+  };
+
+  const saveEditSubject = async () => {
+    if (!editingSubject) return;
     try {
-      await api.deleteMaterial(matId);
+      await api.updateSubject(Number(editingSubject.id), { name: editingSubject.name, emoji: editingSubject.emoji });
+      setEditingSubject(null);
       await syncWithBackend();
-      toast({ title: "Material apagado!", variant: "default" });
-    } catch(e){ toast({ title: "Erro ao apagar", variant: "destructive" }); }
+      toast({ title: "Disciplina atualizada! ✅" });
+    } catch (e) {
+      toast({ title: "Erro ao atualizar disciplina", variant: "destructive" });
+    }
+  };
+
+  const saveEditMaterial = async () => {
+    if (!editingMaterial) return;
+    try {
+      await api.updateMaterial(editingMaterial.id, { title: editingMaterial.name, type: editingMaterial.type as any });
+      setEditingMaterial(null);
+      await syncWithBackend();
+       toast({ title: "Material atualizado! ✅" });
+     } catch(e){ toast({ title: "Erro ao atualizar material", variant: "destructive" }); }
   };
 
   const saveTrimesterGrade = async (testType: "p1" | "p2", nota: number) => {
@@ -347,7 +375,8 @@ const SubjectSelection = () => {
             <button
               key={sub.id}
               onClick={() => setActiveSubjectId(sub.id)}
-              className={`shrink-0 flex flex-col items-center justify-center gap-2 w-20 p-2.5 rounded-2xl transition-all snap-start ${activeSubjectId === sub.id
+              onDoubleClick={() => setEditingSubject({ id: sub.id, name: sub.name, emoji: sub.emoji })}
+              className={`shrink-0 flex flex-col items-center justify-center gap-2 w-20 p-2.5 rounded-2xl transition-all snap-start relative ${activeSubjectId === sub.id
                 ? "bg-[#4ade80] text-[#0e1710] shadow-[0_5px_15px_rgba(74,222,128,0.2)]"
                 : "bg-[#141e16] border border-slate-800 text-slate-400 hover:border-[#254238]"
                 }`}
@@ -361,6 +390,15 @@ const SubjectSelection = () => {
                 }`}>
                   {sub.materials.length}
                 </span>
+              )}
+              {/* Edit indicator */}
+              {activeSubjectId === sub.id && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditingSubject({ id: sub.id, name: sub.name, emoji: sub.emoji }); }}
+                  className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-[#0e1710] border border-[#4ade80] flex items-center justify-center"
+                >
+                  <Edit3 className="h-2.5 w-2.5 text-[#4ade80]" />
+                </button>
               )}
             </button>
           ))}
@@ -476,12 +514,20 @@ const SubjectSelection = () => {
                             <span className="text-[10px] font-medium text-slate-500">{mat.addedAt}</span>
                           </div>
                         </div>
-                        <button
-                          onClick={() => deleteMaterial(mat.id)}
-                          className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors shrink-0"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            onClick={() => setEditingMaterial({ id: mat.id, name: mat.name, type: mat.type })}
+                            className="w-8 h-8 rounded-full bg-[#4ade80]/10 text-[#4ade80] flex items-center justify-center hover:bg-[#4ade80] hover:text-[#0e1710] transition-colors"
+                          >
+                            <Edit3 className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => deleteMaterial(mat.id)}
+                            className="w-8 h-8 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                       
                       {mat.fileName && (
@@ -636,6 +682,94 @@ const SubjectSelection = () => {
         )}
       </div>
       {renderBottomNav()}
+
+      {/* ── EDIT SUBJECT MODAL ── */}
+      {editingSubject && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingSubject(null)}>
+          <div className="bg-[#141e16] border-t border-[#254238] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-white">Editar Disciplina</h3>
+              <button onClick={() => setEditingSubject(null)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Nome da Disciplina</label>
+                <input
+                  type="text"
+                  value={editingSubject.name}
+                  onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
+                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Emoji</label>
+                <input
+                  type="text"
+                  value={editingSubject.emoji}
+                  onChange={(e) => setEditingSubject({ ...editingSubject, emoji: e.target.value })}
+                  className="w-20 bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-xl text-center text-white focus:border-[#4ade80] outline-none"
+                />
+              </div>
+              <button
+                onClick={saveEditSubject}
+                className="w-full py-4 bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                <Save className="h-5 w-5 stroke-[3]" /> Guardar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT MATERIAL MODAL ── */}
+      {editingMaterial && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingMaterial(null)}>
+          <div className="bg-[#141e16] border-t border-[#254238] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-white">Editar Material</h3>
+              <button onClick={() => setEditingMaterial(null)} className="text-slate-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Título do Material</label>
+                <input
+                  type="text"
+                  value={editingMaterial.name}
+                  onChange={(e) => setEditingMaterial({ ...editingMaterial, name: e.target.value })}
+                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tipo</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {materialTypes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setEditingMaterial({ ...editingMaterial, type: t.id })}
+                      className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-colors border ${editingMaterial.type === t.id
+                        ? "bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]"
+                        : "bg-[#0e1710] border-slate-800 text-slate-400 hover:border-slate-600"
+                        }`}
+                    >
+                      {t.emoji} {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={saveEditMaterial}
+                className="w-full py-4 bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                <Save className="h-5 w-5 stroke-[3]" /> Guardar Alterações
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
