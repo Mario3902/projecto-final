@@ -19,6 +19,7 @@ import SubjectSelection from "./pages/SubjectSelection";
 import NotFound from "./pages/NotFound";
 import Ranking from "./pages/Ranking";
 import Carreira from "./pages/Carreira";
+import AcademicCalendar from "./pages/AcademicCalendar";
 import { GameProvider } from "./context/GameContext";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/dashboard/subjects" element={<SubjectSelection />} />
             <Route path="/dashboard/ranking" element={<Ranking />} />
             <Route path="/dashboard/carreira" element={<Carreira />} />
+            <Route path="/dashboard/calendar" element={<AcademicCalendar />} />
             <Route path="*" element={<NotFound />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -533,77 +533,131 @@ const Profile = () => {
 
         {/* ══════════════════  TAB: BOLETIM  ══════════════════ */}
         {activeTab === "boletim" && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="bg-[#141e16] border border-[#254238]/60 p-4 rounded-3xl shadow-lg">
-              <h3 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-[#4ade80]" /> Boletim Escolar Completo
-              </h3>
-              <p className="text-[10px] text-slate-500 font-bold mb-5">
-                Edita as notas diretamente. Guarda automaticamente ao saíres do campo.
+          <div className="space-y-5 animate-fade-in">
+
+            {/* Header Card */}
+            <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-[#4ade80]" /> Boletim Escolar
+                </h3>
+                <span className="text-[10px] font-bold text-slate-500 bg-[#0e1710] border border-slate-800 px-2.5 py-1 rounded-lg">
+                  {profile.year || "Ano Lectivo"}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Edita as notas diretamente — guarda automaticamente.
               </p>
-
-              {subjects.length === 0 ? (
-                <div className="text-center py-8 border border-slate-800 border-dashed rounded-2xl">
-                  <p className="text-sm text-slate-400 font-bold">Nenhuma disciplina configurada.</p>
-                  <Link to="/dashboard/subjects" className="text-[#4ade80] text-xs font-bold mt-2 inline-block">
-                    Configurar Disciplinas →
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="grid grid-cols-[1fr_repeat(6,40px)] gap-1 text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">
-                    <div className="text-left pl-2">Disciplina</div>
-                    <div>T1 P1</div>
-                    <div>T1 P2</div>
-                    <div>T2 P1</div>
-                    <div>T2 P2</div>
-                    <div>T3 P1</div>
-                    <div>T3 P2</div>
-                  </div>
-
-                  {/* Rows */}
-                  {subjects.map((sub: any) => (
-                    <div
-                      key={sub.id}
-                      className="grid grid-cols-[1fr_repeat(6,40px)] gap-1 items-center bg-[#0e1710] rounded-xl p-2 border border-slate-800/50 hover:border-[#254238] transition-colors"
-                    >
-                      <div className="flex items-center gap-2 pl-1 min-w-0">
-                        <span className="text-sm">{sub.emoji}</span>
-                        <span className="text-[11px] font-bold text-white truncate">{sub.name}</span>
-                      </div>
-                      {(["T1", "T2", "T3"] as const).map(tri =>
-                        (["p1", "p2"] as const).map(test => {
-                          const existing = getGrade(sub.id, tri, test);
-                          return (
-                            <input
-                              key={`${sub.id}-${tri}-${test}`}
-                              type="number"
-                              min={0}
-                              max={20}
-                              defaultValue={existing}
-                              placeholder="-"
-                              onBlur={(e) => {
-                                const val = parseFloat(e.target.value);
-                                if (!isNaN(val) && val >= 0 && val <= 20) {
-                                  handleGradeSave(sub.id, tri, test, val);
-                                }
-                              }}
-                              className={`w-10 h-9 text-center text-sm font-black bg-transparent border rounded-lg outline-none transition-colors ${existing
-                                  ? parseFloat(existing) >= 14 ? "border-[#4ade80]/30 text-[#4ade80]"
-                                    : parseFloat(existing) >= 10 ? "border-yellow-500/30 text-yellow-500"
-                                      : "border-red-500/30 text-red-400"
-                                  : "border-slate-700 text-slate-300"
-                                } focus:border-[#4ade80]`}
-                            />
-                          );
-                        })
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
+
+            {subjects.length === 0 ? (
+              <div className="text-center py-10 border border-slate-800 border-dashed rounded-3xl bg-[#141e16]">
+                <BookOpen className="h-8 w-8 text-slate-600 mx-auto mb-3" />
+                <p className="text-sm text-slate-400 font-bold mb-2">Nenhuma disciplina configurada.</p>
+                <Link to="/dashboard/subjects" className="text-[#4ade80] text-xs font-bold hover:underline">
+                  Configurar Disciplinas →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {subjects.map((sub: any) => {
+                  const getAvg = (tri: string) => {
+                    const p1 = getGrade(sub.id, tri, "p1");
+                    const p2 = getGrade(sub.id, tri, "p2");
+                    const vals = [p1, p2].filter(v => v !== "").map(Number);
+                    if (vals.length === 0) return null;
+                    return (vals.reduce((a: number, b: number) => a + b, 0) / vals.length).toFixed(1);
+                  };
+                  const t1Avg = getAvg("T1");
+                  const t2Avg = getAvg("T2");
+                  const t3Avg = getAvg("T3");
+                  const allAvgs = [t1Avg, t2Avg, t3Avg].filter(v => v !== null).map(Number);
+                  const finalAvg = allAvgs.length > 0
+                    ? (allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length).toFixed(1)
+                    : null;
+                  const gradeColor = (val: number | null) => {
+                    if (val === null) return "text-slate-500";
+                    if (val >= 14) return "text-[#4ade80]";
+                    if (val >= 10) return "text-yellow-500";
+                    return "text-red-400";
+                  };
+                  const inputColor = (val: string) => {
+                    if (!val) return "border-slate-700/50 text-slate-300";
+                    const n = parseFloat(val);
+                    if (n >= 14) return "border-[#4ade80]/30 text-[#4ade80]";
+                    if (n >= 10) return "border-yellow-500/30 text-yellow-500";
+                    return "border-red-500/30 text-red-400";
+                  };
+
+                  return (
+                    <div key={sub.id} className="bg-[#141e16] border border-slate-800/60 rounded-2xl overflow-hidden shadow-lg">
+                      {/* Subject header */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/40">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-lg">{sub.emoji}</span>
+                          <span className="text-sm font-bold text-white">{sub.name}</span>
+                        </div>
+                        {finalAvg !== null && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Média</span>
+                            <span className={`text-lg font-black ${gradeColor(Number(finalAvg))}`}>
+                              {finalAvg}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Trimesters grid */}
+                      <div className="grid grid-cols-3 divide-x divide-slate-800/40">
+                        {(["T1", "T2", "T3"] as const).map((tri, triIdx) => {
+                          const avg = [t1Avg, t2Avg, t3Avg][triIdx];
+                          return (
+                            <div key={tri} className="p-3">
+                              <div className="flex items-center justify-between mb-2.5">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                                  {triIdx + 1}º Trim
+                                </span>
+                                {avg !== null && (
+                                  <span className={`text-[11px] font-black ${gradeColor(Number(avg))}`}>
+                                    {avg}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                {(["p1", "p2"] as const).map(test => {
+                                  const existing = getGrade(sub.id, tri, test);
+                                  return (
+                                    <div key={`${sub.id}-${tri}-${test}`} className="flex items-center gap-2">
+                                      <span className="text-[9px] font-bold text-slate-600 uppercase w-5 shrink-0">
+                                        {test.toUpperCase()}
+                                      </span>
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={20}
+                                        defaultValue={existing}
+                                        placeholder="—"
+                                        onBlur={(e) => {
+                                          const val = parseFloat(e.target.value);
+                                          if (!isNaN(val) && val >= 0 && val <= 20) {
+                                            handleGradeSave(sub.id, tri, test, val);
+                                          }
+                                        }}
+                                        className={`w-full h-9 text-center text-sm font-black bg-[#0e1710] border rounded-lg outline-none transition-colors focus:border-[#4ade80] ${inputColor(existing)}`}
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Vocational */}
             <div className="bg-gradient-to-br from-[#141e16] to-[#1e2e26] border border-[#254238]/80 p-6 rounded-3xl shadow-lg relative overflow-hidden group">

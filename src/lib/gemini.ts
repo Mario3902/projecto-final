@@ -50,6 +50,23 @@ export const buildStudentContext = async (): Promise<string> => {
             lines.push(`Tarefas: ${done} concluídas de ${tasks.length} total`);
         }
 
+        // Academic Calendar — upcoming events so Nzila can recommend study focus
+        try {
+            const upcoming = await api.getUpcomingEvents();
+            if (upcoming && upcoming.length > 0) {
+                lines.push("\nEventos académicos próximos (próximos 7 dias):");
+                upcoming.forEach((ev: any) => {
+                    const d = new Date(ev.event_date.split("T")[0] + "T00:00:00");
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                    const when = diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `em ${diffDays} dias`;
+                    const subj = ev.subject_name ? ` (${ev.subject_name})` : "";
+                    lines.push(`  📅 ${ev.title}${subj} — ${when} (${ev.event_type})`);
+                });
+                lines.push("IMPORTANTE: Usa esta informação para recomendar ao aluno o que deve estudar com prioridade.");
+            }
+        } catch { /* calendar not available yet */ }
+
         return lines.length > 0
             ? lines.join("\n")
             : "Perfil ainda não configurado — pede ao aluno para completar o perfil.";
@@ -189,6 +206,25 @@ export const generatePersonalStats = async (
         return data.stats ?? null;
     } catch (error: any) {
         console.error("Personal Stats Error:", error);
+        return null;
+    }
+};
+
+// Utility: Parse Academic Calendar from PDF text
+export const parseCalendarFromText = async (
+    text: string
+): Promise<{ title: string; event_date: string; event_type: string; subject_name: string }[] | null> => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/parse-calendar`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.events ?? null;
+    } catch (error: any) {
+        console.error("Parse Calendar Error:", error);
         return null;
     }
 };

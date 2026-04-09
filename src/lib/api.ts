@@ -261,5 +261,34 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+
+  // Calendar
+  getCalendarEvents: async () => {
+    const res = await fetch(`${API_URL}/calendar`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  getUpcomingEvents: async () => {
+    const res = await fetch(`${API_URL}/calendar/upcoming`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  submitCalendar: async (events: { title: string; event_date: string; event_type: string; subject_name?: string; description?: string }[]) => {
+    const res = await fetch(`${API_URL}/calendar/bulk`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ events }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  clearCalendar: async () => {
+    const res = await fetch(`${API_URL}/calendar/all`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 };
 

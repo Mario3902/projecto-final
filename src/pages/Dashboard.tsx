@@ -1,15 +1,23 @@
+import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { 
   Sparkles, MessageCircle, TrendingUp, ChevronRight, Zap, Target, 
-  Clock, BookOpen, Bot, View, Home, Check, Trophy, Briefcase, User 
+  Clock, BookOpen, Bot, View, Home, Check, Trophy, Briefcase, User,
+  Calendar, FileText, AlertCircle
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useGame } from "@/context/GameContext";
+import { api } from "@/lib/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { xp, level, streak, quizzesCompleted, studyHours, performanceData } = useGame();
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+
+  useEffect(() => {
+    api.getUpcomingEvents().then(setUpcomingEvents).catch(() => {});
+  }, []);
 
   const averageAvg = performanceData.length > 0
     ? (performanceData.reduce((acc, curr) => acc + curr.nota, 0) / performanceData.length).toFixed(1)
@@ -155,6 +163,30 @@ const Dashboard = () => {
             </div>
           </button>
         </div>
+
+        {/* ── Calendar Card ── */}
+        <button
+          onClick={() => navigate("/dashboard/calendar")}
+          className="w-full text-left bg-[#141e16] border border-slate-800/60 p-5 rounded-2xl hover:border-[#4ade80]/40 transition-colors group mb-6"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-[#1e2e26] border border-slate-700/50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-[#4ade80]/10 transition-colors">
+              <Calendar className="h-6 w-6 text-[#4ade80]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-[15px] text-white mb-0.5">Calendário Acadêmico</p>
+              {upcomingEvents.length > 0 ? (
+                <p className="text-xs text-slate-400 font-medium truncate">
+                  📅 {upcomingEvents[0].title}
+                  {upcomingEvents.length > 1 ? ` +${upcomingEvents.length - 1} eventos` : ""}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-500 font-medium">Submete o teu calendário escolar</p>
+              )}
+            </div>
+            <ChevronRight className="h-5 w-5 text-slate-600 ml-auto" />
+          </div>
+        </button>
 
         {/* ── Bottom Mini Stats ── */}
         <div className="grid grid-cols-2 gap-3 mb-4">
