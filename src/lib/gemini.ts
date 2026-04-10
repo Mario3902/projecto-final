@@ -63,9 +63,29 @@ export const buildStudentContext = async (): Promise<string> => {
                     const subj = ev.subject_name ? ` (${ev.subject_name})` : "";
                     lines.push(`  📅 ${ev.title}${subj} — ${when} (${ev.event_type})`);
                 });
-                lines.push("IMPORTANTE: Usa esta informação para recomendar ao aluno o que deve estudar com prioridade.");
             }
         } catch { /* calendar not available yet */ }
+
+        // Weekly Schedule — today's classes
+        try {
+            const schedule = await api.getSchedule();
+            if (schedule && schedule.length > 0) {
+                const todayDowIndex = new Date().getDay(); // 0 = Sun, 1 = Mon...
+                const DOW_MAP = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+                const todayStr = DOW_MAP[todayDowIndex];
+                
+                const todaysClasses = schedule.filter((c: any) => c.day_of_week === todayStr);
+                
+                if (todaysClasses.length > 0) {
+                    lines.push(`\nAulas que o aluno teve (ou vai ter) HOJE (${todayStr}):`);
+                    todaysClasses.forEach((c: any) => {
+                        lines.push(`  ⏰ ${c.start_time} - ${c.end_time}: ${c.subject_name}`);
+                    });
+                }
+            }
+        } catch { /* schedule not available yet */ }
+
+        lines.push("\nIMPORTANTE: cruza a informação das aulas de hoje com as provas que se aproximam para sugerir ao aluno o que ele deve estudar no Planner (método Pomodoro).");
 
         return lines.length > 0
             ? lines.join("\n")
@@ -210,21 +230,61 @@ export const generatePersonalStats = async (
     }
 };
 
+// Utility: Generate Study Suggestions based on Context
+export const generateStudySuggestions = async (contextText: string) => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-study-suggestions`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ context: contextText }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.suggestions ?? [];
+    } catch (error: any) {
+        console.error("Study Suggestions Error:", error);
+        return [];
+    }
+};
+
 // Utility: Parse Academic Calendar from PDF text
 export const parseCalendarFromText = async (
-    text: string
+    text: string | null,
+    pdfBase64?: string
 ): Promise<{ title: string; event_date: string; event_type: string; subject_name: string }[] | null> => {
     try {
+        const payload = Object.assign({}, text ? { text } : null, pdfBase64 ? { pdfBase64 } : null);
         const res = await fetch(`${PROXY_URL}/api/parse-calendar`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify(payload),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         return data.events ?? null;
     } catch (error: any) {
         console.error("Parse Calendar Error:", error);
+        return null;
+    }
+};
+
+// Utility: Parse Weekly Schedule from PDF text
+export const parseScheduleFromText = async (
+    text: string | null,
+    pdfBase64?: string
+): Promise<{ day_of_week: string; start_time: string; end_time: string; subject_name: string }[] | null> => {
+    try {
+        const payload = Object.assign({}, text ? { text } : null, pdfBase64 ? { pdfBase64 } : null);
+        const res = await fetch(`${PROXY_URL}/api/parse-schedule`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.classes ?? null;
+    } catch (error: any) {
+        console.error("Parse Schedule Error:", error);
         return null;
     }
 };

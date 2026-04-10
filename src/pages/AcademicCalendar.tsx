@@ -6,7 +6,7 @@ import {
   FileText, GraduationCap, PartyPopper, Flag, Upload, Sparkles, Loader2
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { parseCalendarFromText } from "@/lib/gemini";
+import { parseCalendarFromText, parseScheduleFromText } from "@/lib/gemini";
 import { toast } from "sonner";
 
 interface CalendarEvent {
@@ -23,6 +23,22 @@ interface DraftEvent {
   title: string;
   event_date: string;
   event_type: "prova" | "entrega" | "feriado" | "evento" | "outro";
+  subject_name: string;
+}
+
+interface ScheduleBlock {
+  id?: number;
+  day_of_week: "Seg" | "Ter" | "Qua" | "Qui" | "Sex" | "Sab" | "Dom";
+  start_time: string;
+  end_time: string;
+  subject_name: string;
+}
+
+interface DraftClass {
+  uid: string;
+  day_of_week: "Seg" | "Ter" | "Qua" | "Qui" | "Sex" | "Sab" | "Dom";
+  start_time: string;
+  end_time: string;
   subject_name: string;
 }
 
@@ -62,6 +78,18 @@ const AcademicCalendar = () => {
   const [drafts, setDrafts] = useState<DraftEvent[]>([
     { uid: crypto.randomUUID(), title: "", event_date: "", event_type: "prova", subject_name: "" }
   ]);
+  
+  // Weekly Schedule State
+  const [activeTab, setActiveTab] = useState<"aulas" | "provas">("aulas");
+  const [schedule, setSchedule] = useState<ScheduleBlock[]>([]);
+  const [hasSchedule, setHasSchedule] = useState(false);
+  const [isParsingSchedule, setIsParsingSchedule] = useState(false);
+  const [schedulePdfName, setSchedulePdfName] = useState<string | null>(null);
+  const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
+  const scheduleFileInputRef = useRef<HTMLInputElement>(null);
+  const [draftClasses, setDraftClasses] = useState<DraftClass[]>([
+    { uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
+  ]);
 
   // Subjects from localStorage
   const [subjects, setSubjects] = useState<{ id: string; name: string; emoji: string }[]>([]);
@@ -82,6 +110,14 @@ const AcademicCalendar = () => {
       setHasCalendar(data.length > 0);
     } catch (e) {
       console.error("Erro ao carregar calendário", e);
+    }
+    
+    try {
+      const sData = await api.getSchedule();
+      setSchedule(sData);
+      setHasSchedule(sData.length > 0);
+    } catch (e) {
+      console.error("Erro ao carregar horário", e);
     } finally {
       setIsLoading(false);
     }
@@ -101,53 +137,57 @@ const AcademicCalendar = () => {
     toast("A analisar o PDF com IA... 🤖", { icon: "📄" });
 
     try {
-      // Extract text from PDF using pdfjs-dist
-      const pdfjsLib = await import("pdfjs-dist");
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      // FileReader to convert PDF to Base64 natively
+      const reader = new FileReader();
       
-      let fullText = "";
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        const pageText = content.items.map((item: any) => item.str).join(" ");
-        fullText += pageText + "\n";
-      }
+      reader.onload = async (event) => {
+        try {
+          const base64Data = (event.target?.result as string).split(',')[1];
+          if (!base64Data) throw new Error("Erro ao converter ficheiro.");
+          
+          // Send to Gemini AI for native PDF semantic parsing
+          const parsed = await parseCalendarFromText(null, base64Data);
 
-      if (fullText.trim().length < 20) {
-        toast.error("Não foi possível extrair texto suficiente do PDF. Tenta um PDF com texto seleccionável.");
+          if (!parsed || parsed.length === 0) {
+            toast.error("A IA não encontrou eventos no PDF. Tenta adicionar manualmente.");
+            setIsParsing(false);
+            return;
+          }
+
+          // Convert parsed events to drafts
+          const newDrafts = parsed.map((p: any) => ({
+            uid: crypto.randomUUID(),
+            title: p.title,
+            event_date: p.event_date,
+            event_type: p.event_type as any,
+            subject_name: p.subject_name,
+          }));
+
+          setDrafts(prev => {
+            const emptyDrafts = prev.filter(d => !d.title && !d.event_date);
+            if (emptyDrafts.length === prev.length) return newDrafts; // replace if all empty
+            return [...prev, ...newDrafts]; // append otherwise
+          });
+
+          toast.success("Eventos extraídos com sucesso!");
+        } catch (error) {
+          console.error(error);
+          toast.error("Ocorreu um erro no processamento da IA.");
+        } finally {
+          setIsParsing(false);
+        }
+      };
+
+      reader.onerror = () => {
+        toast.error("Erro na leitura do ficheiro.");
         setIsParsing(false);
-        return;
-      }
+      };
 
-      // Send to Gemini AI for parsing
-      const parsed = await parseCalendarFromText(fullText);
+      reader.readAsDataURL(file);
 
-      if (!parsed || parsed.length === 0) {
-        toast.error("A IA não encontrou eventos no PDF. Tenta adicionar manualmente.");
-        setIsParsing(false);
-        return;
-      }
-
-      // Convert parsed events to drafts
-      const newDrafts: DraftEvent[] = parsed.map(ev => ({
-        uid: crypto.randomUUID(),
-        title: ev.title || "",
-        event_date: ev.event_date || "",
-        event_type: (["prova", "entrega", "feriado", "evento", "outro"].includes(ev.event_type)
-          ? ev.event_type
-          : "evento") as DraftEvent["event_type"],
-        subject_name: ev.subject_name || "",
-      }));
-
-      setDrafts(newDrafts);
-      toast.success(`${newDrafts.length} eventos encontrados no PDF! Revê e submete. 🎉`);
-    } catch (err) {
-      console.error("PDF Parse Error:", err);
-      toast.error("Erro ao processar o PDF. Verifica se o proxy está a correr.");
-    } finally {
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao iniciar a leitura do ficheiro.");
       setIsParsing(false);
     }
   };
@@ -205,6 +245,123 @@ const AcademicCalendar = () => {
       toast.success("Calendário limpo. Podes submeter um novo.");
     } catch (e) {
       toast.error("Erro ao limpar calendário.");
+    }
+  };
+
+  // -------------------------
+  // WEEKLY SCHEDULE FUNCTIONS
+  // -------------------------
+  const handleSchedulePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast.error("Por favor seleciona um ficheiro PDF válido.");
+      return;
+    }
+
+    setSchedulePdfName(file.name);
+    setIsParsingSchedule(true);
+    toast("A analisar o horário com IA... 🤖", { icon: "📄" });
+
+    try {
+      // FileReader to convert PDF to Base64 natively
+      const reader = new FileReader();
+      
+      reader.onload = async (event) => {
+        try {
+          const base64Data = (event.target?.result as string).split(',')[1];
+          if (!base64Data) throw new Error("Erro ao converter ficheiro.");
+
+          const parsed = await parseScheduleFromText(null, base64Data);
+
+          if (!parsed || parsed.length === 0) {
+            toast.error("A IA não encontrou aulas no PDF. Tenta adicionar manualmente.");
+            setIsParsingSchedule(false);
+            return;
+          }
+
+          const newDrafts: DraftClass[] = parsed.map(c => ({
+            uid: crypto.randomUUID(),
+            day_of_week: c.day_of_week as any,
+            start_time: c.start_time,
+            end_time: c.end_time,
+            subject_name: c.subject_name
+          }));
+
+          setDraftClasses(newDrafts);
+          toast.success(`${newDrafts.length} aulas encontradas no PDF! Revê e submete. 🎉`);
+        } catch (err) {
+          console.error("PDF Schedule Parse Error:", err);
+          toast.error("Erro ao processar o horário. Verifica proxy.");
+        } finally {
+          setIsParsingSchedule(false);
+        }
+      };
+
+      reader.onerror = () => {
+        toast.error("Erro na leitura do ficheiro de horário.");
+        setIsParsingSchedule(false);
+      };
+
+      reader.readAsDataURL(file);
+
+    } catch (err) {
+      console.error("PDF Schedule Start Error:", err);
+      toast.error("Erro ao iniciar a leitura do ficheiro.");
+      setIsParsingSchedule(false);
+    }
+  };
+
+  const addDraftClass = () => {
+    setDraftClasses(prev => [
+      ...prev,
+      { uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
+    ]);
+  };
+  const removeDraftClass = (uid: string) => {
+    if (draftClasses.length <= 1) return;
+    setDraftClasses(prev => prev.filter(c => c.uid !== uid));
+  };
+  const updateDraftClass = (uid: string, field: keyof DraftClass, value: string) => {
+    setDraftClasses(prev => prev.map(c => c.uid === uid ? { ...c, [field]: value } : c));
+  };
+
+  const handleScheduleSubmit = async () => {
+    const valid = draftClasses.filter(c => c.subject_name.trim() && c.start_time && c.end_time);
+    if (valid.length === 0) {
+      toast.error("Adiciona pelo menos uma aula válida.");
+      return;
+    }
+
+    setIsSubmittingSchedule(true);
+    try {
+      await api.submitSchedule(
+        valid.map(c => ({
+          day_of_week: c.day_of_week,
+          start_time: c.start_time,
+          end_time: c.end_time,
+          subject_name: c.subject_name.trim()
+        }))
+      );
+      toast.success(`Horário submetido com sucesso!`);
+      await loadEvents();
+    } catch (e) {
+      toast.error("Erro ao submeter horário.");
+    } finally {
+      setIsSubmittingSchedule(false);
+    }
+  };
+
+  const handleClearSchedule = async () => {
+    if (!confirm("Tens a certeza que queres limpar todo o horário escolar?")) return;
+    try {
+      await api.clearSchedule();
+      setSchedule([]);
+      setHasSchedule(false);
+      setDraftClasses([{ uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }]);
+      toast.success("Horário limpo.");
+    } catch (e) {
+      toast.error("Erro ao limpar horário.");
     }
   };
 
@@ -303,9 +460,35 @@ const AcademicCalendar = () => {
           </div>
         </div>
 
-        {!hasCalendar ? (
-          /* ══════════ STATE 1: SUBMIT CALENDAR ══════════ */
-          <div className="space-y-5">
+        {/* Action Tabs */}
+        <div className="flex bg-[#141e16] p-1.5 rounded-xl border border-[#254238] mb-6 shadow-sm">
+          <button
+            onClick={() => setActiveTab("aulas")}
+            className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 ${
+              activeTab === "aulas" 
+                ? "bg-[#4ade80] text-[#0e1710] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Horário Semanal
+          </button>
+          <button
+            onClick={() => setActiveTab("provas")}
+            className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 ${
+              activeTab === "provas" 
+                ? "bg-[#4ade80] text-[#0e1710] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            Provas & Eventos
+          </button>
+        </div>
+
+        {activeTab === "provas" && (
+          <>
+            {!hasCalendar ? (
+              /* ══════════ STATE 1: SUBMIT CALENDAR (PROVAS) ══════════ */
+              <div className="space-y-5">
             {/* Instructions */}
             <div className="bg-[#141e16] border border-[#254238]/60 rounded-2xl p-5 shadow-lg">
               <div className="flex items-start gap-3 mb-3">
@@ -684,6 +867,150 @@ const AcademicCalendar = () => {
             >
               <RefreshCw className="h-4 w-4" /> Resubmeter Calendário
             </button>
+          </div>
+        )}
+        </>
+        )}
+
+        {/* ══════════ TAB: HORÁRIO SEMANAL DE AULAS ══════════ */}
+        {activeTab === "aulas" && (
+          <div className="space-y-6 animate-fade-in">
+            {!hasSchedule ? (
+              <div className="space-y-5">
+                {/* Upload Section */}
+                <div className="bg-gradient-to-br from-[#141e16] to-[#1a261d] border border-[#4ade80]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                  <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#4ade80]/5 rounded-full blur-2xl" />
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 bg-[#4ade80]/15 rounded-xl flex items-center justify-center shrink-0">
+                        <Sparkles className="h-5 w-5 text-[#4ade80]" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Importar Horário Escolar</h3>
+                        <p className="text-[10px] text-slate-400 leading-relaxed max-w-[200px]">
+                          Ficheiro em PDF. A IA vai analisar os teus dias e horas de aulas automaticamente.
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <input
+                      type="file"
+                      id="schedule-pdf-upload"
+                      accept="application/pdf"
+                      ref={scheduleFileInputRef}
+                      onChange={handleSchedulePdfUpload}
+                      className="hidden"
+                    />
+                    
+                    <button
+                      disabled={isParsingSchedule}
+                      onClick={() => scheduleFileInputRef.current?.click()}
+                      className="w-full mt-2 py-3 bg-[#0e1710] border border-[#254238] hover:border-[#4ade80]/50 rounded-xl text-sm font-bold text-[#4ade80] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {isParsingSchedule ? (
+                        <><div className="h-4 w-4 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin" />A analisar...</>
+                      ) : (
+                        <><Upload className="h-4 w-4" /> Selecionar PDF</>
+                      )}
+                    </button>
+                    {schedulePdfName && !isParsingSchedule && (
+                      <p className="text-[10px] text-center text-[#4ade80] font-bold mt-3">✓ {schedulePdfName}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 py-2">
+                  <div className="h-px bg-slate-800 flex-1" />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">ou configurar manual</span>
+                  <div className="h-px bg-slate-800 flex-1" />
+                </div>
+
+                <div className="space-y-3">
+                  {draftClasses.map((d, index) => (
+                    <div key={d.uid} className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-[10px] font-black tracking-widest text-[#4ade80] uppercase">Aula {index + 1}</span>
+                        {draftClasses.length > 1 && (
+                          <button onClick={() => removeDraftClass(d.uid)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Dia</label>
+                          <select
+                            value={d.day_of_week}
+                            onChange={(e) => updateDraftClass(d.uid, "day_of_week", e.target.value)}
+                            className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#4ade80] outline-none"
+                          >
+                            {WEEKDAYS.map(w => <option key={w} value={w}>{w}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Disciplina</label>
+                          <input type="text" value={d.subject_name} onChange={(e) => updateDraftClass(d.uid, "subject_name", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[#4ade80] outline-none" placeholder="Ex: Matemática" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Início</label>
+                          <input type="time" value={d.start_time} onChange={(e) => updateDraftClass(d.uid, "start_time", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#4ade80] outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Fim</label>
+                          <input type="time" value={d.end_time} onChange={(e) => updateDraftClass(d.uid, "end_time", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#4ade80] outline-none" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button onClick={addDraftClass} className="w-full py-3 border-2 border-dashed border-[#254238] rounded-2xl text-sm font-bold text-slate-400 hover:text-[#4ade80] transition-colors flex items-center justify-center gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar Bloco
+                </button>
+
+                <button onClick={handleScheduleSubmit} disabled={isSubmittingSchedule} className="w-full py-4 bg-[#4ade80] text-[#0e1710] font-black text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 shadow-[0_5px_25px_rgba(74,222,128,0.2)]">
+                  {isSubmittingSchedule ? <><div className="h-4 w-4 border-2 border-[#0e1710] border-t-transparent rounded-full animate-spin" />A submeter...</> : <><Send className="h-4 w-4" /> Gravar Horário Escolar</>}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-[#141e16] border border-[#254238] rounded-2xl p-5 shadow-lg overflow-hidden">
+                  <h3 className="text-white font-bold mb-4">O Meu Horário Semanal</h3>
+                  <div className="space-y-4">
+                    {WEEKDAYS.map(day => {
+                      const dayClasses = schedule.filter(c => c.day_of_week === day).sort((a,b) => a.start_time.localeCompare(b.start_time));
+                      if (dayClasses.length === 0) return null;
+                      return (
+                        <div key={day} className="bg-[#0e1710] border border-slate-800/80 rounded-xl p-3">
+                          <h4 className="text-[10px] font-black tracking-widest text-[#4ade80] uppercase mb-2 ml-1">{day}</h4>
+                          <div className="space-y-2">
+                            {dayClasses.map((c, i) => (
+                              <div key={i} className="flex items-center gap-3 px-2 py-1.5 hover:bg-[#1a261d] rounded-lg transition-colors">
+                                <div className="text-[11px] font-mono text-slate-400 w-24 shrink-0">
+                                  {c.start_time} - {c.end_time}
+                                </div>
+                                <div className="text-sm font-bold text-white truncate">{c.subject_name}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handleClearSchedule}
+                  className="w-full py-3 bg-[#141e16] border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors"
+                >
+                  <RefreshCw className="h-4 w-4" /> Limpar Horário
+                </button>
+              </div>
+            )}
           </div>
         )}
 

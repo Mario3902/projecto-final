@@ -5,18 +5,36 @@ import {
   Clock, BookOpen, Bot, View, Home, Check, Trophy, Briefcase, User,
   Calendar, FileText, AlertCircle
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { useGame } from "@/context/GameContext";
 import { api } from "@/lib/api";
+import { buildStudentContext, generateStudySuggestions } from "@/lib/gemini";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { xp, level, streak, quizzesCompleted, studyHours, performanceData } = useGame();
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  
+  // AI Suggestions
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
   useEffect(() => {
     api.getUpcomingEvents().then(setUpcomingEvents).catch(() => {});
+    
+    // Load AI Suggestions
+    const loadSuggestions = async () => {
+      try {
+        const context = await buildStudentContext();
+        const sugg = await generateStudySuggestions(context);
+        setSuggestions(sugg || []);
+      } catch (e) {
+        setSuggestions([]);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    };
+    loadSuggestions();
   }, []);
 
   const averageAvg = performanceData.length > 0
@@ -121,6 +139,62 @@ const Dashboard = () => {
             </div>
           </div>
         </button>
+
+        {/* ── AI Study Suggestions ── */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+              <Bot className="h-5 w-5 text-[#4ade80]" /> Recomendações Nzila
+            </h3>
+          </div>
+          
+          {loadingSuggestions ? (
+            <div className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-6 flex flex-col items-center justify-center">
+              <div className="h-6 w-6 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-xs font-bold text-slate-400">A cruzar o teu horário com as provas...</p>
+            </div>
+          ) : suggestions.length > 0 ? (
+            <div className="space-y-3">
+              {suggestions.map((s, i) => (
+                <div key={i} className="bg-[#141e16] border border-slate-800/60 transition-colors hover:border-[#254238] rounded-2xl p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#4ade80] bg-[#4ade80]/10 px-2 py-0.5 rounded-sm">
+                      {s.subject_name}
+                    </span>
+                    <span className={`text-[10px] font-black uppercase tracking-wide px-2 py-0.5 rounded-sm ${
+                      s.urgency === "alta" ? "bg-red-500/15 text-red-500" :
+                      s.urgency === "media" ? "bg-amber-500/15 text-amber-500" :
+                      "bg-blue-500/15 text-blue-500"
+                    }`}>
+                      Prioridade {s.urgency}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-white mb-1">{s.topic}</h4>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{s.reason}</p>
+                  
+                  <button 
+                    onClick={() => navigate(`/dashboard/tasks?subject=${encodeURIComponent(s.subject_name)}&topic=${encodeURIComponent(s.topic)}`)}
+                    className="w-full py-2 bg-[#0e1710] border border-slate-800 rounded-xl text-xs font-bold text-slate-300 hover:text-[#4ade80] hover:border-[#4ade80]/30 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Adicionar ao Planner Domodoro
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-5 text-center">
+              <p className="text-[11px] text-slate-400 font-bold mb-3">
+                Não há provas próximas nem aulas detetadas hoje.
+              </p>
+              <button 
+                onClick={() => navigate("/dashboard/calendar")}
+                className="text-xs font-bold text-[#4ade80] bg-[#4ade80]/10 px-4 py-2 rounded-xl"
+              >
+                Configurar o teu Calendário
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ── Quick Actions Grid ── */}
         <h3 className="text-lg font-bold mb-4">Acesso Rápido</h3>

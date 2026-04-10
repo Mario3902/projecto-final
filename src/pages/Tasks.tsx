@@ -49,13 +49,34 @@ const Tasks = () => {
   // Load Subjects from LocalStorage
   useEffect(() => {
     const stored = localStorage.getItem("nzila_course_data");
+    let loadedSubjects: SubjectData[] = [];
     if (stored) {
       const data = JSON.parse(stored);
       if (data.subjects && data.subjects.length > 0) {
         setSubjects(data.subjects);
+        loadedSubjects = data.subjects;
       }
     }
-  }, []);
+
+    // Check for query parameters (?subject=...&topic=...)
+    const searchParams = new URLSearchParams(location.search);
+    const qSubject = searchParams.get("subject");
+    const qTopic = searchParams.get("topic");
+
+    if (qSubject && loadedSubjects.length > 0) {
+      // Find subject by name similarity
+      const found = loadedSubjects.find(s => s.name.toLowerCase().includes(qSubject.toLowerCase()));
+      if (found) {
+        setSelectedSubject(found);
+      } else {
+        // If not found, maybe create a free text one or just leave blank
+        setSelectedTopic(`[${qSubject}] ` + (qTopic || ""));
+      }
+    }
+    if (qTopic) {
+      setSelectedTopic(prev => prev ? prev : qTopic);
+    }
+  }, [location.search]);
 
   // Calendar logic
   const today = new Date();

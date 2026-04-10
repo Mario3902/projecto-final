@@ -290,5 +290,29 @@ export const api = {
     if (!res.ok) throw new Error(await res.text());
     return res.json();
   },
+
+  // Weekly Schedule
+  getSchedule: async () => {
+    const res = await fetch(`${API_URL}/schedule`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  submitSchedule: async (classes: { day_of_week: string; start_time: string; end_time: string; subject_name: string }[]) => {
+    const res = await fetch(`${API_URL}/schedule/bulk`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ classes }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  clearSchedule: async () => {
+    const res = await fetch(`${API_URL}/schedule/all`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
 };
 

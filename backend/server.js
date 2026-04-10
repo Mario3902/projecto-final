@@ -14,6 +14,7 @@ const quizzesRoutes = require("./routes/quizzes");
 const chatRoutes = require("./routes/chat");
 const pomodoroRoutes = require("./routes/pomodoro");
 const calendarRoutes = require("./routes/calendar");
+const scheduleRoutes = require("./routes/schedule");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/quizzes", quizzesRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/pomodoro", pomodoroRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/schedule", scheduleRoutes);
 
 // General Error Handler
 app.use((err, req, res, next) => {

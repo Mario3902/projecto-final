@@ -145,3 +145,32 @@ CREATE TABLE IF NOT EXISTS pomodoro_sessions (
   FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL
 );
 
+-- -------------------------------------------------------------
+-- 11. CALENDÁRIO ACADÉMICO (Eventos específicos)
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS academic_calendar (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT NOT NULL,
+  title        VARCHAR(255) NOT NULL,
+  event_date   DATE NOT NULL,
+  event_type   ENUM('prova','entrega','feriado','evento','outro') DEFAULT 'evento',
+  subject_name VARCHAR(100) DEFAULT NULL,
+  description  TEXT DEFAULT NULL,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX idx_calendar_user_date ON academic_calendar(user_id, event_date);
+
+-- -------------------------------------------------------------
+-- 12. HORÁRIO ESCOLAR SEMANAL
+-- -------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS weekly_schedule (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  user_id      INT NOT NULL,
+  day_of_week  ENUM('Seg','Ter','Qua','Qui','Sex','Sab','Dom') NOT NULL,
+  start_time   TIME NOT NULL,
+  end_time     TIME NOT NULL,
+  subject_name VARCHAR(120) NOT NULL,
+  created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
