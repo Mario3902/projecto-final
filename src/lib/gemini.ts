@@ -247,6 +247,32 @@ export const generateStudySuggestions = async (contextText: string) => {
     }
 };
 
+// Utility: OCR Text Extraction from images and PDFs via OCR.space
+export const extractTextFromFile = async (
+    base64Data: string,
+    mimeType: string
+): Promise<string> => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/ocr-extract`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ base64Data, mimeType }),
+        });
+        if (!res.ok) {
+            const errBody = await res.json().catch(() => ({}));
+            throw new Error(errBody.error || `HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        return data.text || "";
+    } catch (error: any) {
+        console.error("OCR Extract Error:", error);
+        if (error.message?.includes("Failed to fetch") || error.message?.includes("ERR_CONNECTION")) {
+            throw new Error("Proxy não disponível. Reinicia com `node proxy.js`.");
+        }
+        throw error;
+    }
+};
+
 // Utility: Parse Academic Calendar from PDF text
 export const parseCalendarFromText = async (
     text: string | null,

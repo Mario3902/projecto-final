@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { api } from "@/lib/api";
+import { extractTextFromFile } from "@/lib/gemini";
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -218,6 +219,7 @@ const SubjectSelection = () => {
   const [matContent, setMatContent] = useState("");
   const [matName, setMatName] = useState("");
   const [matFile, setMatFile] = useState<File | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   
   // Trimestral grades UI
@@ -241,6 +243,51 @@ const SubjectSelection = () => {
       syncWithBackend();
     } catch (e) {
       toast({ title: "Erro ao adicionar disciplina", variant: "destructive" });
+    }
+  };
+
+  const handleFileUploadWithOCR = async (file: File) => {
+    setMatFile(file);
+    if (!matName) setMatName(file.name.split('.')[0]);
+    
+    // Auto-extract text from file via OCR
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    
+    if (isImage || isPdf) {
+      setIsExtracting(true);
+      toast({ title: "A extrair texto do ficheiro com OCR... 🔍" });
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const base64Data = (event.target?.result as string).split(',')[1];
+            if (!base64Data) throw new Error("Erro ao converter ficheiro.");
+            
+            const extractedText = await extractTextFromFile(base64Data, file.type);
+            
+            if (extractedText && extractedText.trim().length > 10) {
+              setMatContent(prev => prev ? `${prev}\n\n--- Texto extraído de ${file.name} ---\n${extractedText}` : extractedText);
+              toast({ title: `Texto extraído com sucesso! ✅`, description: `${extractedText.length} caracteres encontrados.` });
+            } else {
+              toast({ title: "OCR não encontrou texto legível no ficheiro.", description: "Podes colar o conteúdo manualmente.", variant: "destructive" });
+            }
+          } catch (err: any) {
+            console.error("OCR Error:", err);
+            toast({ title: "Erro na extração OCR", description: err.message || "Tenta novamente.", variant: "destructive" });
+          } finally {
+            setIsExtracting(false);
+          }
+        };
+        reader.onerror = () => {
+          toast({ title: "Erro na leitura do ficheiro.", variant: "destructive" });
+          setIsExtracting(false);
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {
+        setIsExtracting(false);
+      }
     }
   };
 
@@ -609,8 +656,7 @@ const SubjectSelection = () => {
                     ref={fileRef}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
-                        setMatFile(e.target.files[0]);
-                        if (!matName) setMatName(e.target.files[0].name.split('.')[0]);
+                        handleFileUploadWithOCR(e.target.files[0]);
                       }
                     }}
                     accept=".pdf,.doc,.docx,.txt,image/*"
@@ -636,13 +682,23 @@ const SubjectSelection = () => {
                       </button>
                     </div>
                   ) : (
+                    isExtracting ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-12 h-12 bg-[#4ade80]/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                          <Upload className="h-5 w-5 text-[#4ade80] animate-spin" />
+                        </div>
+                        <p className="text-[13px] font-bold text-[#4ade80]">A extrair texto com OCR...</p>
+                        <p className="text-[10px] font-bold text-slate-500">Aguarda um momento</p>
+                      </div>
+                    ) : (
                     <>
                       <div className="w-12 h-12 bg-[#1e2e26] rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                         <Upload className="h-5 w-5 text-slate-400 group-hover:text-[#4ade80]" />
                       </div>
                       <p className="text-[13px] font-bold text-white mb-1">Clica para anexar do telemóvel</p>
-                      <p className="text-[10px] font-bold text-slate-500">Documentos PDF, Word ou Imagens</p>
+                      <p className="text-[10px] font-bold text-slate-500">PDF, Imagens ou Word — OCR extrai texto automaticamente 🔍</p>
                     </>
+                    )
                   )}
                 </div>
               </div>

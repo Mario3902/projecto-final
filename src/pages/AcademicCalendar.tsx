@@ -6,7 +6,7 @@ import {
   FileText, GraduationCap, PartyPopper, Flag, Upload, Sparkles, Loader2
 } from "lucide-react";
 import { api } from "@/lib/api";
-import { parseCalendarFromText, parseScheduleFromText } from "@/lib/gemini";
+import { parseCalendarFromText, parseScheduleFromText, extractTextFromFile } from "@/lib/gemini";
 import { toast } from "sonner";
 
 interface CalendarEvent {
@@ -123,21 +123,24 @@ const AcademicCalendar = () => {
     }
   };
 
-  // PDF Upload + AI Parse
+  // PDF/Image Upload + AI Parse (Calendar)
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Por favor seleciona um ficheiro PDF.");
+    
+    const isPdf = file.type === "application/pdf";
+    const isImage = file.type.startsWith("image/");
+    
+    if (!isPdf && !isImage) {
+      toast.error("Por favor seleciona um ficheiro PDF ou imagem.");
       return;
     }
 
     setPdfFileName(file.name);
     setIsParsing(true);
-    toast("A analisar o PDF com IA... 🤖", { icon: "📄" });
+    toast(isImage ? "A extrair texto da imagem com OCR... 🔍" : "A analisar o PDF com IA... 🤖", { icon: "📄" });
 
     try {
-      // FileReader to convert PDF to Base64 natively
       const reader = new FileReader();
       
       reader.onload = async (event) => {
@@ -145,16 +148,28 @@ const AcademicCalendar = () => {
           const base64Data = (event.target?.result as string).split(',')[1];
           if (!base64Data) throw new Error("Erro ao converter ficheiro.");
           
-          // Send to Gemini AI for native PDF semantic parsing
-          const parsed = await parseCalendarFromText(null, base64Data);
+          let parsed;
+          
+          if (isImage) {
+            // Images: Extract text via OCR first, then parse with AI
+            const extractedText = await extractTextFromFile(base64Data, file.type);
+            if (!extractedText || extractedText.trim().length < 10) {
+              toast.error("OCR não conseguiu extrair texto da imagem. Tenta com um PDF.");
+              setIsParsing(false);
+              return;
+            }
+            parsed = await parseCalendarFromText(extractedText);
+          } else {
+            // PDFs: Send directly to Gemini for native semantic parsing
+            parsed = await parseCalendarFromText(null, base64Data);
+          }
 
           if (!parsed || parsed.length === 0) {
-            toast.error("A IA não encontrou eventos no PDF. Tenta adicionar manualmente.");
+            toast.error("A IA não encontrou eventos. Tenta adicionar manualmente.");
             setIsParsing(false);
             return;
           }
 
-          // Convert parsed events to drafts
           const newDrafts = parsed.map((p: any) => ({
             uid: crypto.randomUUID(),
             title: p.title,
@@ -165,14 +180,14 @@ const AcademicCalendar = () => {
 
           setDrafts(prev => {
             const emptyDrafts = prev.filter(d => !d.title && !d.event_date);
-            if (emptyDrafts.length === prev.length) return newDrafts; // replace if all empty
-            return [...prev, ...newDrafts]; // append otherwise
+            if (emptyDrafts.length === prev.length) return newDrafts;
+            return [...prev, ...newDrafts];
           });
 
-          toast.success("Eventos extraídos com sucesso!");
+          toast.success(`${newDrafts.length} evento(s) extraído(s) com sucesso! ✅`);
         } catch (error) {
           console.error(error);
-          toast.error("Ocorreu um erro no processamento da IA.");
+          toast.error("Ocorreu um erro no processamento.");
         } finally {
           setIsParsing(false);
         }
@@ -251,20 +266,24 @@ const AcademicCalendar = () => {
   // -------------------------
   // WEEKLY SCHEDULE FUNCTIONS
   // -------------------------
+  // PDF/Image Upload + AI Parse (Schedule)
   const handleSchedulePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.type !== "application/pdf") {
-      toast.error("Por favor seleciona um ficheiro PDF válido.");
+    
+    const isPdf = file.type === "application/pdf";
+    const isImage = file.type.startsWith("image/");
+    
+    if (!isPdf && !isImage) {
+      toast.error("Por favor seleciona um ficheiro PDF ou imagem válida.");
       return;
     }
 
     setSchedulePdfName(file.name);
     setIsParsingSchedule(true);
-    toast("A analisar o horário com IA... 🤖", { icon: "📄" });
+    toast(isImage ? "A extrair horário da imagem com OCR... 🔍" : "A analisar o horário com IA... 🤖", { icon: "📄" });
 
     try {
-      // FileReader to convert PDF to Base64 natively
       const reader = new FileReader();
       
       reader.onload = async (event) => {
@@ -272,10 +291,22 @@ const AcademicCalendar = () => {
           const base64Data = (event.target?.result as string).split(',')[1];
           if (!base64Data) throw new Error("Erro ao converter ficheiro.");
 
-          const parsed = await parseScheduleFromText(null, base64Data);
+          let parsed;
+          
+          if (isImage) {
+            const extractedText = await extractTextFromFile(base64Data, file.type);
+            if (!extractedText || extractedText.trim().length < 10) {
+              toast.error("OCR não conseguiu extrair texto da imagem.");
+              setIsParsingSchedule(false);
+              return;
+            }
+            parsed = await parseScheduleFromText(extractedText);
+          } else {
+            parsed = await parseScheduleFromText(null, base64Data);
+          }
 
           if (!parsed || parsed.length === 0) {
-            toast.error("A IA não encontrou aulas no PDF. Tenta adicionar manualmente.");
+            toast.error("A IA não encontrou aulas. Tenta adicionar manualmente.");
             setIsParsingSchedule(false);
             return;
           }
@@ -289,24 +320,24 @@ const AcademicCalendar = () => {
           }));
 
           setDraftClasses(newDrafts);
-          toast.success(`${newDrafts.length} aulas encontradas no PDF! Revê e submete. 🎉`);
+          toast.success(`${newDrafts.length} aulas encontradas! Revê e submete. 🎉`);
         } catch (err) {
-          console.error("PDF Schedule Parse Error:", err);
-          toast.error("Erro ao processar o horário. Verifica proxy.");
+          console.error("Schedule Parse Error:", err);
+          toast.error("Erro ao processar. Verifica o proxy.");
         } finally {
           setIsParsingSchedule(false);
         }
       };
 
       reader.onerror = () => {
-        toast.error("Erro na leitura do ficheiro de horário.");
+        toast.error("Erro na leitura do ficheiro.");
         setIsParsingSchedule(false);
       };
 
       reader.readAsDataURL(file);
 
     } catch (err) {
-      console.error("PDF Schedule Start Error:", err);
+      console.error("Schedule Start Error:", err);
       toast.error("Erro ao iniciar a leitura do ficheiro.");
       setIsParsingSchedule(false);
     }
@@ -522,7 +553,7 @@ const AcademicCalendar = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,image/*"
                   onChange={handlePdfUpload}
                   className="hidden"
                 />
@@ -551,7 +582,7 @@ const AcademicCalendar = () => {
                   ) : (
                     <>
                       <Upload className="h-4 w-4" />
-                      Selecionar PDF do Calendário
+                      Selecionar PDF ou Imagem do Calendário
                     </>
                   )}
                 </button>
@@ -888,7 +919,7 @@ const AcademicCalendar = () => {
                       <div>
                         <h3 className="text-sm font-bold text-white">Importar Horário Escolar</h3>
                         <p className="text-[10px] text-slate-400 leading-relaxed max-w-[200px]">
-                          Ficheiro em PDF. A IA vai analisar os teus dias e horas de aulas automaticamente.
+                          Ficheiro PDF ou foto do horário. A IA (com OCR) vai analisar automaticamente.
                         </p>
                       </div>
                     </div>
@@ -896,7 +927,7 @@ const AcademicCalendar = () => {
                     <input
                       type="file"
                       id="schedule-pdf-upload"
-                      accept="application/pdf"
+                      accept=".pdf,image/*"
                       ref={scheduleFileInputRef}
                       onChange={handleSchedulePdfUpload}
                       className="hidden"
@@ -910,7 +941,7 @@ const AcademicCalendar = () => {
                       {isParsingSchedule ? (
                         <><div className="h-4 w-4 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin" />A analisar...</>
                       ) : (
-                        <><Upload className="h-4 w-4" /> Selecionar PDF</>
+                        <><Upload className="h-4 w-4" /> Selecionar PDF ou Imagem</>
                       )}
                     </button>
                     {schedulePdfName && !isParsingSchedule && (

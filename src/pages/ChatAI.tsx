@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Home, Check, Trophy, Briefcase, BookOpen } from "lucide-react";
+import { Send, Bot, User, Home, Check, Trophy, Briefcase, BookOpen, Paperclip, X, FileText, Loader2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { chatWithNzila } from "@/lib/gemini";
+import { chatWithNzila, extractTextFromFile } from "@/lib/gemini";
 import { api } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  attachment?: string; // filename of attached file
 }
 
 const suggestions = [
@@ -24,9 +25,9 @@ const getWelcomeMessage = () => {
     const game = JSON.parse(localStorage.getItem("nzila_game_state") || "{}");
     const xp = game.xp ?? 0;
     const level = game.level ?? 1;
-    return `Olá${name}! 👋 Sou o **Nzila**, o teu parceiro de estudos inteligente.\n\nVejo que estás no **Nível ${level}** com **${xp} XP** 🎮. Estou aqui para te acompanhar de forma contínua — podes pedir dicas de estudo, correção de exercícios, ou perguntar qualquer coisa! 📚 Como te posso ajudar hoje?`;
+    return `Olá${name}! 👋 Sou o **Nzila**, o teu parceiro de estudos inteligente.\n\nVejo que estás no **Nível ${level}** com **${xp} XP** 🎮. Estou aqui para te acompanhar de forma contínua — podes pedir dicas de estudo, correção de exercícios, ou perguntar qualquer coisa! 📚\n\n📎 **Novidade:** Agora podes enviar fotos ou PDFs dos teus testes, apontamentos ou exercícios! Basta clicar no 📎 para anexar.`;
   } catch {
-    return "Olá! 👋 Sou o Nzila, o teu parceiro de estudos! Estou aqui para te acompanhar de forma contínua com dicas, orientação e muito mais 📚";
+    return "Olá! 👋 Sou o Nzila, o teu parceiro de estudos! Estou aqui para te acompanhar de forma contínua com dicas, orientação e muito mais 📚\n\n📎 Podes enviar fotos ou PDFs e eu analiso o conteúdo!";
   }
 };
 
@@ -34,7 +35,11 @@ const ChatAI = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [extractedFileText, setExtractedFileText] = useState<string>("");
+  const [isExtractingFile, setIsExtractingFile] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
 
   useEffect(() => {
@@ -43,13 +48,11 @@ const ChatAI = () => {
       try {
         const history = await api.getChatHistory();
         if (history.length > 0) {
-          // Map DB assistant back to local assistant if needed, though they match
           setMessages(history.map((m: any) => ({ 
              role: m.role === "assistant" || m.role === "model" ? "assistant" : "user", 
              content: m.content 
           })));
         } else {
-          // Initialize first welcome message
           const welcome = getWelcomeMessage();
           setMessages([{ role: "assistant", content: welcome }]);
           await api.saveChatMessage({ role: "assistant", content: welcome });
@@ -65,16 +68,83 @@ const ChatAI = () => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
+  // Handle file attachment with OCR
+  const handleFileAttach = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf";
+    
+    if (!isImage && !isPdf) {
+      return;
+    }
+
+    setAttachedFile(file);
+    setIsExtractingFile(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const base64Data = (event.target?.result as string).split(',')[1];
+          if (!base64Data) throw new Error("Erro ao converter ficheiro.");
+          
+          const text = await extractTextFromFile(base64Data, file.type);
+          setExtractedFileText(text || "");
+          
+          if (!text || text.trim().length < 5) {
+            setExtractedFileText(`[Ficheiro anexado: ${file.name} - OCR não encontrou texto legível]`);
+          }
+        } catch (err) {
+          console.error("OCR Error:", err);
+          setExtractedFileText(`[Ficheiro anexado: ${file.name} - erro na extração]`);
+        } finally {
+          setIsExtractingFile(false);
+        }
+      };
+      reader.onerror = () => {
+        setIsExtractingFile(false);
+        setExtractedFileText(`[Ficheiro anexado: ${file.name}]`);
+      };
+      reader.readAsDataURL(file);
+    } catch {
+      setIsExtractingFile(false);
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachedFile(null);
+    setExtractedFileText("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
-    const userMsg: Message = { role: "user", content: text.trim() };
+    if (!text.trim() && !extractedFileText) return;
+    
+    // Build the full message with file context if attached
+    let fullMessage = text.trim();
+    const fileName = attachedFile?.name;
+    
+    if (extractedFileText && extractedFileText.trim().length > 0) {
+      fullMessage = fullMessage 
+        ? `${fullMessage}\n\n📎 Conteúdo extraído do ficheiro "${fileName}":\n"""\n${extractedFileText}\n"""`
+        : `Analisa o conteúdo deste ficheiro "${fileName}":\n"""\n${extractedFileText}\n"""`;
+    }
+    
+    const userMsg: Message = { 
+      role: "user", 
+      content: fullMessage,
+      attachment: fileName 
+    };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    removeAttachment();
     setIsTyping(true);
 
     try {
       // Save User Message to DB
-      await api.saveChatMessage({ role: "user", content: text.trim() });
+      await api.saveChatMessage({ role: "user", content: fullMessage });
 
       // Format history for Gemini (max 10 interactions to avoid token limits)
       const recentMessages = messages.slice(-10);
@@ -84,7 +154,7 @@ const ChatAI = () => {
       })) as { role: "user" | "model", parts: { text: string }[] }[];
 
       // Fetch response from Gemini
-      const responseText = await chatWithNzila(text.trim(), history);
+      const responseText = await chatWithNzila(fullMessage, history);
 
       setMessages((prev) => [...prev, { role: "assistant", content: responseText }]);
       
@@ -142,6 +212,13 @@ const ChatAI = () => {
                     : "bg-[#141e16] border border-[#254238]/60 text-slate-200 rounded-bl-sm"
                 }`}
               >
+                {/* Attachment indicator */}
+                {msg.attachment && (
+                  <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-current/20">
+                    <FileText className="h-3.5 w-3.5" />
+                    <span className="text-[11px] font-bold truncate">{msg.attachment}</span>
+                  </div>
+                )}
                 {/* Basic Markdown rendering for bold text **text** */}
                 {msg.content.split(/(\*\*.*?\*\*)/).map((part, index) => {
                   if (part.startsWith('**') && part.endsWith('**')) {
@@ -192,19 +269,60 @@ const ChatAI = () => {
           </div>
         )}
 
+        {/* Attachment Preview */}
+        {attachedFile && (
+          <div className="flex items-center gap-2 bg-[#141e16] border border-[#4ade80]/30 rounded-xl px-3 py-2 mb-2 shrink-0 animate-fade-in">
+            {isExtractingFile ? (
+              <Loader2 className="h-4 w-4 text-[#4ade80] animate-spin shrink-0" />
+            ) : (
+              <FileText className="h-4 w-4 text-[#4ade80] shrink-0" />
+            )}
+            <span className="text-xs font-bold text-slate-300 truncate flex-1">{attachedFile.name}</span>
+            {isExtractingFile ? (
+              <span className="text-[10px] text-[#4ade80] font-bold shrink-0">A extrair texto...</span>
+            ) : (
+              <span className="text-[10px] text-[#4ade80] font-bold shrink-0">
+                {extractedFileText.length > 20 ? `${extractedFileText.length} chars ✓` : "Pronto ✓"}
+              </span>
+            )}
+            <button onClick={removeAttachment} className="text-slate-500 hover:text-red-400 transition-colors shrink-0">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
         {/* Input Area */}
         <div className="flex gap-2 shrink-0 bg-[#0e1710] pt-2">
+          {/* File upload hidden input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileAttach}
+            accept=".pdf,image/*"
+            className="hidden"
+          />
+          
+          {/* Attachment button */}
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isTyping || isExtractingFile}
+            className="h-[52px] w-[52px] rounded-2xl bg-[#141e16] hover:bg-[#1e2e26] border border-[#254238]/60 hover:border-[#4ade80]/40 text-slate-400 hover:text-[#4ade80] shrink-0 transition-all disabled:opacity-50"
+            variant="ghost"
+          >
+            <Paperclip className="h-5 w-5" />
+          </Button>
+          
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-            placeholder="Pergunta alguma coisa..."
+            placeholder={attachedFile ? "Pergunta sobre o ficheiro..." : "Pergunta alguma coisa..."}
             className="flex-1 bg-[#141e16] border border-[#254238]/60 rounded-2xl px-5 py-3.5 text-[15px] text-white placeholder:text-slate-500 outline-none focus:border-[#4ade80]/50 transition-colors"
           />
           <Button
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isTyping}
+            disabled={(!input.trim() && !extractedFileText) || isTyping || isExtractingFile}
             className="h-[52px] w-[52px] rounded-2xl bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] shrink-0 transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100"
           >
             <Send className="h-5 w-5 ml-1" />
@@ -235,3 +353,4 @@ const ChatAI = () => {
 };
 
 export default ChatAI;
+
