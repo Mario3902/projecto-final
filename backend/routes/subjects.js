@@ -117,7 +117,8 @@ router.put("/materials/:id", auth, async (req, res) => {
     if (type !== undefined)    { fields.push("type = ?");    values.push(type); }
     if (content !== undefined) { fields.push("content = ?"); values.push(content); }
     if (fields.length === 0) return res.status(400).json({ error: "Nada para atualizar." });
-    
+    // ola aqui avalmos verificar se sei rpramar eu nao entendo nada do me codigo nada mesmo nem sei o que estou a fazer 
+    //segunda linha de comando para testat
     // Verify ownership through subject -> user
     values.push(id, req.user.id);
     const [result] = await db.query(
