@@ -66,6 +66,7 @@ const AcademicCalendar = () => {
   const [hasCalendar, setHasCalendar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [isParsing, setIsParsing] = useState(false);
   const [pdfFileName, setPdfFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,7 @@ const AcademicCalendar = () => {
   };
 
   // PDF/Image Upload + AI Parse (Calendar)
+  // Flow: File → OCR.space (extract text) → Gemini AI (structure JSON)
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -138,7 +140,6 @@ const AcademicCalendar = () => {
 
     setPdfFileName(file.name);
     setIsParsing(true);
-    toast(isImage ? "A extrair texto da imagem com OCR... 🔍" : "A analisar o PDF com IA... 🤖", { icon: "📄" });
 
     try {
       const reader = new FileReader();
@@ -147,25 +148,25 @@ const AcademicCalendar = () => {
         try {
           const base64Data = (event.target?.result as string).split(',')[1];
           if (!base64Data) throw new Error("Erro ao converter ficheiro.");
-          
-          let parsed;
-          
-          if (isImage) {
-            // Images: Extract text via OCR first, then parse with AI
-            const extractedText = await extractTextFromFile(base64Data, file.type);
-            if (!extractedText || extractedText.trim().length < 10) {
-              toast.error("OCR não conseguiu extrair texto da imagem. Tenta com um PDF.");
-              setIsParsing(false);
-              return;
-            }
-            parsed = await parseCalendarFromText(extractedText);
-          } else {
-            // PDFs: Send directly to Gemini for native semantic parsing
-            parsed = await parseCalendarFromText(null, base64Data);
+
+          // Step 1: OCR — extract raw text from PDF or image
+          toast("Passo 1/2 — A extrair texto com OCR... 🔍", { icon: "📄" });
+          const extractedText = await extractTextFromFile(base64Data, file.type);
+
+          if (!extractedText || extractedText.trim().length < 15) {
+            toast.error("OCR não conseguiu extrair texto suficiente. Verifica se o ficheiro está legível.");
+            setIsParsing(false);
+            return;
           }
 
+          console.log(`[Calendar OCR] ${extractedText.length} caracteres extraídos.`);
+
+          // Step 2: Gemini AI — parse the extracted text into structured events
+          toast("Passo 2/2 — IA a identificar eventos... 🤖", { icon: "📅" });
+          const parsed = await parseCalendarFromText(extractedText);
+
           if (!parsed || parsed.length === 0) {
-            toast.error("A IA não encontrou eventos. Tenta adicionar manualmente.");
+            toast.error("A IA não encontrou eventos no texto. Tenta adicionar manualmente.");
             setIsParsing(false);
             return;
           }
@@ -185,9 +186,12 @@ const AcademicCalendar = () => {
           });
 
           toast.success(`${newDrafts.length} evento(s) extraído(s) com sucesso! ✅`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(error);
-          toast.error("Ocorreu um erro no processamento.");
+          const msg = error?.message?.includes("Proxy") 
+            ? "Proxy não está a correr. Reinicia com `node proxy.js`."
+            : "Erro no processamento. Verifica o ficheiro e tenta novamente.";
+          toast.error(msg);
         } finally {
           setIsParsing(false);
         }
@@ -267,6 +271,7 @@ const AcademicCalendar = () => {
   // WEEKLY SCHEDULE FUNCTIONS
   // -------------------------
   // PDF/Image Upload + AI Parse (Schedule)
+  // Flow: File → OCR.space (extract text) → Gemini AI (structure JSON)
   const handleSchedulePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -281,7 +286,6 @@ const AcademicCalendar = () => {
 
     setSchedulePdfName(file.name);
     setIsParsingSchedule(true);
-    toast(isImage ? "A extrair horário da imagem com OCR... 🔍" : "A analisar o horário com IA... 🤖", { icon: "📄" });
 
     try {
       const reader = new FileReader();
@@ -291,22 +295,24 @@ const AcademicCalendar = () => {
           const base64Data = (event.target?.result as string).split(',')[1];
           if (!base64Data) throw new Error("Erro ao converter ficheiro.");
 
-          let parsed;
-          
-          if (isImage) {
-            const extractedText = await extractTextFromFile(base64Data, file.type);
-            if (!extractedText || extractedText.trim().length < 10) {
-              toast.error("OCR não conseguiu extrair texto da imagem.");
-              setIsParsingSchedule(false);
-              return;
-            }
-            parsed = await parseScheduleFromText(extractedText);
-          } else {
-            parsed = await parseScheduleFromText(null, base64Data);
+          // Step 1: OCR — extract raw text from PDF or image
+          toast("Passo 1/2 — A extrair texto com OCR... 🔍", { icon: "📄" });
+          const extractedText = await extractTextFromFile(base64Data, file.type);
+
+          if (!extractedText || extractedText.trim().length < 15) {
+            toast.error("OCR não conseguiu extrair texto suficiente. Verifica se o horário está legível.");
+            setIsParsingSchedule(false);
+            return;
           }
 
+          console.log(`[Schedule OCR] ${extractedText.length} caracteres extraídos.`);
+
+          // Step 2: Gemini AI — parse the extracted text into class schedule
+          toast("Passo 2/2 — IA a identificar aulas... 🤖", { icon: "⏰" });
+          const parsed = await parseScheduleFromText(extractedText);
+
           if (!parsed || parsed.length === 0) {
-            toast.error("A IA não encontrou aulas. Tenta adicionar manualmente.");
+            toast.error("A IA não encontrou aulas no texto. Tenta adicionar manualmente.");
             setIsParsingSchedule(false);
             return;
           }
@@ -321,9 +327,12 @@ const AcademicCalendar = () => {
 
           setDraftClasses(newDrafts);
           toast.success(`${newDrafts.length} aulas encontradas! Revê e submete. 🎉`);
-        } catch (err) {
+        } catch (err: any) {
           console.error("Schedule Parse Error:", err);
-          toast.error("Erro ao processar. Verifica o proxy.");
+          const msg = err?.message?.includes("Proxy")
+            ? "Proxy não está a correr. Reinicia com `node proxy.js`."
+            : "Erro ao processar. Verifica o ficheiro e o proxy.";
+          toast.error(msg);
         } finally {
           setIsParsingSchedule(false);
         }
@@ -734,6 +743,16 @@ const AcademicCalendar = () => {
               </div>
             </div>
 
+            {/* Legend */}
+            <div className="flex flex-wrap gap-2 mb-1">
+              {EVENT_TYPES.map(t => (
+                <span key={t.value} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ backgroundColor: t.color + '18', border: `1px solid ${t.color}30` }}>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  <span className="text-[10px] font-bold" style={{ color: t.color }}>{t.label}</span>
+                </span>
+              ))}
+            </div>
+
             {/* Calendar grid */}
             <div className="bg-[#141e16] border border-[#254238]/60 rounded-3xl p-4 shadow-lg">
               {/* Weekday headers */}
@@ -750,28 +769,46 @@ const AcademicCalendar = () => {
                 {calendarDays.map((day, i) => {
                   const dayEvents = eventsByDate.get(day.dateStr) || [];
                   const isToday = day.dateStr === todayStr;
-                  const isSelected = day.dateStr === selectedDay;
-                  const hasEvents = dayEvents.length > 0;
+                  const isSelected = day.dateStr === selectedDay && modalOpen;
+                  const hasEvents = dayEvents.length > 0 && day.isCurrentMonth;
+
+                  // Determine dominant event type for highlight color
+                  const hasProva = dayEvents.some(e => e.event_type === 'prova');
+                  const hasEvento = dayEvents.some(e => e.event_type === 'evento');
+                  const dominantColor = hasProva ? '#ef4444' : hasEvento ? '#3b82f6' : getTypeConfig(dayEvents[0]?.event_type)?.color || '#4ade80';
 
                   return (
                     <button
                       key={i}
-                      onClick={() => hasEvents ? setSelectedDay(isSelected ? null : day.dateStr) : null}
-                      className={`relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all text-xs font-bold ${
+                      onClick={() => {
+                        if (hasEvents) {
+                          setSelectedDay(day.dateStr);
+                          setModalOpen(true);
+                        }
+                      }}
+                      className={`relative aspect-square rounded-xl flex flex-col items-center justify-center transition-all duration-200 text-xs font-bold ${
                         !day.isCurrentMonth
-                          ? "text-slate-700"
+                          ? 'text-slate-700 cursor-default'
                           : isSelected
-                          ? "bg-[#4ade80] text-[#0e1710] shadow-[0_0_12px_rgba(74,222,128,0.3)]"
-                          : isToday
-                          ? "bg-[#4ade80]/15 text-[#4ade80] ring-1 ring-[#4ade80]/40"
+                          ? 'text-white scale-95'
+                          : isToday && !hasEvents
+                          ? 'bg-[#4ade80]/15 text-[#4ade80] ring-1 ring-[#4ade80]/40'
                           : hasEvents
-                          ? "text-white hover:bg-[#1e2e26] cursor-pointer"
-                          : "text-slate-400"
+                          ? 'text-white hover:scale-105 cursor-pointer'
+                          : 'text-slate-400 cursor-default'
                       }`}
+                      style={hasEvents && day.isCurrentMonth ? {
+                        backgroundColor: isSelected ? dominantColor + '35' : dominantColor + '18',
+                        boxShadow: isSelected ? `0 0 14px ${dominantColor}55` : `0 0 6px ${dominantColor}22`,
+                        border: `1.5px solid ${dominantColor}${isSelected ? '80' : '40'}`,
+                      } : isToday && hasEvents ? {
+                        backgroundColor: dominantColor + '25',
+                        border: `1.5px solid ${dominantColor}60`,
+                      } : undefined}
                     >
                       <span className="text-[13px]">{day.date.getDate()}</span>
                       {/* Event dots */}
-                      {hasEvents && day.isCurrentMonth && (
+                      {hasEvents && (
                         <div className="flex gap-0.5 mt-0.5">
                           {dayEvents.slice(0, 3).map((ev, j) => (
                             <div
@@ -788,39 +825,88 @@ const AcademicCalendar = () => {
               </div>
             </div>
 
-            {/* Selected day events */}
-            {selectedDay && selectedDayEvents.length > 0 && (
-              <div className="bg-[#141e16] border border-[#254238]/60 rounded-2xl p-4 space-y-3 animate-fade-in shadow-lg">
-                <h3 className="text-xs font-black text-[#4ade80] uppercase tracking-widest">
-                  {new Date(selectedDay + "T00:00:00").toLocaleDateString("pt-PT", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long"
-                  })}
-                </h3>
-                {selectedDayEvents.map((ev, i) => {
-                  const cfg = getTypeConfig(ev.event_type);
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 bg-[#0e1710] rounded-xl p-3 border border-slate-800/50"
-                    >
-                      <div
-                        className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: cfg.color + "20" }}
+            {/* Event Detail Modal (slide-up) */}
+            {modalOpen && selectedDay && selectedDayEvents.length > 0 && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                  onClick={() => setModalOpen(false)}
+                />
+                {/* Panel */}
+                <div
+                  className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 animate-slide-up"
+                  style={{ animation: 'slideUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards' }}
+                >
+                  <div className="bg-[#141e16] border-t-2 border-[#254238] rounded-t-3xl p-5 pb-8 shadow-2xl">
+                    {/* Handle bar */}
+                    <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5" />
+
+                    {/* Date header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-[10px] font-black text-[#4ade80] uppercase tracking-[0.2em] mb-0.5">Eventos do Dia</p>
+                        <h3 className="text-lg font-bold text-white">
+                          {new Date(selectedDay + 'T00:00:00').toLocaleDateString('pt-PT', {
+                            weekday: 'long', day: 'numeric', month: 'long'
+                          })}
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setModalOpen(false)}
+                        className="w-9 h-9 rounded-full bg-[#0e1710] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                       >
-                        <cfg.icon className="h-4 w-4" style={{ color: cfg.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{ev.title}</p>
-                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                          {cfg.label} {ev.subject_name ? `• ${ev.subject_name}` : ""}
-                        </p>
-                      </div>
+                        ✕
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Events list */}
+                    <div className="space-y-3">
+                      {selectedDayEvents.map((ev, i) => {
+                        const cfg = getTypeConfig(ev.event_type);
+                        return (
+                          <div
+                            key={i}
+                            className="rounded-2xl p-4 border"
+                            style={{
+                              backgroundColor: cfg.color + '12',
+                              borderColor: cfg.color + '40',
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                                style={{ backgroundColor: cfg.color + '25' }}
+                              >
+                                <span className="text-xl">{cfg.emoji}</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-base font-bold text-white leading-snug mb-1">{ev.title}</p>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  <span
+                                    className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg"
+                                    style={{ backgroundColor: cfg.color + '20', color: cfg.color }}
+                                  >
+                                    {cfg.label}
+                                  </span>
+                                  {ev.subject_name && (
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-800/60">
+                                      📚 {ev.subject_name}
+                                    </span>
+                                  )}
+                                </div>
+                                {ev.description && (
+                                  <p className="text-xs text-slate-400 mt-2 leading-relaxed">{ev.description}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Upcoming events */}
