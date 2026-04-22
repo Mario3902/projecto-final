@@ -18,28 +18,36 @@ router.get("/", auth, async (req, res) => {
     const progress = rows[0];
 
     // --- Streak logic ---
+    const toLocalDateStr = (d) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = toLocalDateStr(today);
 
-    const lastActive = progress.last_active_date
-      ? new Date(progress.last_active_date)
-      : null;
-    if (lastActive) lastActive.setHours(0, 0, 0, 0);
+    // Parse last_active_date as local date to avoid UTC timezone shift
+    let lastActive = null;
+    if (progress.last_active_date) {
+      const raw =
+        typeof progress.last_active_date === "string"
+          ? progress.last_active_date
+          : progress.last_active_date.toISOString().split("T")[0];
+      const [y, m, d] = raw.split("-").map(Number);
+      lastActive = new Date(y, m - 1, d);
+    }
 
     let newStreak = progress.streak || 0;
 
     if (!lastActive) {
-      // First time ever — start streak at 1
       newStreak = 1;
     } else {
       const diffMs = today.getTime() - lastActive.getTime();
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
       if (diffDays === 0) {
-        // Same day — streak stays the same, no update needed
+        // Same day — streak stays the same
       } else if (diffDays === 1) {
-        // Consecutive day — increment streak! 🔥
+        // Consecutive day — increment streak
         newStreak += 1;
       } else {
         // Missed one or more days — reset to 1
@@ -48,7 +56,7 @@ router.get("/", auth, async (req, res) => {
     }
 
     // Only write to DB if something changed
-    const lastActiveStr = lastActive ? lastActive.toISOString().split("T")[0] : null;
+    const lastActiveStr = lastActive ? toLocalDateStr(lastActive) : null;
     if (newStreak !== progress.streak || lastActiveStr !== todayStr) {
       await db.query(
         "UPDATE user_progress SET streak = ?, last_active_date = ? WHERE user_id = ?",

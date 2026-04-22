@@ -139,13 +139,20 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
-        // Simple heuristic: if we have a token, load real data
         if (localStorage.getItem("nzila_token")) {
            loadData();
         } else {
-           // Wait for user to log in/register
            setIsLoading(false);
         }
+
+        // Recarrega o progresso (incluindo streak) quando o utilizador volta ao tab
+        const handleVisibility = () => {
+            if (!document.hidden && localStorage.getItem("nzila_token")) {
+                loadData();
+            }
+        };
+        document.addEventListener("visibilitychange", handleVisibility);
+        return () => document.removeEventListener("visibilitychange", handleVisibility);
     }, []);
 
     // Calcula o nível com base no XP (100 XP por nível)
