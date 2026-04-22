@@ -212,7 +212,7 @@ export const api = {
     return res.json();
   },
 
-  // Chat
+  // Chat (Legacy — flat, no sessions)
   getChatHistory: async () => {
     const res = await fetch(`${API_URL}/chat`, { headers: getHeaders() });
     if (!res.ok) throw new Error(await res.text());
@@ -220,6 +220,53 @@ export const api = {
   },
   saveChatMessage: async (data: { role: string; content: string }) => {
     const res = await fetch(`${API_URL}/chat`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+
+  // Chat Sessions
+  getChatSessions: async () => {
+    const res = await fetch(`${API_URL}/chat/sessions`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  createChatSession: async (title?: string) => {
+    const res = await fetch(`${API_URL}/chat/sessions`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  deleteChatSession: async (sessionId: number) => {
+    const res = await fetch(`${API_URL}/chat/sessions/${sessionId}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  renameChatSession: async (sessionId: number, title: string) => {
+    const res = await fetch(`${API_URL}/chat/sessions/${sessionId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  getSessionMessages: async (sessionId: number) => {
+    const res = await fetch(`${API_URL}/chat/sessions/${sessionId}/messages`, { headers: getHeaders() });
+    if (!res.ok) throw new Error(await res.text());
+    return res.json();
+  },
+  saveSessionMessage: async (sessionId: number, data: { role: string; content: string }) => {
+    const res = await fetch(`${API_URL}/chat/sessions/${sessionId}/messages`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),

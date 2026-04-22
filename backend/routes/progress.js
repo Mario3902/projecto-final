@@ -3,14 +3,66 @@ const router = express.Router();
 const db = require("../db");
 const auth = require("../middleware/auth");
 
-// Get progress stats
+// Get progress stats (+ auto-update streak)
 router.get("/", auth, async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT xp, level, streak, study_hours, quizzes_completed FROM user_progress WHERE user_id = ?",
+      "SELECT xp, level, streak, study_hours, quizzes_completed, last_active_date FROM user_progress WHERE user_id = ?",
       [req.user.id]
     );
-    res.json(rows[0] || { xp: 0, level: 1, streak: 0, study_hours: 0, quizzes_completed: 0 });
+
+    if (rows.length === 0) {
+      return res.json({ xp: 0, level: 1, streak: 0, study_hours: 0, quizzes_completed: 0 });
+    }
+
+    const progress = rows[0];
+
+    // --- Streak logic ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
+
+    const lastActive = progress.last_active_date
+      ? new Date(progress.last_active_date)
+      : null;
+    if (lastActive) lastActive.setHours(0, 0, 0, 0);
+
+    let newStreak = progress.streak || 0;
+
+    if (!lastActive) {
+      // First time ever — start streak at 1
+      newStreak = 1;
+    } else {
+      const diffMs = today.getTime() - lastActive.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        // Same day — streak stays the same, no update needed
+      } else if (diffDays === 1) {
+        // Consecutive day — increment streak! 🔥
+        newStreak += 1;
+      } else {
+        // Missed one or more days — reset to 1
+        newStreak = 1;
+      }
+    }
+
+    // Only write to DB if something changed
+    const lastActiveStr = lastActive ? lastActive.toISOString().split("T")[0] : null;
+    if (newStreak !== progress.streak || lastActiveStr !== todayStr) {
+      await db.query(
+        "UPDATE user_progress SET streak = ?, last_active_date = ? WHERE user_id = ?",
+        [newStreak, todayStr, req.user.id]
+      );
+    }
+
+    res.json({
+      xp: progress.xp,
+      level: progress.level,
+      streak: newStreak,
+      study_hours: progress.study_hours,
+      quizzes_completed: progress.quizzes_completed,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao buscar progresso." });

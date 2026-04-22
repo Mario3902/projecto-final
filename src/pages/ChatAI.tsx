@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Home, Check, Trophy, Briefcase, BookOpen, Paperclip, X, FileText, Loader2 } from "lucide-react";
+import { Send, Bot, User, Home, Check, BookOpen, Paperclip, X, FileText, Loader2, Plus, MessageSquare, Trash2, Menu, ChevronLeft } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { chatWithNzila, extractTextFromFile } from "@/lib/gemini";
@@ -8,7 +8,14 @@ import { api } from "@/lib/api";
 interface Message {
   role: "user" | "assistant";
   content: string;
-  attachment?: string; // filename of attached file
+  attachment?: string;
+}
+
+interface ChatSession {
+  id: number;
+  title: string;
+  created_at: string;
+  updated_at?: string;
 }
 
 const suggestions = [
@@ -42,27 +49,97 @@ const ChatAI = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const location = useLocation();
 
+  // Session state
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+
+  // Load sessions on mount
   useEffect(() => {
-    async function loadChat() {
-      if (!localStorage.getItem("nzila_token")) return;
-      try {
-        const history = await api.getChatHistory();
-        if (history.length > 0) {
-          setMessages(history.map((m: any) => ({ 
-             role: m.role === "assistant" || m.role === "model" ? "assistant" : "user", 
-             content: m.content 
-          })));
-        } else {
-          const welcome = getWelcomeMessage();
-          setMessages([{ role: "assistant", content: welcome }]);
-          await api.saveChatMessage({ role: "assistant", content: welcome });
-        }
-      } catch (error) {
-        console.error("Erro ao carregar chat", error);
-      }
-    }
-    loadChat();
+    if (!localStorage.getItem("nzila_token")) return;
+    loadSessions();
   }, []);
+
+  const loadSessions = async () => {
+    setIsLoadingSessions(true);
+    try {
+      const data = await api.getChatSessions();
+      setSessions(data);
+      if (data.length > 0 && !activeSessionId) {
+        // Open the most recent session
+        const mostRecent = data[0];
+        setActiveSessionId(mostRecent.id);
+        await loadSessionMessages(mostRecent.id);
+      } else if (data.length === 0) {
+        // No sessions — auto-create the first one
+        await createNewChat();
+      }
+    } catch (error) {
+      console.error("Erro ao carregar sessões", error);
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  };
+
+  const loadSessionMessages = async (sessionId: number) => {
+    try {
+      const history = await api.getSessionMessages(sessionId);
+      if (history.length > 0) {
+        setMessages(history.map((m: any) => ({
+          role: m.role === "assistant" || m.role === "model" ? "assistant" : "user",
+          content: m.content
+        })));
+      } else {
+        // New empty session — show welcome
+        const welcome = getWelcomeMessage();
+        setMessages([{ role: "assistant", content: welcome }]);
+        await api.saveSessionMessage(sessionId, { role: "assistant", content: welcome });
+      }
+    } catch (error) {
+      console.error("Erro ao carregar mensagens", error);
+    }
+  };
+
+  const switchSession = async (sessionId: number) => {
+    setActiveSessionId(sessionId);
+    setMessages([]);
+    await loadSessionMessages(sessionId);
+    setSidebarOpen(false);
+  };
+
+  const createNewChat = async () => {
+    try {
+      const session = await api.createChatSession("Novo Chat");
+      setSessions(prev => [session, ...prev]);
+      setActiveSessionId(session.id);
+      const welcome = getWelcomeMessage();
+      setMessages([{ role: "assistant", content: welcome }]);
+      await api.saveSessionMessage(session.id, { role: "assistant", content: welcome });
+      setSidebarOpen(false);
+    } catch (error) {
+      console.error("Erro ao criar chat", error);
+    }
+  };
+
+  const deleteSession = async (sessionId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm("Apagar esta conversa?")) return;
+    try {
+      await api.deleteChatSession(sessionId);
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      if (activeSessionId === sessionId) {
+        const remaining = sessions.filter(s => s.id !== sessionId);
+        if (remaining.length > 0) {
+          await switchSession(remaining[0].id);
+        } else {
+          await createNewChat();
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao apagar chat", error);
+    }
+  };
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,27 +149,20 @@ const ChatAI = () => {
   const handleFileAttach = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
     const isImage = file.type.startsWith("image/");
     const isPdf = file.type === "application/pdf";
-    
-    if (!isImage && !isPdf) {
-      return;
-    }
+    if (!isImage && !isPdf) return;
 
     setAttachedFile(file);
     setIsExtractingFile(true);
-
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
         try {
           const base64Data = (event.target?.result as string).split(',')[1];
           if (!base64Data) throw new Error("Erro ao converter ficheiro.");
-          
           const text = await extractTextFromFile(base64Data, file.type);
           setExtractedFileText(text || "");
-          
           if (!text || text.trim().length < 5) {
             setExtractedFileText(`[Ficheiro anexado: ${file.name} - OCR não encontrou texto legível]`);
           }
@@ -121,46 +191,41 @@ const ChatAI = () => {
 
   const sendMessage = async (text: string) => {
     if (!text.trim() && !extractedFileText) return;
-    
-    // Build the full message with file context if attached
+    if (!activeSessionId) return;
+
     let fullMessage = text.trim();
     const fileName = attachedFile?.name;
-    
     if (extractedFileText && extractedFileText.trim().length > 0) {
-      fullMessage = fullMessage 
+      fullMessage = fullMessage
         ? `${fullMessage}\n\n📎 Conteúdo extraído do ficheiro "${fileName}":\n"""\n${extractedFileText}\n"""`
         : `Analisa o conteúdo deste ficheiro "${fileName}":\n"""\n${extractedFileText}\n"""`;
     }
-    
-    const userMsg: Message = { 
-      role: "user", 
-      content: fullMessage,
-      attachment: fileName 
-    };
+
+    const userMsg: Message = { role: "user", content: fullMessage, attachment: fileName };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     removeAttachment();
     setIsTyping(true);
 
     try {
-      // Save User Message to DB
-      await api.saveChatMessage({ role: "user", content: fullMessage });
+      await api.saveSessionMessage(activeSessionId, { role: "user", content: fullMessage });
 
-      // Format history for Gemini (max 10 interactions to avoid token limits)
+      // Update session title in sidebar if it's the first message
+      const currentSession = sessions.find(s => s.id === activeSessionId);
+      if (currentSession && currentSession.title === "Novo Chat") {
+        const shortTitle = text.trim().length > 35 ? text.trim().substring(0, 35) + "..." : text.trim();
+        setSessions(prev => prev.map(s => s.id === activeSessionId ? { ...s, title: shortTitle } : s));
+      }
+
       const recentMessages = messages.slice(-10);
       const history = recentMessages.filter(m => m.content).map(m => ({
         role: m.role === "user" ? "user" : "model",
         parts: [{ text: m.content }]
       })) as { role: "user" | "model", parts: { text: string }[] }[];
 
-      // Fetch response from Gemini
       const responseText = await chatWithNzila(fullMessage, history);
-
       setMessages((prev) => [...prev, { role: "assistant", content: responseText }]);
-      
-      // Save AI Message to DB
-      await api.saveChatMessage({ role: "assistant", content: responseText });
-
+      await api.saveSessionMessage(activeSessionId, { role: "assistant", content: responseText });
     } catch (e) {
       console.error("Erro ao comunicar com a IA", e);
     } finally {
@@ -176,18 +241,129 @@ const ChatAI = () => {
     { title: "Perfil", path: "/dashboard/performance", icon: User },
   ];
 
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Agora";
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d`;
+    return d.toLocaleDateString("pt-PT", { day: "2-digit", month: "short" });
+  };
+
   return (
     <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
+      
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={`fixed top-0 left-0 h-full w-[280px] bg-[#0c120e] border-r border-[#1a261d] z-50 flex flex-col transition-transform duration-300 ease-out ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full"
+      }`}>
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-[#1a261d] flex items-center justify-between shrink-0">
+          <h2 className="text-sm font-black text-white tracking-wide">Conversas</h2>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="h-8 w-8 rounded-lg bg-[#141e16] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* New Chat Button */}
+        <div className="p-3 shrink-0">
+          <button
+            onClick={createNewChat}
+            className="w-full flex items-center gap-2.5 py-3 px-4 rounded-xl bg-[#4ade80] text-[#0e1710] font-bold text-sm transition-transform active:scale-95 shadow-[0_4px_15px_rgba(74,222,128,0.2)]"
+          >
+            <Plus className="h-4 w-4 stroke-[3]" />
+            Novo Chat
+          </button>
+        </div>
+
+        {/* Sessions List */}
+        <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-1 scrollbar-hide">
+          {isLoadingSessions ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-5 w-5 text-[#4ade80] animate-spin" />
+            </div>
+          ) : sessions.length === 0 ? (
+            <p className="text-center text-slate-600 text-xs py-8">Nenhuma conversa ainda</p>
+          ) : (
+            sessions.map((session) => (
+              <button
+                key={session.id}
+                onClick={() => switchSession(session.id)}
+                className={`w-full flex items-center gap-3 py-3 px-3.5 rounded-xl text-left transition-all group ${
+                  activeSessionId === session.id
+                    ? "bg-[#4ade80]/10 border border-[#4ade80]/30"
+                    : "hover:bg-[#141e16] border border-transparent"
+                }`}
+              >
+                <MessageSquare className={`h-4 w-4 shrink-0 ${
+                  activeSessionId === session.id ? "text-[#4ade80]" : "text-slate-600"
+                }`} />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-bold truncate ${
+                    activeSessionId === session.id ? "text-white" : "text-slate-300"
+                  }`}>
+                    {session.title}
+                  </p>
+                  <p className="text-[10px] text-slate-600 mt-0.5">
+                    {formatDate(session.updated_at || session.created_at)}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => deleteSession(session.id, e)}
+                  className="opacity-0 group-hover:opacity-100 h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-red-400 hover:bg-red-400/10 transition-all shrink-0"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
       <div className="max-w-md mx-auto w-full px-5 py-6 flex flex-col h-screen pb-24">
         
         {/* Header */}
         <div className="flex items-center justify-between mb-6 mt-2 shrink-0">
-          <div>
-            <h3 className="text-[#4ade80] text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase mb-0.5">TUTOR INTELIGENTE</h3>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white m-0">Nzila IA</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="h-10 w-10 min-w-10 rounded-xl bg-[#141e16] border border-[#254238]/60 flex items-center justify-center text-slate-400 hover:text-[#4ade80] hover:border-[#4ade80]/40 transition-colors"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <div>
+              <h3 className="text-[#4ade80] text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase mb-0.5">TUTOR INTELIGENTE</h3>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white m-0">Nzila IA</h1>
+            </div>
           </div>
-          <div className="h-10 w-10 min-w-10 rounded-full bg-[#1e2e26] border border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.2)] flex items-center justify-center shrink-0">
-            <Bot className="h-5 w-5 text-[#4ade80]" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={createNewChat}
+              className="h-10 w-10 min-w-10 rounded-xl bg-[#141e16] border border-[#254238]/60 flex items-center justify-center text-slate-400 hover:text-[#4ade80] hover:border-[#4ade80]/40 transition-colors"
+              title="Novo Chat"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+            <div className="h-10 w-10 min-w-10 rounded-full bg-[#1e2e26] border border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.2)] flex items-center justify-center shrink-0">
+              <Bot className="h-5 w-5 text-[#4ade80]" />
+            </div>
           </div>
         </div>
 
@@ -212,14 +388,12 @@ const ChatAI = () => {
                     : "bg-[#141e16] border border-[#254238]/60 text-slate-200 rounded-bl-sm"
                 }`}
               >
-                {/* Attachment indicator */}
                 {msg.attachment && (
                   <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-current/20">
                     <FileText className="h-3.5 w-3.5" />
                     <span className="text-[11px] font-bold truncate">{msg.attachment}</span>
                   </div>
                 )}
-                {/* Basic Markdown rendering for bold text **text** */}
                 {msg.content.split(/(\*\*.*?\*\*)/).map((part, index) => {
                   if (part.startsWith('**') && part.endsWith('**')) {
                     return <strong key={index} className={msg.role === "user" ? "text-black" : "text-white"}>{part.slice(2, -2)}</strong>;
@@ -236,7 +410,6 @@ const ChatAI = () => {
             </div>
           ))}
           
-          {/* Typing Indicator */}
           {isTyping && (
             <div className="flex gap-3 animate-fade-in">
               <div className="bg-[#1e2e26] border border-[#4ade80]/30 rounded-full h-10 w-10 min-w-10 flex items-center justify-center text-[#4ade80] shrink-0 mt-1">
@@ -293,7 +466,6 @@ const ChatAI = () => {
 
         {/* Input Area */}
         <div className="flex gap-2 shrink-0 bg-[#0e1710] pt-2">
-          {/* File upload hidden input */}
           <input
             type="file"
             ref={fileInputRef}
@@ -301,8 +473,6 @@ const ChatAI = () => {
             accept=".pdf,image/*"
             className="hidden"
           />
-          
-          {/* Attachment button */}
           <Button
             onClick={() => fileInputRef.current?.click()}
             disabled={isTyping || isExtractingFile}
@@ -311,7 +481,6 @@ const ChatAI = () => {
           >
             <Paperclip className="h-5 w-5" />
           </Button>
-          
           <input
             type="text"
             value={input}
@@ -353,4 +522,3 @@ const ChatAI = () => {
 };
 
 export default ChatAI;
-

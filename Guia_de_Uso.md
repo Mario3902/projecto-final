@@ -90,6 +90,6 @@ O ecossistema do projeto é distribuído, dependendo de três serviços principa
 ### 10. Dashboard de Ranking Pessoal e Inteligência Analítica
 - **Descrição:** Insight puro fornecido à base de dados para o guiar.
 - **Como Usar:** Aceda às suas estatísticas avançadas, onde a IA correlaciona o seu nível de XP, tempo de estúdio real, notas registadas de modo a dar o feedback direto de como e para onde deve direcionar as capacidades do semestre num texto fluido.
-
+TESTE PARA O APRENDIZADO DA MAQUINA E DO DEZENVOLVIMENTO 
 ---
 _Nota de funcionalidades Futuras (Em desenvolvimentos locais nestes diretórios): Serviços extra imersivos em **Sala IA de Ensino com Avatar 3D** e observação de física interativa em **Realidades 3Ds mistas** dos diretórios `interactive-solar-system-guide` e `3D-ai-school-threejs` estão atualmente a ser explorados._

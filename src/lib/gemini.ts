@@ -50,38 +50,28 @@ export const buildStudentContext = async (): Promise<string> => {
             lines.push(`Tarefas: ${done} concluídas de ${tasks.length} total`);
         }
 
-        // Academic Calendar — upcoming events so Nzila can recommend study focus
+        // Academic Calendar — full calendar so Nzila knows all activities and exams
         try {
-            const upcoming = await api.getUpcomingEvents();
-            if (upcoming && upcoming.length > 0) {
-                lines.push("\nEventos académicos próximos (próximos 7 dias):");
-                upcoming.forEach((ev: any) => {
+            const calendarEvents = await api.getCalendarEvents();
+            if (calendarEvents && calendarEvents.length > 0) {
+                lines.push("\nCalendário Académico (Atividades, Provas, Feriados):");
+                calendarEvents.forEach((ev: any) => {
                     const d = new Date(ev.event_date.split("T")[0] + "T00:00:00");
-                    const today = new Date(); today.setHours(0,0,0,0);
-                    const diffDays = Math.ceil((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                    const when = diffDays === 0 ? "HOJE" : diffDays === 1 ? "AMANHÃ" : `em ${diffDays} dias`;
+                    const dateStr = d.toLocaleDateString("pt-PT");
                     const subj = ev.subject_name ? ` (${ev.subject_name})` : "";
-                    lines.push(`  📅 ${ev.title}${subj} — ${when} (${ev.event_type})`);
+                    lines.push(`  📅 ${dateStr}: ${ev.title}${subj} - ${ev.event_type}`);
                 });
             }
         } catch { /* calendar not available yet */ }
 
-        // Weekly Schedule — today's classes
+        // Weekly Schedule — full schedule
         try {
             const schedule = await api.getSchedule();
             if (schedule && schedule.length > 0) {
-                const todayDowIndex = new Date().getDay(); // 0 = Sun, 1 = Mon...
-                const DOW_MAP = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
-                const todayStr = DOW_MAP[todayDowIndex];
-                
-                const todaysClasses = schedule.filter((c: any) => c.day_of_week === todayStr);
-                
-                if (todaysClasses.length > 0) {
-                    lines.push(`\nAulas que o aluno teve (ou vai ter) HOJE (${todayStr}):`);
-                    todaysClasses.forEach((c: any) => {
-                        lines.push(`  ⏰ ${c.start_time} - ${c.end_time}: ${c.subject_name}`);
-                    });
-                }
+                lines.push(`\nHorário Semanal de Aulas:`);
+                schedule.forEach((c: any) => {
+                    lines.push(`  ⏰ ${c.day_of_week}: ${c.start_time} às ${c.end_time} - ${c.subject_name}`);
+                });
             }
         } catch { /* schedule not available yet */ }
 

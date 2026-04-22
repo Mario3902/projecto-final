@@ -29,6 +29,14 @@ router.post("/result", auth, async (req, res) => {
       [req.user.id, subject, score, total, xpEarned, isVocational || false]
     );
 
+    // Update quizzes_completed in user_progress
+    if (!isVocational) {
+      await db.query(
+        "UPDATE user_progress SET quizzes_completed = quizzes_completed + 1 WHERE user_id = ?",
+        [req.user.id]
+      );
+    }
+
     res.json({ success: true, id: result.insertId });
   } catch (error) {
     console.error(error);
