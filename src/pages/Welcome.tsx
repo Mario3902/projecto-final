@@ -9,7 +9,7 @@ const Welcome = () => {
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("text"), 800);
     const t2 = setTimeout(() => setPhase("exit"), 2500);
-    const t3 = setTimeout(() => navigate("/login"), 3200);
+    const t3 = setTimeout(() => navigate("/onboarding"), 3200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [navigate]);
 

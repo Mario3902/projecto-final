@@ -17,6 +17,7 @@ import Vocational from "./pages/Vocational";
 import AugmentedReality from "./pages/AugmentedReality";
 import SubjectSelection from "./pages/SubjectSelection";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
 import Ranking from "./pages/Ranking";
 import Carreira from "./pages/Carreira";
 import AcademicCalendar from "./pages/AcademicCalendar";
@@ -33,6 +34,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
