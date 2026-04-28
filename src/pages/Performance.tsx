@@ -40,14 +40,27 @@ const Confetti = ({ show }: { show: boolean }) => {
   );
 };
 
-// ── Badge System ──
+// ── Badge System (expanded) ──
 const BADGES = [
-  { id: "starter", name: "Primeiro Passo", desc: "Completar o registo", icon: Star, color: "#4ade80", minXP: 0 },
-  { id: "focus", name: "Foco Inicial", desc: "Ganhar 200 XP", icon: Target, color: "#22d3ee", minXP: 200 },
-  { id: "studious", name: "Estudioso", desc: "Ganhar 500 XP", icon: BookOpen, color: "#facc15", minXP: 500 },
-  { id: "champion", name: "Campeão", desc: "Ganhar 1000 XP", icon: Trophy, color: "#fb923c", minXP: 1000 },
-  { id: "master", name: "Mestre Nzila", desc: "Ganhar 2000 XP", icon: Crown, color: "#f472b6", minXP: 2000 },
-  { id: "legend", name: "Lenda", desc: "Ganhar 5000 XP", icon: Shield, color: "#a78bfa", minXP: 5000 },
+  // XP milestones
+  { id: "starter",    name: "Primeiro Passo",  desc: "Completar o registo",          icon: Star,        color: "#4ade80", minXP: 0,     streakReq: 0,  quizReq: 0  },
+  { id: "focus",      name: "Foco Inicial",    desc: "Ganhar 200 XP",                icon: Target,      color: "#22d3ee", minXP: 200,   streakReq: 0,  quizReq: 0  },
+  { id: "studious",   name: "Estudioso",       desc: "Ganhar 500 XP",                icon: BookOpen,    color: "#facc15", minXP: 500,   streakReq: 0,  quizReq: 0  },
+  { id: "champion",   name: "Campeão",         desc: "Ganhar 1000 XP",               icon: Trophy,      color: "#fb923c", minXP: 1000,  streakReq: 0,  quizReq: 0  },
+  { id: "master",     name: "Mestre Nzila",    desc: "Ganhar 2000 XP",               icon: Crown,       color: "#f472b6", minXP: 2000,  streakReq: 0,  quizReq: 0  },
+  { id: "legend",     name: "Lenda",           desc: "Ganhar 5000 XP",               icon: Shield,      color: "#a78bfa", minXP: 5000,  streakReq: 0,  quizReq: 0  },
+  // Streak badges
+  { id: "streak3",    name: "3 Dias Seguidos", desc: "Streak de 3 dias",             icon: Flame,       color: "#f97316", minXP: 0,     streakReq: 3,  quizReq: 0  },
+  { id: "streak7",    name: "Semana Perfeita", desc: "Streak de 7 dias",             icon: Flame,       color: "#ef4444", minXP: 0,     streakReq: 7,  quizReq: 0  },
+  { id: "streak30",   name: "Mês Dedicado",    desc: "Streak de 30 dias",            icon: Flame,       color: "#dc2626", minXP: 0,     streakReq: 30, quizReq: 0  },
+  // Quiz badges
+  { id: "quiz5",      name: "Curioso",         desc: "Completar 5 quizzes",          icon: Zap,         color: "#60a5fa", minXP: 0,     streakReq: 0,  quizReq: 5  },
+  { id: "quiz20",     name: "Explorador",      desc: "Completar 20 quizzes",         icon: Zap,         color: "#3b82f6", minXP: 0,     streakReq: 0,  quizReq: 20 },
+  { id: "quiz50",     name: "Veterano",        desc: "Completar 50 quizzes",         icon: Award,       color: "#2563eb", minXP: 0,     streakReq: 0,  quizReq: 50 },
+  // Level badges
+  { id: "level5",     name: "Crescendo",       desc: "Atingir o Nível 5",            icon: TrendingUp,  color: "#34d399", minXP: 400,   streakReq: 0,  quizReq: 0  },
+  { id: "level10",    name: "Em Ascensão",     desc: "Atingir o Nível 10",           icon: TrendingUp,  color: "#10b981", minXP: 900,   streakReq: 0,  quizReq: 0  },
+  { id: "nzila_star", name: "Estrela Nzila",   desc: "500 XP + 7d streak + 10 quiz", icon: Star,        color: "#fbbf24", minXP: 500,   streakReq: 7,  quizReq: 10 },
 ];
 
 const TrendIcon = ({ trend }: { trend: string }) => {
@@ -202,8 +215,14 @@ const Profile = () => {
   ];
 
   // ── Badges earned ──
-  const earnedBadges = BADGES.filter(b => xp >= b.minXP);
-  const nextBadge = BADGES.find(b => xp < b.minXP);
+  const earnedBadges = BADGES.filter(b =>
+    xp >= b.minXP &&
+    streak >= b.streakReq &&
+    quizzesCompleted >= b.quizReq
+  );
+  const nextBadge = BADGES.find(b =>
+    !(xp >= b.minXP && streak >= b.streakReq && quizzesCompleted >= b.quizReq)
+  );
 
   const bottomNavItems = [
     { title: "Início", path: "/dashboard", icon: Home },
@@ -699,28 +718,39 @@ const Profile = () => {
                 <div className="bg-[#0e1710] border border-slate-800 rounded-2xl p-4 mb-5">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-300">Próxima: {nextBadge.name}</span>
-                    <span className="text-[10px] font-bold text-[#4ade80]">
-                      {xp}/{nextBadge.minXP} XP
-                    </span>
+                    <span className="text-[10px] font-bold text-[#4ade80]">{nextBadge.desc}</span>
                   </div>
-                  <div className="h-2 w-full bg-[#1e2e26] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min((xp / nextBadge.minXP) * 100, 100)}%`,
-                        backgroundColor: nextBadge.color
-                      }}
-                    />
+                  {nextBadge.minXP > 0 && (
+                    <div className="h-2 w-full bg-[#1e2e26] rounded-full overflow-hidden mb-2">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min((xp / nextBadge.minXP) * 100, 100)}%`, backgroundColor: nextBadge.color }}
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {nextBadge.minXP > 0 && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        XP: {xp}/{nextBadge.minXP} {xp >= nextBadge.minXP ? "✅" : ""}
+                      </span>
+                    )}
+                    {nextBadge.streakReq > 0 && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Streak: {streak}/{nextBadge.streakReq} {streak >= nextBadge.streakReq ? "✅" : "🔥"}
+                      </span>
+                    )}
+                    {nextBadge.quizReq > 0 && (
+                      <span className="text-[10px] text-slate-500 font-medium">
+                        Quizzes: {quizzesCompleted}/{nextBadge.quizReq} {quizzesCompleted >= nextBadge.quizReq ? "✅" : "📝"}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-2 font-medium">
-                    Faltam {Math.max(0, nextBadge.minXP - xp)} XP para desbloquear
-                  </p>
                 </div>
               )}
 
               <div className="grid grid-cols-2 gap-3">
                 {BADGES.map((badge, i) => {
-                  const earned = xp >= badge.minXP;
+                  const earned = xp >= badge.minXP && streak >= badge.streakReq && quizzesCompleted >= badge.quizReq;
                   const Icon = badge.icon;
                   return (
                     <div

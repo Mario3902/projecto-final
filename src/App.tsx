@@ -22,6 +22,14 @@ import Ranking from "./pages/Ranking";
 import Carreira from "./pages/Carreira";
 import AcademicCalendar from "./pages/AcademicCalendar";
 import { GameProvider } from "./context/GameContext";
+import { NziProvider } from "./context/NziContext";
+import LessonPage from "./pages/LessonPage";
+import SkillTreePage from "./pages/SkillTreePage";
+import LeaguePage from "./pages/LeaguePage";
+import FlashcardsPage from "./pages/FlashcardsPage";
+import MindMapPage from "./pages/MindMapPage";
+import StoryModePage from "./pages/StoryModePage";
+import NziWidget from "./components/nzi/NziWidget";
 
 const queryClient = new QueryClient();
 
@@ -29,31 +37,39 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <GameProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/performance" element={<Performance />} />
-            <Route path="/dashboard/tasks" element={<Tasks />} />
-            <Route path="/dashboard/quizzes" element={<Quizzes />} />
-            <Route path="/dashboard/chat" element={<ChatAI />} />
-            <Route path="/dashboard/sala-ia" element={<SalaIA />} />
-            <Route path="/dashboard/sistema-solar" element={<SistemaSolar />} />
-            <Route path="/dashboard/vocational" element={<Vocational />} />
-            <Route path="/dashboard/ar" element={<AugmentedReality />} />
-            <Route path="/dashboard/subjects" element={<SubjectSelection />} />
-            <Route path="/dashboard/ranking" element={<Ranking />} />
-            <Route path="/dashboard/carreira" element={<Carreira />} />
-            <Route path="/dashboard/calendar" element={<AcademicCalendar />} />
-            <Route path="*" element={<NotFound />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <NziProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <NziWidget />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/performance" element={<Performance />} />
+              <Route path="/dashboard/tasks" element={<Tasks />} />
+              <Route path="/dashboard/quizzes" element={<Quizzes />} />
+              <Route path="/dashboard/lesson" element={<LessonPage />} />
+              <Route path="/dashboard/skill-tree" element={<SkillTreePage />} />
+              <Route path="/dashboard/leagues" element={<LeaguePage />} />
+              <Route path="/dashboard/flashcards" element={<FlashcardsPage />} />
+              <Route path="/dashboard/mindmap" element={<MindMapPage />} />
+              <Route path="/dashboard/story" element={<StoryModePage />} />
+              <Route path="/dashboard/chat" element={<ChatAI />} />
+              <Route path="/dashboard/sala-ia" element={<SalaIA />} />
+              <Route path="/dashboard/sistema-solar" element={<SistemaSolar />} />
+              <Route path="/dashboard/vocational" element={<Vocational />} />
+              <Route path="/dashboard/ar" element={<AugmentedReality />} />
+              <Route path="/dashboard/subjects" element={<SubjectSelection />} />
+              <Route path="/dashboard/ranking" element={<Ranking />} />
+              <Route path="/dashboard/carreira" element={<Carreira />} />
+              <Route path="/dashboard/calendar" element={<AcademicCalendar />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </NziProvider>
       </GameProvider>
     </TooltipProvider>
   </QueryClientProvider>

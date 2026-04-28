@@ -3,11 +3,13 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { 
+import {
   CheckCircle2, XCircle, ArrowRight, SkipForward, RotateCcw, Timer, Sparkles, BookOpen,
-  Flame, User, Zap, Play, Calculator, FlaskConical, BookA, Home, Trophy, Briefcase, Bot
+  Flame, User, Zap, Play, Calculator, FlaskConical, BookA, Home, Trophy, Briefcase, Bot,
+  Heart, Swords
 } from "lucide-react";
 import { useGame } from "@/context/GameContext";
+import { useNzi } from "@/context/NziContext";
 import { generateQuiz, generateVocationalQuestions, getVocationalAdvice } from "@/lib/gemini";
 import { api } from "@/lib/api";
 
@@ -37,7 +39,8 @@ interface Question {
 }
 
 const Quizzes = () => {
-  const { completeQuiz, level, xp, streak: realStreak } = useGame();
+  const { completeQuiz, level, xp, streak: realStreak, hearts } = useGame();
+  const { celebrate, encourage } = useNzi();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -186,8 +189,10 @@ const Quizzes = () => {
       if (idx === question.correct) {
         setScore((s) => s + 1);
         playTone(600, "sine", 0.3);
+        celebrate();
       } else {
         playTone(200, "sawtooth", 0.4);
+        encourage();
       }
     } else {
       playTone(400, "sine", 0.1);
@@ -448,13 +453,16 @@ const Quizzes = () => {
             <h3 className="text-[#4ade80] text-[10px] sm:text-xs font-black tracking-[0.2em] uppercase mb-0.5">Nzila AI</h3>
             <h1 className="text-3xl sm:text-[34px] font-bold text-white m-0">Quizzes</h1>
           </div>
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-2 sm:gap-3 items-center">
+            {/* Hearts */}
+            <div className="flex gap-0.5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Heart key={i} className={`h-4 w-4 ${i < hearts ? 'text-red-500 fill-red-500' : 'text-slate-700'}`} />
+              ))}
+            </div>
             <div className="flex items-center gap-1.5 bg-[#4ade80]/10 text-[#4ade80] border border-[#4ade80]/20 px-3 py-1.5 rounded-full">
               <Flame className="h-3.5 w-3.5 fill-[#4ade80]" />
-              <span className="text-xs sm:text-sm font-bold">{realStreak} Dias</span>
-            </div>
-            <div className="h-10 w-10 min-w-10 rounded-full bg-[#1a261d] border border-slate-700 flex items-center justify-center shrink-0 ml-1">
-              <User className="h-5 w-5 text-slate-400" />
+              <span className="text-xs sm:text-sm font-bold">{realStreak}</span>
             </div>
           </div>
         </div>
@@ -469,6 +477,50 @@ const Quizzes = () => {
             <div className="h-full bg-[#4ade80] rounded-full transition-all duration-500" style={{ width: `${Math.min(((xp - ((level - 1) * 100)) / 100) * 100, 100)}%` }}></div>
           </div>
           <p className="text-[10px] text-slate-500 mt-2 text-right font-bold">{xp} / {level * 100} XP</p>
+        </div>
+
+        {/* ── Gamification shortcuts ── */}
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <button
+            onClick={() => navigate("/dashboard/skill-tree")}
+            className="bg-[#141e16] border border-[#254238] p-4 rounded-2xl text-left hover:border-[#4ade80]/40 transition-colors group active:scale-95"
+          >
+            <span className="text-2xl block mb-2">🌳</span>
+            <p className="font-bold text-sm text-white">Árvore de Habilidades</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Caminho por tópicos</p>
+          </button>
+          <button
+            onClick={() => navigate("/dashboard/leagues")}
+            className="bg-[#141e16] border border-[#254238] p-4 rounded-2xl text-left hover:border-yellow-500/40 transition-colors group active:scale-95"
+          >
+            <span className="text-2xl block mb-2">🏆</span>
+            <p className="font-bold text-sm text-white">Ligas Semanais</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Compete com outros</p>
+          </button>
+        </div>
+
+        {/* ── Lição Completa (Duolingo-style mixed lesson) ── */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate(`/dashboard/lesson?subject=${encodeURIComponent(userProfile.course || 'Geral')}&context=${encodeURIComponent(`Perguntas do curso de ${userProfile.course || 'Geral'}`)}&n=8`)}
+            className="w-full text-left bg-gradient-to-br from-[#1e2e5f] to-[#283880] border border-[#60a5fa]/30 rounded-[28px] p-5 relative overflow-hidden active:scale-[0.98] transition-transform group hover:border-[#60a5fa]/60"
+          >
+            <div className="absolute -top-4 -right-4 w-28 h-28 bg-[#60a5fa]/10 rounded-full group-hover:scale-110 transition-transform duration-500" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="w-14 h-14 bg-[#60a5fa]/20 rounded-2xl flex items-center justify-center shrink-0 border border-[#60a5fa]/30">
+                <Swords className="h-7 w-7 text-[#60a5fa]" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-[#60a5fa]">Novo</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Game</span>
+                </div>
+                <h3 className="text-white font-bold text-base leading-tight mb-1">Lição Completa</h3>
+                <p className="text-slate-400 text-xs">8 perguntas • Tipos variados • ❤️ Vidas • 🪙 Cauris</p>
+              </div>
+              <ArrowRight className="h-5 w-5 text-[#60a5fa] shrink-0" />
+            </div>
+          </button>
         </div>
 
         {/* Desafio Adaptativo */}
@@ -553,16 +605,23 @@ const Quizzes = () => {
                 const theme = colors[idx % colors.length];
 
                 return (
-                  <button 
-                    key={sub.id}
-                    onClick={() => startSpecificQuiz(sub.name, sub.promptContext, 5)}
-                    className="flex flex-col items-center gap-3 shrink-0 snap-start transition-transform active:scale-95 w-[80px]"
-                  >
-                    <div className={`h-[72px] w-[72px] rounded-2xl ${theme.bg} flex items-center justify-center shadow-lg border border-white/5 text-3xl`}>
-                      {sub.emoji}
-                    </div>
+                  <div key={sub.id} className="flex flex-col items-center gap-2 shrink-0 snap-start w-[80px]">
+                    <button
+                      onClick={() => startSpecificQuiz(sub.name, sub.promptContext, 5)}
+                      className="transition-transform active:scale-95"
+                    >
+                      <div className={`h-[72px] w-[72px] rounded-2xl ${theme.bg} flex items-center justify-center shadow-lg border border-white/5 text-3xl`}>
+                        {sub.emoji}
+                      </div>
+                    </button>
                     <span className="text-[12px] font-bold text-slate-200 text-center leading-tight truncate w-full px-1">{sub.name}</span>
-                  </button>
+                    <button
+                      onClick={() => navigate(`/dashboard/lesson?subject=${encodeURIComponent(sub.name)}&context=${encodeURIComponent(sub.promptContext)}&n=8`)}
+                      className="text-[9px] font-black text-[#60a5fa] bg-[#60a5fa]/10 px-2 py-0.5 rounded-full"
+                    >
+                      LIÇÃO
+                    </button>
+                  </div>
                 );
               })}
             </div>

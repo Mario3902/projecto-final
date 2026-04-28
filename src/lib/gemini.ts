@@ -284,6 +284,110 @@ export const parseCalendarFromText = async (
     }
 };
 
+// Utility: Generate Skill Tree topics for a subject
+export interface SkillTopic {
+    id: string;
+    name: string;
+    emoji: string;
+    description: string;
+    difficulty: 'básico' | 'médio' | 'avançado';
+}
+
+// Fallback topic trees for common Angolan secondary school subjects
+const FALLBACK_TOPICS: Record<string, SkillTopic[]> = {
+    "matemática": [
+        { id: "conjuntos", name: "Conjuntos Numéricos", emoji: "🔢", description: "Naturais, inteiros, racionais e reais", difficulty: "básico" },
+        { id: "algebra", name: "Álgebra", emoji: "✏️", description: "Expressões e equações algébricas", difficulty: "básico" },
+        { id: "funcoes", name: "Funções", emoji: "📈", description: "Funções lineares, quadráticas e exponenciais", difficulty: "médio" },
+        { id: "geometria", name: "Geometria", emoji: "📐", description: "Figuras planas e sólidos geométricos", difficulty: "médio" },
+        { id: "trigonometria", name: "Trigonometria", emoji: "🔺", description: "Seno, cosseno e tangente", difficulty: "médio" },
+        { id: "estatistica", name: "Estatística", emoji: "📊", description: "Média, mediana, moda e desvio padrão", difficulty: "avançado" },
+        { id: "calculos", name: "Cálculo Diferencial", emoji: "∫", description: "Derivadas e aplicações", difficulty: "avançado" },
+        { id: "matrizes", name: "Matrizes", emoji: "🗂️", description: "Operações com matrizes e determinantes", difficulty: "avançado" },
+    ],
+    "física": [
+        { id: "cinematica", name: "Cinemática", emoji: "🏃", description: "Movimento, velocidade e aceleração", difficulty: "básico" },
+        { id: "dinamica", name: "Dinâmica", emoji: "⚡", description: "Leis de Newton e forças", difficulty: "básico" },
+        { id: "energia", name: "Energia e Trabalho", emoji: "🔋", description: "Energia cinética, potencial e conservação", difficulty: "médio" },
+        { id: "ondas", name: "Ondas", emoji: "〰️", description: "Propriedades e tipos de ondas", difficulty: "médio" },
+        { id: "eletricidade", name: "Eletricidade", emoji: "💡", description: "Corrente elétrica, resistência e circuitos", difficulty: "médio" },
+        { id: "termodinamica", name: "Termodinâmica", emoji: "🌡️", description: "Calor, temperatura e leis da termodinâmica", difficulty: "avançado" },
+        { id: "optica", name: "Óptica", emoji: "🔭", description: "Reflexão, refração e lentes", difficulty: "avançado" },
+        { id: "moderna", name: "Física Moderna", emoji: "⚛️", description: "Relatividade e física quântica", difficulty: "avançado" },
+    ],
+    "química": [
+        { id: "tabela", name: "Tabela Periódica", emoji: "🧪", description: "Elementos e suas propriedades", difficulty: "básico" },
+        { id: "ligacoes", name: "Ligações Químicas", emoji: "🔗", description: "Iónica, covalente e metálica", difficulty: "básico" },
+        { id: "reacoes", name: "Reações Químicas", emoji: "⚗️", description: "Tipos e equações químicas", difficulty: "médio" },
+        { id: "solucoes", name: "Soluções", emoji: "🧫", description: "Concentração, solubilidade e pH", difficulty: "médio" },
+        { id: "organica", name: "Química Orgânica", emoji: "🌿", description: "Hidrocarbonetos e grupos funcionais", difficulty: "avançado" },
+        { id: "termoquimica", name: "Termoquímica", emoji: "🔥", description: "Entalpia, entropia e energia livre", difficulty: "avançado" },
+    ],
+    "biologia": [
+        { id: "celula", name: "Célula", emoji: "🦠", description: "Estrutura e funções celulares", difficulty: "básico" },
+        { id: "genetica", name: "Genética", emoji: "🧬", description: "DNA, RNA e hereditariedade", difficulty: "médio" },
+        { id: "ecologia", name: "Ecologia", emoji: "🌍", description: "Ecossistemas e cadeias alimentares", difficulty: "básico" },
+        { id: "evolucao", name: "Evolução", emoji: "🦕", description: "Darwin e seleção natural", difficulty: "médio" },
+        { id: "fisiologia", name: "Fisiologia Humana", emoji: "🫀", description: "Sistemas do corpo humano", difficulty: "médio" },
+        { id: "botanica", name: "Botânica", emoji: "🌱", description: "Estrutura e fisiologia vegetal", difficulty: "avançado" },
+        { id: "microbiologia", name: "Microbiologia", emoji: "🔬", description: "Vírus, bactérias e fungos", difficulty: "avançado" },
+    ],
+    "história": [
+        { id: "africa_precolonial", name: "África Pré-Colonial", emoji: "🌍", description: "Reinos e sociedades africanas", difficulty: "básico" },
+        { id: "colonialismo", name: "Colonialismo em Angola", emoji: "⚓", description: "Período colonial português", difficulty: "básico" },
+        { id: "resistencia", name: "Resistência Nacional", emoji: "✊", description: "Movimentos de libertação em Angola", difficulty: "médio" },
+        { id: "independencia", name: "Independência de Angola", emoji: "🇦🇴", description: "11 de Novembro de 1975", difficulty: "médio" },
+        { id: "guerra_mundial", name: "II Guerra Mundial", emoji: "🕊️", description: "Causas, desenvolvimento e consequências", difficulty: "médio" },
+        { id: "guerra_fria", name: "Guerra Fria", emoji: "🌐", description: "EUA vs URSS e o mundo bipolar", difficulty: "avançado" },
+    ],
+    "geografia": [
+        { id: "angola_fisica", name: "Angola Física", emoji: "🗺️", description: "Relevo, clima e hidrografia de Angola", difficulty: "básico" },
+        { id: "clima", name: "Climas do Mundo", emoji: "☀️", description: "Tipos de clima e fatores climáticos", difficulty: "básico" },
+        { id: "hidrografia", name: "Hidrografia", emoji: "💧", description: "Rios, lagos e recursos hídricos", difficulty: "médio" },
+        { id: "populacao", name: "População Mundial", emoji: "👥", description: "Crescimento, distribuição e migrações", difficulty: "médio" },
+        { id: "economia", name: "Economia de Angola", emoji: "💰", description: "Petróleo, agricultura e indústria", difficulty: "avançado" },
+        { id: "urbanizacao", name: "Urbanização", emoji: "🏙️", description: "Cidades, urbanização e problemas urbanos", difficulty: "avançado" },
+    ],
+    "português": [
+        { id: "gramatica", name: "Gramática", emoji: "📝", description: "Classes de palavras e análise sintática", difficulty: "básico" },
+        { id: "ortografia", name: "Ortografia", emoji: "🔤", description: "Regras ortográficas e acentuação", difficulty: "básico" },
+        { id: "leitura", name: "Compreensão Leitora", emoji: "📖", description: "Interpretação e análise de textos", difficulty: "médio" },
+        { id: "escrita", name: "Produção Escrita", emoji: "✍️", description: "Redação, dissertação e narração", difficulty: "médio" },
+        { id: "literatura", name: "Literatura Angolana", emoji: "📚", description: "Autores e obras da literatura angolana", difficulty: "avançado" },
+        { id: "comunicacao", name: "Comunicação Oral", emoji: "🎤", description: "Debate, argumentação e retórica", difficulty: "avançado" },
+    ],
+};
+
+export const generateTopicsForSubject = async (subject: string): Promise<SkillTopic[]> => {
+    // Try the fallback first (instant, no API call needed)
+    const key = subject.toLowerCase().trim();
+    for (const [k, topics] of Object.entries(FALLBACK_TOPICS)) {
+        if (key.includes(k) || k.includes(key)) return topics;
+    }
+
+    // For unknown subjects, generate via AI
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-topics`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subject }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.topics && data.topics.length > 0) return data.topics;
+    } catch { /* fall through to generic */ }
+
+    // Generic fallback
+    return [
+        { id: "intro", name: `Introdução a ${subject}`, emoji: "📚", description: `Conceitos básicos de ${subject}`, difficulty: "básico" },
+        { id: "basico", name: "Conceitos Fundamentais", emoji: "🔑", description: "Fundamentos essenciais", difficulty: "básico" },
+        { id: "intermedio", name: "Tópicos Intermédios", emoji: "📊", description: "Aprofundamento dos conceitos", difficulty: "médio" },
+        { id: "avancado", name: "Conteúdos Avançados", emoji: "🚀", description: "Tópicos de maior complexidade", difficulty: "avançado" },
+        { id: "pratica", name: "Prática e Exercícios", emoji: "✏️", description: "Aplicação prática dos conhecimentos", difficulty: "médio" },
+        { id: "revisao", name: "Revisão Geral", emoji: "🔄", description: "Consolidação de todos os tópicos", difficulty: "básico" },
+    ];
+};
+
 // Utility: Parse Weekly Schedule from PDF text
 export const parseScheduleFromText = async (
     text: string | null,

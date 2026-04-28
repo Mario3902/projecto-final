@@ -2,6 +2,14 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 
+const MAX_HEARTS = 5;
+const HEART_REGEN_MS = 30 * 60 * 1000; // 30 min per heart
+
+function checkGodMode(): boolean {
+  const name = (localStorage.getItem("userName") || "").toLowerCase();
+  return name.includes("fernandes") || name.includes("mario") || name.includes("mário");
+}
+
 interface Task {
     id: number;
     title: string;
@@ -31,6 +39,8 @@ interface GameContextType {
     xp: number;
     level: number;
     streak: number;
+    hearts: number;
+    cauris: number;
     tasks: Task[];
     quizzesCompleted: number;
     studyHours: number;
@@ -38,8 +48,13 @@ interface GameContextType {
     pomodoroSessions: PomodoroSession[];
     pomodoroCalendar: PomodoroDayStat[];
     pomodoroStats: { total_sessions: number; total_minutes: number; today_sessions: number; today_minutes: number } | null;
-    
+
+    isGodMode: boolean;
     addXP: (amount: number, reason: string) => Promise<void>;
+    loseHeart: () => void;
+    restoreHearts: (n?: number) => void;
+    gainCauris: (amount: number) => void;
+    spendCauris: (amount: number) => boolean;
     addTask: (title: string, date?: string) => Promise<void>;
     toggleTask: (id: number) => Promise<void>;
     deleteTask: (id: number) => Promise<void>;
@@ -61,12 +76,77 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [quizzesCompleted, setQuizzesCompleted] = useState<number>(0);
     const [studyHours, setStudyHours] = useState<number>(0);
     const [performanceData, setPerformanceData] = useState<{materia: string; nota: number}[]>([]);
-    
+
+    // Hearts & Cauris (persisted to localStorage)
+    const [hearts, setHearts] = useState<number>(() => {
+        const stored = localStorage.getItem("nzila_hearts");
+        if (!stored) return MAX_HEARTS;
+        const { count, lastLostAt } = JSON.parse(stored);
+        const regenCount = Math.floor((Date.now() - lastLostAt) / HEART_REGEN_MS);
+        return Math.min(MAX_HEARTS, count + regenCount);
+    });
+    const [cauris, setCauris] = useState<number>(() => {
+        return Number(localStorage.getItem("nzila_cauris") || "0");
+    });
+
     const [pomodoroSessions, setPomodoroSessions] = useState<PomodoroSession[]>([]);
     const [pomodoroCalendar, setPomodoroCalendar] = useState<PomodoroDayStat[]>([]);
     const [pomodoroStats, setPomodoroStats] = useState<any>(null);
-    
+
     const [isLoading, setIsLoading] = useState(true);
+    const [isGodMode, setIsGodMode] = useState<boolean>(() => checkGodMode());
+
+    // Persist hearts
+    useEffect(() => {
+        localStorage.setItem("nzila_hearts", JSON.stringify({ count: hearts, lastLostAt: Date.now() }));
+    }, [hearts]);
+
+    // Persist cauris
+    useEffect(() => {
+        localStorage.setItem("nzila_cauris", String(cauris));
+    }, [cauris]);
+
+    // Heart regen ticker
+    useEffect(() => {
+        if (hearts >= MAX_HEARTS) return;
+        const interval = setInterval(() => {
+            setHearts((h) => {
+                if (h < MAX_HEARTS) {
+                    toast("❤️ Ganhaste uma vida!", { duration: 2000 });
+                    return h + 1;
+                }
+                return h;
+            });
+        }, HEART_REGEN_MS);
+        return () => clearInterval(interval);
+    }, [hearts]);
+
+    const loseHeart = () => {
+        if (isGodMode) return; // unlimited hearts for this profile
+        setHearts((h) => {
+            const next = Math.max(0, h - 1);
+            if (next === 0) toast.error("Ficaste sem vidas! 💔 Aguarda ou usa Cauris.", { duration: 4000 });
+            return next;
+        });
+    };
+
+    const restoreHearts = (n = MAX_HEARTS) => {
+        setHearts(Math.min(MAX_HEARTS, hearts + n));
+    };
+
+    const gainCauris = (amount: number) => {
+        setCauris((c) => c + amount);
+        toast(`+${amount} Cauris 🪙`, { duration: 2000 });
+    };
+
+    const spendCauris = (amount: number): boolean => {
+        if (cauris < amount) {
+            toast.error(`Precisas de ${amount} Cauris. Tens ${cauris}.`);
+            return false;
+        }
+        setCauris((c) => c - amount);
+        return true;
+    };
 
     const loadData = async () => {
         try {
@@ -96,6 +176,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 userProfile = await api.getProfile();
                 localStorage.setItem("nzila_profile", JSON.stringify(userProfile));
                 localStorage.setItem("userName", userProfile.name || "Estudante");
+                setIsGodMode(checkGodMode());
             } catch (e) { console.warn("Profile fetch failed:", e); }
 
             // Cache subjects for Quizzes "Para Ti" and "Matérias" sections
@@ -173,6 +254,16 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setXp(result.xp);
             setLevel(result.level);
             toast(`+${amount} XP: ${reason}`, { icon: "⭐" });
+            // Track weekly XP for leagues
+            try {
+                const { addWeeklyXP } = await import("@/pages/LeaguePage");
+                addWeeklyXP(amount);
+            } catch {}
+            // Track daily XP for daily goals
+            try {
+                const { recordDailyXP } = await import("@/components/gamification/DailyGoal");
+                recordDailyXP(amount);
+            } catch {}
         } catch (e) { console.error(e); }
     };
 
@@ -263,6 +354,9 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 xp,
                 level,
                 streak,
+                hearts,
+                cauris,
+                isGodMode,
                 tasks,
                 quizzesCompleted,
                 studyHours,
@@ -271,6 +365,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 pomodoroCalendar,
                 pomodoroStats,
                 addXP,
+                loseHeart,
+                restoreHearts,
+                gainCauris,
+                spendCauris,
                 addTask,
                 toggleTask,
                 deleteTask,
