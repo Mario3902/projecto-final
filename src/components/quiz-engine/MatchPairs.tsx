@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface MatchPairsProps {
@@ -68,17 +68,17 @@ const MatchPairs: React.FC<MatchPairsProps> = ({ question, pairs, onAnswer, disa
   };
 
   const leftStyle = (id: number) => {
-    if (isLeftMatched(id)) return 'border-[#4ade80] bg-[#4ade80]/15 text-[#4ade80]';
-    if (selectedLeft === id) return 'border-[#4ade80] bg-[#4ade80]/10 text-white scale-105';
+    if (isLeftMatched(id)) return 'border-[#72EB3A] bg-[#72EB3A]/15 text-[#72EB3A]';
+    if (selectedLeft === id) return 'border-[#72EB3A] bg-[#72EB3A]/10 text-white scale-105';
     if (wrongPair && wrongPair[0] === id) return 'border-red-500 bg-red-500/10 text-red-400 animate-shake';
-    return 'border-slate-700 bg-[#141e16] text-slate-200 hover:border-[#4ade80]/40';
+    return 'border-slate-700 bg-[#1C2210] text-slate-200 hover:border-[#72EB3A]/40';
   };
 
   const rightStyle = (id: number) => {
-    if (isRightMatched(id)) return 'border-[#4ade80] bg-[#4ade80]/15 text-[#4ade80]';
+    if (isRightMatched(id)) return 'border-[#72EB3A] bg-[#72EB3A]/15 text-[#72EB3A]';
     if (wrongPair && wrongPair[1] === id) return 'border-red-500 bg-red-500/10 text-red-400 animate-shake';
     if (selectedLeft !== null && !isRightMatched(id)) return 'border-[#60a5fa]/40 bg-[#60a5fa]/5 hover:border-[#60a5fa] text-slate-200';
-    return 'border-slate-700 bg-[#141e16] text-slate-500';
+    return 'border-slate-700 bg-[#1C2210] text-slate-500';
   };
 
   const handleGiveUp = () => {
@@ -118,11 +118,11 @@ const MatchPairs: React.FC<MatchPairsProps> = ({ question, pairs, onAnswer, disa
       </div>
 
       {result && (
-        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#4ade80]/15' : 'bg-red-500/15'}`}>
+        <div className={`flex items-center gap-2 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#72EB3A]/15' : 'bg-red-500/15'}`}>
           {result === 'correct'
-            ? <CheckCircle2 className="h-5 w-5 text-[#4ade80] shrink-0" />
+            ? <CheckCircle2 className="h-5 w-5 text-[#72EB3A] shrink-0" />
             : <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
-          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#4ade80]' : 'text-red-400'}`}>
+          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#72EB3A]' : 'text-red-400'}`}>
             {result === 'correct' ? 'Todos os pares corretos! 🎉' : 'Nem todos os pares estavam certos.'}
           </span>
         </div>

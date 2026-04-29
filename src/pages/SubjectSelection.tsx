@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -370,17 +370,17 @@ const SubjectSelection = () => {
   ];
 
   const renderBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0e1710]/95 backdrop-blur-xl border-t border-[#1a261d] px-6 py-4 flex justify-between items-center z-50">
+    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
       {bottomNavItems.map((item, i) => {
         const isActive = location.pathname === item.path || (item.title === 'Cursos' && true);
         return (
           <Link 
             key={i} 
             to={item.path} 
-            className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#4ade80]" : "text-slate-500 hover:text-slate-300"}`}
+            className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#72EB3A]" : "text-slate-500 hover:text-slate-300"}`}
           >
             <item.icon className={`h-[22px] w-[22px] ${isActive ? "stroke-[2.5]" : "stroke-2"}`} />
-            <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#4ade80]" : ""}`}>
+            <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#72EB3A]" : ""}`}>
               {item.title}
             </span>
           </Link>
@@ -390,29 +390,29 @@ const SubjectSelection = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
       <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-6 mt-2">
           <div className="flex-1 overflow-hidden">
             <h1 className="text-lg font-bold text-white truncate">{courseData?.courseName}</h1>
-            <p className="text-[11px] text-[#4ade80] font-bold uppercase tracking-wider">{courseData?.ano}</p>
+            <p className="text-[11px] text-[#72EB3A] font-bold uppercase tracking-wider">{courseData?.ano}</p>
           </div>
-          <div className="text-right shrink-0 bg-[#1e2e26] border border-[#254238] rounded-xl px-3 py-1.5">
+          <div className="text-right shrink-0 bg-[#253510] border border-[#365A08] rounded-xl px-3 py-1.5">
             <p className="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Acervo</p>
-            <p className="text-lg font-black text-[#4ade80] leading-none">{totalMaterials}</p>
+            <p className="text-lg font-black text-[#72EB3A] leading-none">{totalMaterials}</p>
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className="bg-[#141e16] border border-[#254238]/60 p-4 rounded-2xl mb-6 shadow-lg">
+        <div className="bg-[#1C2210] border border-[#365A08]/60 p-4 rounded-2xl mb-6 shadow-lg">
           <div className="flex justify-between text-[11px] font-bold mb-2">
             <span className="text-slate-400">{subjectsWithMaterials} de {courseData?.subjects.length} cadeiras c/ material</span>
-            <span className="text-[#4ade80]">{totalMaterials} materiais doc.</span>
+            <span className="text-[#72EB3A]">{totalMaterials} materiais doc.</span>
           </div>
-          <div className="h-2 w-full bg-[#0e1710] rounded-full overflow-hidden flex">
-             <div className="h-full bg-[#4ade80] transition-all duration-500" style={{ width: `${courseData ? (subjectsWithMaterials / courseData.subjects.length) * 100 : 0}%` }}></div>
+          <div className="h-2 w-full bg-[#1B1D24] rounded-full overflow-hidden flex">
+             <div className="h-full bg-[#72EB3A] transition-all duration-500" style={{ width: `${courseData ? (subjectsWithMaterials / courseData.subjects.length) * 100 : 0}%` }}></div>
           </div>
         </div>
 
@@ -424,16 +424,16 @@ const SubjectSelection = () => {
               onClick={() => setActiveSubjectId(sub.id)}
               onDoubleClick={() => setEditingSubject({ id: sub.id, name: sub.name, emoji: sub.emoji })}
               className={`shrink-0 flex flex-col items-center justify-center gap-2 w-20 p-2.5 rounded-2xl transition-all snap-start relative ${activeSubjectId === sub.id
-                ? "bg-[#4ade80] text-[#0e1710] shadow-[0_5px_15px_rgba(74,222,128,0.2)]"
-                : "bg-[#141e16] border border-slate-800 text-slate-400 hover:border-[#254238]"
+                ? "bg-[#72EB3A] text-[#1B1D24] shadow-[0_5px_15px_rgba(74,222,128,0.2)]"
+                : "bg-[#1C2210] border border-slate-800 text-slate-400 hover:border-[#365A08]"
                 }`}
             >
               <span className="text-2xl mt-1">{sub.emoji}</span>
               <span className="text-[10px] font-bold leading-tight text-center truncate w-full px-1">{sub.name}</span>
               
               {sub.materials.length > 0 && (
-                <span className={`absolute top-0 right-0 -mt-1 -mr-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black border-2 border-[#0e1710] ${
-                  activeSubjectId === sub.id ? "bg-[#0e1710] text-[#4ade80]" : "bg-[#4ade80] text-[#0e1710]"
+                <span className={`absolute top-0 right-0 -mt-1 -mr-1 h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-black border-2 border-[#1B1D24] ${
+                  activeSubjectId === sub.id ? "bg-[#1B1D24] text-[#72EB3A]" : "bg-[#72EB3A] text-[#1B1D24]"
                 }`}>
                   {sub.materials.length}
                 </span>
@@ -442,9 +442,9 @@ const SubjectSelection = () => {
               {activeSubjectId === sub.id && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingSubject({ id: sub.id, name: sub.name, emoji: sub.emoji }); }}
-                  className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-[#0e1710] border border-[#4ade80] flex items-center justify-center"
+                  className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-[#1B1D24] border border-[#72EB3A] flex items-center justify-center"
                 >
-                  <Edit3 className="h-2.5 w-2.5 text-[#4ade80]" />
+                  <Edit3 className="h-2.5 w-2.5 text-[#72EB3A]" />
                 </button>
               )}
             </button>
@@ -459,12 +459,12 @@ const SubjectSelection = () => {
             value={customSubName}
             onChange={(e) => setCustomSubName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addExtraSubject()}
-            className="flex-1 bg-[#141e16] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors"
+            className="flex-1 bg-[#1C2210] border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#72EB3A] transition-colors"
           />
           <button
             onClick={addExtraSubject}
             disabled={!customSubName.trim()}
-            className="bg-[#4ade80] hover:bg-[#22c55e] disabled:opacity-30 disabled:cursor-not-allowed text-[#0e1710] font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all active:scale-95"
+            className="bg-[#72EB3A] hover:bg-[#5D9D0B] disabled:opacity-30 disabled:cursor-not-allowed text-[#1B1D24] font-bold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all active:scale-95"
           >
             <Plus className="h-4 w-4 stroke-[3]" /> Adicionar
           </button>
@@ -473,10 +473,10 @@ const SubjectSelection = () => {
         {activeSubject && (
           <div className="animate-slide-up">
             {/* Avaliação Trimestral */}
-            <div className="bg-gradient-to-r from-[#141e16] to-[#1a261d] border border-[#254238]/60 p-5 rounded-3xl mb-6 shadow-lg">
+            <div className="bg-gradient-to-r from-[#1C2210] to-[#253510] border border-[#365A08]/60 p-5 rounded-3xl mb-6 shadow-lg">
               <div className="flex items-center justify-between mb-4">
-                <p className="text-[10px] font-black text-[#4ade80] uppercase tracking-widest flex items-center gap-1.5">
-                  <Star className="h-3.5 w-3.5 fill-[#4ade80]" /> Desempenho
+                <p className="text-[10px] font-black text-[#72EB3A] uppercase tracking-widest flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 fill-[#72EB3A]" /> Desempenho
                 </p>
                 <h3 className="text-lg font-bold text-white">{activeSubject.name}</h3>
               </div>
@@ -487,7 +487,7 @@ const SubjectSelection = () => {
                   <button 
                     key={tri}
                     onClick={() => setActiveTrimester(tri)}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${activeTrimester === tri ? "bg-[#4ade80] text-[#0e1710]" : "bg-[#1e2e26] text-slate-400 hover:text-slate-200"}`}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${activeTrimester === tri ? "bg-[#72EB3A] text-[#1B1D24]" : "bg-[#253510] text-slate-400 hover:text-slate-200"}`}
                   >
                     {tri === "T1" ? "1º Trim" : tri === "T2" ? "2º Trim" : "3º Trim"}
                   </button>
@@ -496,25 +496,25 @@ const SubjectSelection = () => {
 
               {/* Grade Inputs */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0e1710] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
+                <div className="bg-[#1B1D24] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
                   <span className="text-[10px] text-slate-500 font-bold uppercase mb-2 text-center">Prova Prof. 1 (P1)</span>
                   <div className="flex items-end gap-1">
                     <input
                       type="number" min={0} max={20} placeholder="-"
                       onBlur={(e) => saveTrimesterGrade("p1", Number(e.target.value))}
-                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#4ade80]"
+                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#72EB3A]"
                     />
                     <span className="text-xs text-slate-500 font-bold pb-2">/20</span>
                   </div>
                 </div>
 
-                <div className="bg-[#0e1710] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
+                <div className="bg-[#1B1D24] p-3 rounded-2xl border border-slate-800 flex flex-col items-center">
                   <span className="text-[10px] text-slate-500 font-bold uppercase mb-2 text-center">Prova Prof. 2 (P2)</span>
                   <div className="flex items-end gap-1">
                     <input
                       type="number" min={0} max={20} placeholder="-"
                       onBlur={(e) => saveTrimesterGrade("p2", Number(e.target.value))}
-                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#4ade80]"
+                      className="w-12 h-10 text-center text-xl font-black text-white bg-transparent outline-none rounded-xl border-b border-transparent focus:border-[#72EB3A]"
                     />
                     <span className="text-xs text-slate-500 font-bold pb-2">/20</span>
                   </div>
@@ -524,9 +524,9 @@ const SubjectSelection = () => {
             </div>
 
             {/* AI hint */}
-            <div className="bg-[#4ade80]/10 border border-[#4ade80]/20 p-4 rounded-2xl flex items-start gap-3 mb-6">
-              <div className="h-8 w-8 min-w-8 bg-[#4ade80]/20 rounded-full flex items-center justify-center shrink-0">
-                <Bot className="h-4 w-4 text-[#4ade80]" />
+            <div className="bg-[#72EB3A]/10 border border-[#72EB3A]/20 p-4 rounded-2xl flex items-start gap-3 mb-6">
+              <div className="h-8 w-8 min-w-8 bg-[#72EB3A]/20 rounded-full flex items-center justify-center shrink-0">
+                <Bot className="h-4 w-4 text-[#72EB3A]" />
               </div>
               <div>
                 <p className="text-xs font-bold text-white mb-0.5">Dica Nzila IA</p>
@@ -547,9 +547,9 @@ const SubjectSelection = () => {
                 {activeSubject.materials.map((mat) => {
                   const typeInfo = materialTypes.find((t) => t.id === mat.type)!;
                   return (
-                    <div key={mat.id} className="bg-[#141e16] border border-slate-800/60 p-4 rounded-3xl flex flex-col gap-3 group">
+                    <div key={mat.id} className="bg-[#1C2210] border border-slate-800/60 p-4 rounded-3xl flex flex-col gap-3 group">
                       <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 bg-[#1e2e26] rounded-2xl flex items-center justify-center shrink-0 text-2xl border border-slate-700/50 group-hover:bg-[#4ade80]/10 transition-colors">
+                        <div className="w-12 h-12 bg-[#253510] rounded-2xl flex items-center justify-center shrink-0 text-2xl border border-slate-700/50 group-hover:bg-[#72EB3A]/10 transition-colors">
                           {typeInfo?.emoji ?? '📎'}
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
@@ -564,7 +564,7 @@ const SubjectSelection = () => {
                         <div className="flex gap-1.5 shrink-0">
                           <button
                             onClick={() => setEditingMaterial({ id: mat.id, name: mat.name, type: mat.type })}
-                            className="w-8 h-8 rounded-full bg-[#4ade80]/10 text-[#4ade80] flex items-center justify-center hover:bg-[#4ade80] hover:text-[#0e1710] transition-colors"
+                            className="w-8 h-8 rounded-full bg-[#72EB3A]/10 text-[#72EB3A] flex items-center justify-center hover:bg-[#72EB3A] hover:text-[#1B1D24] transition-colors"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
@@ -578,8 +578,8 @@ const SubjectSelection = () => {
                       </div>
                       
                       {mat.fileName && (
-                        <div className="flex items-center gap-2 bg-[#0e1710] px-3 py-2 rounded-xl border border-slate-800 mt-1 w-fit">
-                          <FileText className="h-4 w-4 text-[#4ade80] shrink-0" />
+                        <div className="flex items-center gap-2 bg-[#1B1D24] px-3 py-2 rounded-xl border border-slate-800 mt-1 w-fit">
+                          <FileText className="h-4 w-4 text-[#72EB3A] shrink-0" />
                           <span className="text-xs font-bold text-slate-300 truncate max-w-[200px]">{mat.fileName}</span>
                         </div>
                       )}
@@ -597,8 +597,8 @@ const SubjectSelection = () => {
             )}
 
             {activeSubject.materials.length === 0 && (
-              <div className="text-center py-8 bg-[#141e16] border border-slate-800/60 border-dashed rounded-3xl mb-8">
-                <div className="w-16 h-16 bg-[#1e2e26] rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="text-center py-8 bg-[#1C2210] border border-slate-800/60 border-dashed rounded-3xl mb-8">
+                <div className="w-16 h-16 bg-[#253510] rounded-full flex items-center justify-center mx-auto mb-3">
                    <Upload className="h-6 w-6 text-slate-500" />
                 </div>
                 <p className="text-sm font-bold text-white">Sem ficheiros ou links</p>
@@ -607,9 +607,9 @@ const SubjectSelection = () => {
             )}
 
             {/* Add material form */}
-            <div className="bg-[#141e16] border border-[#254238]/60 p-6 rounded-3xl space-y-5">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 p-6 rounded-3xl space-y-5">
               <p className="text-[15px] font-bold text-white flex items-center gap-2">
-                <Plus className="h-5 w-5 text-[#4ade80]" /> Novo Ficheiro / Apontamento
+                <Plus className="h-5 w-5 text-[#72EB3A]" /> Novo Ficheiro / Apontamento
               </p>
 
               {/* Type selector */}
@@ -621,8 +621,8 @@ const SubjectSelection = () => {
                       key={t.id}
                       onClick={() => setMatType(t.id)}
                       className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-colors border ${matType === t.id
-                        ? "bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]"
-                        : "bg-[#0e1710] border-slate-800 text-slate-400 hover:border-slate-600"
+                        ? "bg-[#72EB3A]/10 border-[#72EB3A] text-[#72EB3A]"
+                        : "bg-[#1B1D24] border-slate-800 text-slate-400 hover:border-slate-600"
                         }`}
                     >
                       {t.emoji} {t.label}
@@ -639,7 +639,7 @@ const SubjectSelection = () => {
                   placeholder={matType === "proof" ? "Ex: Exame Nacional 2024" : "Dá um nome ao apontamento..."}
                   value={matName}
                   onChange={(e) => setMatName(e.target.value)}
-                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors"
+                  className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#72EB3A] transition-colors"
                 />
               </div>
 
@@ -647,7 +647,7 @@ const SubjectSelection = () => {
               <div>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Anexo (Opcional)</p>
                 <div
-                  className="border-2 border-dashed border-slate-700 bg-[#0e1710] rounded-2xl p-5 text-center hover:border-[#4ade80]/50 transition-colors cursor-pointer group"
+                  className="border-2 border-dashed border-slate-700 bg-[#1B1D24] rounded-2xl p-5 text-center hover:border-[#72EB3A]/50 transition-colors cursor-pointer group"
                   onClick={() => fileRef.current?.click()}
                 >
                   <input
@@ -663,8 +663,8 @@ const SubjectSelection = () => {
                   />
                   {matFile ? (
                     <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-[#4ade80]/10 rounded-full flex items-center justify-center">
-                        <FileText className="h-6 w-6 text-[#4ade80]" />
+                      <div className="w-12 h-12 bg-[#72EB3A]/10 rounded-full flex items-center justify-center">
+                        <FileText className="h-6 w-6 text-[#72EB3A]" />
                       </div>
                       <div>
                         <p className="text-[13px] font-bold text-white truncate max-w-[200px]">{matFile.name}</p>
@@ -684,16 +684,16 @@ const SubjectSelection = () => {
                   ) : (
                     isExtracting ? (
                       <div className="flex flex-col items-center gap-2">
-                        <div className="w-12 h-12 bg-[#4ade80]/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                          <Upload className="h-5 w-5 text-[#4ade80] animate-spin" />
+                        <div className="w-12 h-12 bg-[#72EB3A]/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                          <Upload className="h-5 w-5 text-[#72EB3A] animate-spin" />
                         </div>
-                        <p className="text-[13px] font-bold text-[#4ade80]">A extrair texto com OCR...</p>
+                        <p className="text-[13px] font-bold text-[#72EB3A]">A extrair texto com OCR...</p>
                         <p className="text-[10px] font-bold text-slate-500">Aguarda um momento</p>
                       </div>
                     ) : (
                     <>
-                      <div className="w-12 h-12 bg-[#1e2e26] rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                        <Upload className="h-5 w-5 text-slate-400 group-hover:text-[#4ade80]" />
+                      <div className="w-12 h-12 bg-[#253510] rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                        <Upload className="h-5 w-5 text-slate-400 group-hover:text-[#72EB3A]" />
                       </div>
                       <p className="text-[13px] font-bold text-white mb-1">Clica para anexar do telemóvel</p>
                       <p className="text-[10px] font-bold text-slate-500">PDF, Imagens ou Word — OCR extrai texto automaticamente 🔍</p>
@@ -721,14 +721,14 @@ const SubjectSelection = () => {
                   }
                   value={matContent}
                   onChange={(e) => setMatContent(e.target.value)}
-                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#4ade80] transition-colors resize-none mb-1"
+                  className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-[#72EB3A] transition-colors resize-none mb-1"
                 />
               </div>
 
               {/* Submit */}
               <button
                 onClick={addMaterial}
-                className="w-full py-4 bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                className="w-full py-4 bg-[#72EB3A] hover:bg-[#5D9D0B] text-[#1B1D24] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Check className="h-5 w-5 stroke-[3]" /> Adicionar à Base de Dados
               </button>
@@ -742,7 +742,7 @@ const SubjectSelection = () => {
       {/* ── EDIT SUBJECT MODAL ── */}
       {editingSubject && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingSubject(null)}>
-          <div className="bg-[#141e16] border-t border-[#254238] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1C2210] border-t border-[#365A08] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-white">Editar Disciplina</h3>
               <button onClick={() => setEditingSubject(null)} className="text-slate-400 hover:text-white">
@@ -756,7 +756,7 @@ const SubjectSelection = () => {
                   type="text"
                   value={editingSubject.name}
                   onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
-                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none"
+                  className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none"
                 />
               </div>
               <div className="space-y-1.5">
@@ -765,12 +765,12 @@ const SubjectSelection = () => {
                   type="text"
                   value={editingSubject.emoji}
                   onChange={(e) => setEditingSubject({ ...editingSubject, emoji: e.target.value })}
-                  className="w-20 bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-xl text-center text-white focus:border-[#4ade80] outline-none"
+                  className="w-20 bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-xl text-center text-white focus:border-[#72EB3A] outline-none"
                 />
               </div>
               <button
                 onClick={saveEditSubject}
-                className="w-full py-4 bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                className="w-full py-4 bg-[#72EB3A] hover:bg-[#5D9D0B] text-[#1B1D24] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Save className="h-5 w-5 stroke-[3]" /> Guardar Alterações
               </button>
@@ -782,7 +782,7 @@ const SubjectSelection = () => {
       {/* ── EDIT MATERIAL MODAL ── */}
       {editingMaterial && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingMaterial(null)}>
-          <div className="bg-[#141e16] border-t border-[#254238] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#1C2210] border-t border-[#365A08] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-white">Editar Material</h3>
               <button onClick={() => setEditingMaterial(null)} className="text-slate-400 hover:text-white">
@@ -796,7 +796,7 @@ const SubjectSelection = () => {
                   type="text"
                   value={editingMaterial.name}
                   onChange={(e) => setEditingMaterial({ ...editingMaterial, name: e.target.value })}
-                  className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none"
+                  className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none"
                 />
               </div>
               <div className="space-y-1.5">
@@ -807,8 +807,8 @@ const SubjectSelection = () => {
                       key={t.id}
                       onClick={() => setEditingMaterial({ ...editingMaterial, type: t.id })}
                       className={`px-3 py-2.5 rounded-xl text-xs font-bold text-left transition-colors border ${editingMaterial.type === t.id
-                        ? "bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]"
-                        : "bg-[#0e1710] border-slate-800 text-slate-400 hover:border-slate-600"
+                        ? "bg-[#72EB3A]/10 border-[#72EB3A] text-[#72EB3A]"
+                        : "bg-[#1B1D24] border-slate-800 text-slate-400 hover:border-slate-600"
                         }`}
                     >
                       {t.emoji} {t.label}
@@ -818,7 +818,7 @@ const SubjectSelection = () => {
               </div>
               <button
                 onClick={saveEditMaterial}
-                className="w-full py-4 bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+                className="w-full py-4 bg-[#72EB3A] hover:bg-[#5D9D0B] text-[#1B1D24] font-black tracking-wide text-[15px] rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
               >
                 <Save className="h-5 w-5 stroke-[3]" /> Guardar Alterações
               </button>

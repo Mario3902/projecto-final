@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { Zap, CheckCircle2, ChevronRight } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useNavigate } from "react-router-dom";
 
 const GOAL_LEVELS = [
   { label: "Casual", xp: 10, emoji: "🐢", color: "text-slate-400" },
-  { label: "Normal", xp: 30, emoji: "🏃", color: "text-[#4ade80]" },
+  { label: "Normal", xp: 30, emoji: "🏃", color: "text-[#72EB3A]" },
   { label: "Intenso", xp: 80, emoji: "🚀", color: "text-yellow-400" },
 ];
 
@@ -74,7 +74,7 @@ const DailyGoal: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#141e16] border border-[#254238] rounded-2xl p-4 mb-6">
+    <div className="bg-[#1C2210] border border-[#365A08] rounded-2xl p-4 mb-6">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-lg">{goal.emoji}</span>
@@ -84,7 +84,7 @@ const DailyGoal: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {completed && <CheckCircle2 className="h-5 w-5 text-[#4ade80]" />}
+          {completed && <CheckCircle2 className="h-5 w-5 text-[#72EB3A]" />}
           <button
             onClick={() => setShowPicker((v) => !v)}
             className="text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-colors border border-slate-700 rounded-lg px-2 py-1"
@@ -103,8 +103,8 @@ const DailyGoal: React.FC = () => {
               onClick={() => changeGoal(i)}
               className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${
                 i === goalIdx
-                  ? "border-[#4ade80] bg-[#4ade80]/10 text-[#4ade80]"
-                  : "border-slate-700 bg-[#0e1710] text-slate-400 hover:border-slate-600"
+                  ? "border-[#72EB3A] bg-[#72EB3A]/10 text-[#72EB3A]"
+                  : "border-slate-700 bg-[#1B1D24] text-slate-400 hover:border-slate-600"
               }`}
             >
               {g.emoji} {g.label}
@@ -114,9 +114,9 @@ const DailyGoal: React.FC = () => {
       )}
 
       {/* Progress bar */}
-      <div className="h-2.5 bg-[#0e1710] rounded-full overflow-hidden mb-2">
+      <div className="h-2.5 bg-[#1B1D24] rounded-full overflow-hidden mb-2">
         <div
-          className={`h-full rounded-full transition-all duration-700 ${completed ? "bg-[#4ade80]" : "bg-[#4ade80]/60"}`}
+          className={`h-full rounded-full transition-all duration-700 ${completed ? "bg-[#72EB3A]" : "bg-[#72EB3A]/60"}`}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -126,11 +126,11 @@ const DailyGoal: React.FC = () => {
           {todayXP}/{goal.xp} XP hoje
         </span>
         {completed
-          ? <span className="text-[11px] font-black text-[#4ade80]">Meta atingida! +{goal.xp} 🪙</span>
+          ? <span className="text-[11px] font-black text-[#72EB3A]">Meta atingida! +{goal.xp} 🪙</span>
           : (
             <button
               onClick={() => navigate("/dashboard/quizzes")}
-              className="text-[11px] font-bold text-[#4ade80] flex items-center gap-0.5"
+              className="text-[11px] font-bold text-[#72EB3A] flex items-center gap-0.5"
             >
               Ganhar XP <ChevronRight className="h-3 w-3" />
             </button>

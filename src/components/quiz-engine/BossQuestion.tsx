@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+﻿import React, { useState, useCallback } from "react";
 import { Shield, Zap, X, CheckCircle2, XCircle } from "lucide-react";
 import { useGame } from "@/context/GameContext";
 import { useNzi } from "@/context/NziContext";
@@ -91,11 +91,11 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
   // ── Victory ──
   if (phase === "victory") {
     return (
-      <div className="fixed inset-0 bg-[#0e1710]/95 z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="fixed inset-0 bg-[#1B1D24]/95 z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
         <div className="text-6xl mb-4 animate-bounce">🏆</div>
-        <h1 className="text-3xl font-black text-[#4ade80] mb-2">Chefe Derrotado!</h1>
+        <h1 className="text-3xl font-black text-[#72EB3A] mb-2">Chefe Derrotado!</h1>
         <p className="text-slate-400 text-sm mb-1">Dominaste {subjectName}!</p>
-        <p className="text-[#4ade80] font-black text-lg mb-8">+100 XP Bónus!</p>
+        <p className="text-[#72EB3A] font-black text-lg mb-8">+100 XP Bónus!</p>
         <div className="flex gap-3">
           {Array.from({ length: BOSS_HP }).map((_, i) => (
             <div key={i} className="text-3xl">⭐</div>
@@ -103,7 +103,7 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
         </div>
         <button
           onClick={onVictory}
-          className="mt-8 px-8 py-4 bg-[#4ade80] text-[#0e1710] font-black rounded-2xl text-lg active:scale-95 transition-transform"
+          className="mt-8 px-8 py-4 bg-[#72EB3A] text-[#1B1D24] font-black rounded-2xl text-lg active:scale-95 transition-transform"
         >
           Continuar →
         </button>
@@ -114,7 +114,7 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
   // ── Defeat ──
   if (phase === "defeat") {
     return (
-      <div className="fixed inset-0 bg-[#0e1710]/95 z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="fixed inset-0 bg-[#1B1D24]/95 z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
         <div className="text-6xl mb-4">💀</div>
         <h1 className="text-2xl font-black text-red-400 mb-2">Foste derrotado!</h1>
         <p className="text-slate-400 text-sm mb-8 text-center">
@@ -152,7 +152,7 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
   return (
     <div className="fixed inset-0 bg-[#0a0f0b] z-50 flex flex-col font-sans overflow-hidden">
       {/* Background glow */}
-      <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 via-transparent to-[#4ade80]/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 via-transparent to-[#72EB3A]/5 pointer-events-none" />
 
       {/* Header */}
       <div className="relative px-5 pt-5 pb-3">
@@ -172,12 +172,12 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
           <div className="text-5xl">🧑🏾‍🎓</div>
           <div className="w-24">
             <div className="flex justify-between items-center mb-0.5">
-              <span className="text-[9px] font-black text-[#4ade80] uppercase">Nzi</span>
-              <span className="text-[9px] text-[#4ade80]">{playerHp}/3</span>
+              <span className="text-[9px] font-black text-[#72EB3A] uppercase">Nzi</span>
+              <span className="text-[9px] text-[#72EB3A]">{playerHp}/3</span>
             </div>
-            <div className="h-2 bg-[#1a261d] rounded-full overflow-hidden">
+            <div className="h-2 bg-[#253510] rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#4ade80] rounded-full transition-all duration-500"
+                className="h-full bg-[#72EB3A] rounded-full transition-all duration-500"
                 style={{ width: `${playerHpPct}%` }}
               />
             </div>
@@ -223,17 +223,17 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
 
       {/* Question */}
       <div className="flex-1 overflow-y-auto px-5 pb-5">
-        <div className="bg-[#141e16] border border-red-500/20 rounded-2xl p-4 mb-4">
+        <div className="bg-[#1C2210] border border-red-500/20 rounded-2xl p-4 mb-4">
           <p className="text-white font-bold text-base leading-relaxed">{q?.q}</p>
         </div>
 
         <div className="space-y-2.5">
           {q?.options.map((opt, idx) => {
-            let style = "border-slate-700 bg-[#0e1710] text-slate-200 hover:border-red-500/30";
+            let style = "border-slate-700 bg-[#1B1D24] text-slate-200 hover:border-red-500/30";
             if (answered) {
-              if (idx === q.correct) style = "border-[#4ade80] bg-[#4ade80]/10 text-[#4ade80]";
+              if (idx === q.correct) style = "border-[#72EB3A] bg-[#72EB3A]/10 text-[#72EB3A]";
               else if (idx === selected) style = "border-red-500 bg-red-500/10 text-red-400";
-              else style = "border-slate-800 bg-[#0e1710] text-slate-600 opacity-40";
+              else style = "border-slate-800 bg-[#1B1D24] text-slate-600 opacity-40";
             }
             return (
               <button
@@ -254,8 +254,8 @@ const BossQuestion: React.FC<BossQuestionProps> = ({
         </div>
 
         {answered && q?.explanation && (
-          <div className="mt-3 flex items-start gap-2 bg-[#1a261d] border border-[#4ade80]/20 px-4 py-3 rounded-xl animate-fade-in">
-            <Zap className="h-4 w-4 text-[#4ade80] shrink-0 mt-0.5" />
+          <div className="mt-3 flex items-start gap-2 bg-[#253510] border border-[#72EB3A]/20 px-4 py-3 rounded-xl animate-fade-in">
+            <Zap className="h-4 w-4 text-[#72EB3A] shrink-0 mt-0.5" />
             <p className="text-xs text-slate-300 leading-relaxed">{q.explanation}</p>
           </div>
         )}

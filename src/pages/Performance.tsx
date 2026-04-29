@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -16,7 +16,7 @@ import { useGame } from "@/context/GameContext";
 // ── Confetti Effect ──
 const Confetti = ({ show }: { show: boolean }) => {
   if (!show) return null;
-  const colors = ["#4ade80", "#22d3ee", "#facc15", "#fb923c", "#f472b6", "#a78bfa"];
+  const colors = ["#72EB3A", "#22d3ee", "#facc15", "#fb923c", "#f472b6", "#a78bfa"];
   return (
     <div className="fixed inset-0 pointer-events-none z-[100]">
       {Array.from({ length: 40 }).map((_, i) => (
@@ -43,7 +43,7 @@ const Confetti = ({ show }: { show: boolean }) => {
 // ── Badge System (expanded) ──
 const BADGES = [
   // XP milestones
-  { id: "starter",    name: "Primeiro Passo",  desc: "Completar o registo",          icon: Star,        color: "#4ade80", minXP: 0,     streakReq: 0,  quizReq: 0  },
+  { id: "starter",    name: "Primeiro Passo",  desc: "Completar o registo",          icon: Star,        color: "#72EB3A", minXP: 0,     streakReq: 0,  quizReq: 0  },
   { id: "focus",      name: "Foco Inicial",    desc: "Ganhar 200 XP",                icon: Target,      color: "#22d3ee", minXP: 200,   streakReq: 0,  quizReq: 0  },
   { id: "studious",   name: "Estudioso",       desc: "Ganhar 500 XP",                icon: BookOpen,    color: "#facc15", minXP: 500,   streakReq: 0,  quizReq: 0  },
   { id: "champion",   name: "Campeão",         desc: "Ganhar 1000 XP",               icon: Trophy,      color: "#fb923c", minXP: 1000,  streakReq: 0,  quizReq: 0  },
@@ -64,7 +64,7 @@ const BADGES = [
 ];
 
 const TrendIcon = ({ trend }: { trend: string }) => {
-  if (trend === "up") return <TrendingUp className="h-4 w-4 text-[#4ade80]" />;
+  if (trend === "up") return <TrendingUp className="h-4 w-4 text-[#72EB3A]" />;
   if (trend === "down") return <TrendingDown className="h-4 w-4 text-red-500" />;
   return <Minus className="h-4 w-4 text-slate-500" />;
 };
@@ -82,7 +82,7 @@ const Profile = () => {
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [subjectData, setSubjectData] = useState<any[]>([]);
   const [pieData, setPieData] = useState([
-    { name: "Excelente (>16)", value: 0, color: "#4ade80" },
+    { name: "Excelente (>16)", value: 0, color: "#72EB3A" },
     { name: "Bom (10-16)", value: 0, color: "#eab308" },
     { name: "Atenção (<10)", value: 0, color: "#ef4444" },
   ]);
@@ -156,7 +156,7 @@ const Profile = () => {
         else atencao++;
       });
       setPieData([
-        { name: "Excelente (>16)", value: exc || 0.1, color: "#4ade80" },
+        { name: "Excelente (>16)", value: exc || 0.1, color: "#72EB3A" },
         { name: "Bom (10-16)", value: bom || 0.1, color: "#eab308" },
         { name: "Atenção (<10)", value: atencao || 0.1, color: "#ef4444" },
       ]);
@@ -233,24 +233,24 @@ const Profile = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
       <Confetti show={showConfetti} />
       <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
 
         {/* ── PROFILE HEADER ── */}
-        <div className="relative bg-[#141e16] border border-slate-800/60 rounded-3xl p-6 overflow-hidden mt-2 mb-6 shadow-lg">
-          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#4ade80]/10 rounded-full blur-2xl" />
+        <div className="relative bg-[#1C2210] border border-slate-800/60 rounded-3xl p-6 overflow-hidden mt-2 mb-6 shadow-lg">
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-[#72EB3A]/10 rounded-full blur-2xl" />
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-[#22d3ee]/5 rounded-full blur-2xl" />
 
           <div className="relative z-10">
             <div className="flex justify-between items-start mb-5">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4ade80]/30 to-[#22d3ee]/20 text-[#4ade80] flex items-center justify-center shadow-[0_0_25px_rgba(74,222,128,0.2)] border-2 border-[#4ade80]/30 rotate-[-2deg]">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#72EB3A]/30 to-[#22d3ee]/20 text-[#72EB3A] flex items-center justify-center shadow-[0_0_25px_rgba(74,222,128,0.2)] border-2 border-[#72EB3A]/30 rotate-[-2deg]">
                   <span className="font-black text-3xl">{profile.name[0]?.toUpperCase() || "E"}</span>
                 </div>
                 <div>
                   <h1 className="text-xl font-black text-white leading-tight">{profile.name}</h1>
-                  <div className="flex items-center gap-1.5 text-[#4ade80] font-bold text-xs mt-1">
+                  <div className="flex items-center gap-1.5 text-[#72EB3A] font-bold text-xs mt-1">
                     <GraduationCap className="w-3.5 h-3.5" />
                     {profile.year} • {profile.course}
                   </div>
@@ -260,7 +260,7 @@ const Profile = () => {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-[#1e2e26] hover:bg-[#254238] text-white border border-[#254238] p-2.5 rounded-full transition-colors"
+                  className="bg-[#253510] hover:bg-[#365A08] text-white border border-[#365A08] p-2.5 rounded-full transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
                 </button>
@@ -279,7 +279,7 @@ const Profile = () => {
               <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-800/60">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1 mb-1">
-                    <Zap className="h-3 w-3 text-[#4ade80]" />
+                    <Zap className="h-3 w-3 text-[#72EB3A]" />
                   </div>
                   <p className="text-lg font-black text-white leading-none">{xp}</p>
                   <p className="text-[9px] text-slate-500 font-bold mt-1">XP</p>
@@ -320,7 +320,7 @@ const Profile = () => {
                       type="text"
                       value={profile.name}
                       onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none transition-colors"
+                      className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -331,7 +331,7 @@ const Profile = () => {
                       type="number"
                       value={profile.age}
                       onChange={(e) => setProfile({ ...profile, age: e.target.value })}
-                      className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none transition-colors"
+                      className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors"
                       placeholder="Ex: 17"
                     />
                   </div>
@@ -346,7 +346,7 @@ const Profile = () => {
                       type="text"
                       value={profile.year}
                       onChange={(e) => setProfile({ ...profile, year: e.target.value })}
-                      className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none transition-colors"
+                      className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors"
                       placeholder="Ex: 12º Ano"
                     />
                   </div>
@@ -358,7 +358,7 @@ const Profile = () => {
                       type="text"
                       value={profile.course}
                       onChange={(e) => setProfile({ ...profile, course: e.target.value })}
-                      className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none transition-colors"
+                      className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors"
                       placeholder="Ex: Ciências"
                     />
                   </div>
@@ -371,14 +371,14 @@ const Profile = () => {
                   <textarea
                     value={profile.goal}
                     onChange={(e) => setProfile({ ...profile, goal: e.target.value })}
-                    className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#4ade80] outline-none resize-none h-20 transition-colors"
+                    className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-[#72EB3A] outline-none resize-none h-20 transition-colors"
                     placeholder="O que pretendes alcançar?"
                   />
                 </div>
 
                 <button
                   onClick={handleSave}
-                  className="w-full bg-[#4ade80] hover:bg-[#22c55e] text-[#0e1710] font-black tracking-wide text-[15px] py-4 rounded-xl flex items-center justify-center transition-transform active:scale-95"
+                  className="w-full bg-[#72EB3A] hover:bg-[#5D9D0B] text-[#1B1D24] font-black tracking-wide text-[15px] py-4 rounded-xl flex items-center justify-center transition-transform active:scale-95"
                 >
                   <Save className="w-4 h-4 mr-2" /> Guardar Perfil
                 </button>
@@ -398,8 +398,8 @@ const Profile = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-bold transition-all ${activeTab === tab.key
-                  ? "bg-[#4ade80] text-[#0e1710] shadow-[0_4px_15px_rgba(74,222,128,0.2)]"
-                  : "bg-[#141e16] border border-slate-800 text-slate-400 hover:text-white"
+                  ? "bg-[#72EB3A] text-[#1B1D24] shadow-[0_4px_15px_rgba(74,222,128,0.2)]"
+                  : "bg-[#1C2210] border border-slate-800 text-slate-400 hover:text-white"
                 }`}
             >
               <tab.icon className="h-3.5 w-3.5" />
@@ -413,9 +413,9 @@ const Profile = () => {
           <div className="space-y-6 animate-fade-in">
 
             {/* XP Progress Chart */}
-            <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 p-5 rounded-3xl shadow-lg">
               <h3 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
-                <Zap className="h-4 w-4 text-[#4ade80]" /> Progressão de XP
+                <Zap className="h-4 w-4 text-[#72EB3A]" /> Progressão de XP
               </h3>
               <p className="text-[10px] text-slate-500 font-bold mb-4">O teu crescimento ao longo dos níveis</p>
               <div className="h-[180px] w-full">
@@ -423,19 +423,19 @@ const Profile = () => {
                   <AreaChart data={xpChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                     <defs>
                       <linearGradient id="xpGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#4ade80" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#4ade80" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#72EB3A" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="#72EB3A" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e2e26" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#253510" />
                     <XAxis dataKey="label" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                     <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: "#0e1710", border: "1px solid #1e2e26", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
-                      itemStyle={{ color: "#4ade80", fontWeight: "bold" }}
+                      contentStyle={{ backgroundColor: "#1B1D24", border: "1px solid #253510", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
+                      itemStyle={{ color: "#72EB3A", fontWeight: "bold" }}
                       formatter={(value: any) => [`${value} XP`, "Experiência"]}
                     />
-                    <Area type="monotone" dataKey="xp" stroke="#4ade80" strokeWidth={3} fill="url(#xpGrad)" dot={{ fill: "#4ade80", r: 4, strokeWidth: 2, stroke: "#0e1710" }} />
+                    <Area type="monotone" dataKey="xp" stroke="#72EB3A" strokeWidth={3} fill="url(#xpGrad)" dot={{ fill: "#72EB3A", r: 4, strokeWidth: 2, stroke: "#1B1D24" }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -443,7 +443,7 @@ const Profile = () => {
 
             {/* Evolução da Média + Pie */}
             <div className="grid grid-cols-1 gap-4">
-              <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+              <div className="bg-[#1C2210] border border-[#365A08]/60 p-5 rounded-3xl shadow-lg">
                 <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-[#22d3ee]" /> Evolução da Média Geral
                 </h3>
@@ -452,15 +452,15 @@ const Profile = () => {
                     <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                       <defs>
                         <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#4ade80" stopOpacity={0.9} />
+                          <stop offset="0%" stopColor="#72EB3A" stopOpacity={0.9} />
                           <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.7} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e2e26" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#253510" />
                       <XAxis dataKey="mes" stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                       <YAxis stroke="#64748b" fontSize={10} domain={[0, 20]} tickLine={false} axisLine={false} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "#0e1710", border: "1px solid #1e2e26", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
+                        contentStyle={{ backgroundColor: "#1B1D24", border: "1px solid #253510", borderRadius: "12px", boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}
                         itemStyle={{ color: "#fff", fontWeight: "bold" }}
                       />
                       <Bar dataKey="nota" fill="url(#barGrad)" radius={[8, 8, 0, 0]} barSize={40} />
@@ -469,7 +469,7 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+              <div className="bg-[#1C2210] border border-[#365A08]/60 p-5 rounded-3xl shadow-lg">
                 <h3 className="text-sm font-bold text-white mb-2">Distribuição das Notas</h3>
                 <div className="flex flex-col justify-center items-center">
                   <div className="h-[160px] w-full">
@@ -480,7 +480,7 @@ const Profile = () => {
                             <Cell key={i} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: "#0e1710", border: "1px solid #1e2e26", borderRadius: "12px" }} />
+                        <Tooltip contentStyle={{ backgroundColor: "#1B1D24", border: "1px solid #253510", borderRadius: "12px" }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
@@ -502,15 +502,15 @@ const Profile = () => {
                 <h3 className="text-lg font-bold text-white mt-2">Notas por Matéria</h3>
                 <div className="grid grid-cols-2 gap-3">
                   {subjectData.map((sub, i) => (
-                    <div key={i} className="flex flex-col justify-between bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 transition-all hover:bg-[#1e2e26] hover:border-[#4ade80]/30">
+                    <div key={i} className="flex flex-col justify-between bg-[#1C2210] border border-slate-800/60 rounded-2xl p-4 transition-all hover:bg-[#253510] hover:border-[#72EB3A]/30">
                       <div className="flex justify-between items-start mb-3">
                         <p className="font-bold text-slate-200 text-sm leading-tight">{sub.name}</p>
-                        <div className="bg-[#0e1710] rounded-full p-1 border border-slate-800 shadow-sm">
+                        <div className="bg-[#1B1D24] rounded-full p-1 border border-slate-800 shadow-sm">
                           <TrendIcon trend={sub.trend} />
                         </div>
                       </div>
                       <div className="flex items-end gap-1">
-                        <p className={`text-3xl font-black ${sub.score >= 14 ? "text-[#4ade80]" : sub.score >= 10 ? "text-yellow-500" : "text-red-400"}`}>
+                        <p className={`text-3xl font-black ${sub.score >= 14 ? "text-[#72EB3A]" : sub.score >= 10 ? "text-yellow-500" : "text-red-400"}`}>
                           {sub.score}
                         </p>
                         <span className="text-xs text-slate-500 font-bold mb-1 pb-0.5">/ 20</span>
@@ -523,16 +523,16 @@ const Profile = () => {
 
             {/* Study Stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gradient-to-br from-[#141e16] to-[#1e2e26] border border-[#254238]/60 p-4 rounded-2xl">
+              <div className="bg-gradient-to-br from-[#1C2210] to-[#253510] border border-[#365A08]/60 p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#4ade80]/10 flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-[#4ade80]" />
+                  <div className="w-8 h-8 rounded-lg bg-[#72EB3A]/10 flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-[#72EB3A]" />
                   </div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Horas de Estudo</span>
                 </div>
                 <p className="text-2xl font-black text-white">{studyHours}<span className="text-sm text-slate-500 ml-1">h</span></p>
               </div>
-              <div className="bg-gradient-to-br from-[#141e16] to-[#1e2e26] border border-[#254238]/60 p-4 rounded-2xl">
+              <div className="bg-gradient-to-br from-[#1C2210] to-[#253510] border border-[#365A08]/60 p-4 rounded-2xl">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center">
                     <Flame className="h-4 w-4 text-orange-500" />
@@ -555,12 +555,12 @@ const Profile = () => {
           <div className="space-y-5 animate-fade-in">
 
             {/* Header Card */}
-            <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 p-5 rounded-3xl shadow-lg">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <BookOpen className="h-4 w-4 text-[#4ade80]" /> Boletim Escolar
+                  <BookOpen className="h-4 w-4 text-[#72EB3A]" /> Boletim Escolar
                 </h3>
-                <span className="text-[10px] font-bold text-slate-500 bg-[#0e1710] border border-slate-800 px-2.5 py-1 rounded-lg">
+                <span className="text-[10px] font-bold text-slate-500 bg-[#1B1D24] border border-slate-800 px-2.5 py-1 rounded-lg">
                   {profile.year || "Ano Lectivo"}
                 </span>
               </div>
@@ -570,10 +570,10 @@ const Profile = () => {
             </div>
 
             {subjects.length === 0 ? (
-              <div className="text-center py-10 border border-slate-800 border-dashed rounded-3xl bg-[#141e16]">
+              <div className="text-center py-10 border border-slate-800 border-dashed rounded-3xl bg-[#1C2210]">
                 <BookOpen className="h-8 w-8 text-slate-600 mx-auto mb-3" />
                 <p className="text-sm text-slate-400 font-bold mb-2">Nenhuma disciplina configurada.</p>
-                <Link to="/dashboard/subjects" className="text-[#4ade80] text-xs font-bold hover:underline">
+                <Link to="/dashboard/subjects" className="text-[#72EB3A] text-xs font-bold hover:underline">
                   Configurar Disciplinas →
                 </Link>
               </div>
@@ -596,20 +596,20 @@ const Profile = () => {
                     : null;
                   const gradeColor = (val: number | null) => {
                     if (val === null) return "text-slate-500";
-                    if (val >= 14) return "text-[#4ade80]";
+                    if (val >= 14) return "text-[#72EB3A]";
                     if (val >= 10) return "text-yellow-500";
                     return "text-red-400";
                   };
                   const inputColor = (val: string) => {
                     if (!val) return "border-slate-700/50 text-slate-300";
                     const n = parseFloat(val);
-                    if (n >= 14) return "border-[#4ade80]/30 text-[#4ade80]";
+                    if (n >= 14) return "border-[#72EB3A]/30 text-[#72EB3A]";
                     if (n >= 10) return "border-yellow-500/30 text-yellow-500";
                     return "border-red-500/30 text-red-400";
                   };
 
                   return (
-                    <div key={sub.id} className="bg-[#141e16] border border-slate-800/60 rounded-2xl overflow-hidden shadow-lg">
+                    <div key={sub.id} className="bg-[#1C2210] border border-slate-800/60 rounded-2xl overflow-hidden shadow-lg">
                       {/* Subject header */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/40">
                         <div className="flex items-center gap-2.5">
@@ -662,7 +662,7 @@ const Profile = () => {
                                             handleGradeSave(sub.id, tri, test, val);
                                           }
                                         }}
-                                        className={`w-full h-9 text-center text-sm font-black bg-[#0e1710] border rounded-lg outline-none transition-colors focus:border-[#4ade80] ${inputColor(existing)}`}
+                                        className={`w-full h-9 text-center text-sm font-black bg-[#1B1D24] border rounded-lg outline-none transition-colors focus:border-[#72EB3A] ${inputColor(existing)}`}
                                       />
                                     </div>
                                   );
@@ -679,22 +679,22 @@ const Profile = () => {
             )}
 
             {/* Vocational */}
-            <div className="bg-gradient-to-br from-[#141e16] to-[#1e2e26] border border-[#254238]/80 p-6 rounded-3xl shadow-lg relative overflow-hidden group">
-              <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#4ade80]/15 rounded-full blur-2xl group-hover:bg-[#4ade80]/25 transition-colors duration-500" />
+            <div className="bg-gradient-to-br from-[#1C2210] to-[#253510] border border-[#365A08]/80 p-6 rounded-3xl shadow-lg relative overflow-hidden group">
+              <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#72EB3A]/15 rounded-full blur-2xl group-hover:bg-[#72EB3A]/25 transition-colors duration-500" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-[#4ade80]/20 rounded-2xl flex items-center justify-center text-[#4ade80] shadow-[0_0_15px_rgba(74,222,128,0.15)] border border-[#4ade80]/30 shrink-0">
+                  <div className="w-12 h-12 bg-[#72EB3A]/20 rounded-2xl flex items-center justify-center text-[#72EB3A] shadow-[0_0_15px_rgba(74,222,128,0.15)] border border-[#72EB3A]/30 shrink-0">
                     <Bot className="h-6 w-6" />
                   </div>
                   <div>
                     <h4 className="text-base font-bold text-white mb-0.5">Descobre a tua vocação</h4>
-                    <p className="text-[11px] font-bold text-[#4ade80] uppercase tracking-wider">Análise de IA Especializada</p>
+                    <p className="text-[11px] font-bold text-[#72EB3A] uppercase tracking-wider">Análise de IA Especializada</p>
                   </div>
                 </div>
                 <p className="text-sm text-slate-300 leading-relaxed mb-6">
                   A Inteligência Artificial acompanha o teu progresso em tempo real e sugere carreiras baseadas nos teus resultados.
                 </p>
-                <Link to="/dashboard/quizzes" className="w-full bg-[#0e1710] hover:bg-[#4ade80] text-[#4ade80] hover:text-[#0e1710] border border-[#4ade80]/50 font-bold text-sm py-4 rounded-2xl flex items-center justify-center gap-2 transition-all">
+                <Link to="/dashboard/quizzes" className="w-full bg-[#1B1D24] hover:bg-[#72EB3A] text-[#72EB3A] hover:text-[#1B1D24] border border-[#72EB3A]/50 font-bold text-sm py-4 rounded-2xl flex items-center justify-center gap-2 transition-all">
                   Gerar Quiz Vocacional <Bot className="h-4 w-4" />
                 </Link>
               </div>
@@ -705,7 +705,7 @@ const Profile = () => {
         {/* ══════════════════  TAB: BADGES  ══════════════════ */}
         {activeTab === "badges" && (
           <div className="space-y-5 animate-fade-in">
-            <div className="bg-[#141e16] border border-[#254238]/60 p-5 rounded-3xl shadow-lg">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 p-5 rounded-3xl shadow-lg">
               <h3 className="text-sm font-bold text-white mb-1 flex items-center gap-2">
                 <Award className="h-4 w-4 text-yellow-500" /> Conquistas Desbloqueadas
               </h3>
@@ -715,13 +715,13 @@ const Profile = () => {
 
               {/* Progress to next badge */}
               {nextBadge && (
-                <div className="bg-[#0e1710] border border-slate-800 rounded-2xl p-4 mb-5">
+                <div className="bg-[#1B1D24] border border-slate-800 rounded-2xl p-4 mb-5">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-slate-300">Próxima: {nextBadge.name}</span>
-                    <span className="text-[10px] font-bold text-[#4ade80]">{nextBadge.desc}</span>
+                    <span className="text-[10px] font-bold text-[#72EB3A]">{nextBadge.desc}</span>
                   </div>
                   {nextBadge.minXP > 0 && (
-                    <div className="h-2 w-full bg-[#1e2e26] rounded-full overflow-hidden mb-2">
+                    <div className="h-2 w-full bg-[#253510] rounded-full overflow-hidden mb-2">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${Math.min((xp / nextBadge.minXP) * 100, 100)}%`, backgroundColor: nextBadge.color }}
@@ -756,8 +756,8 @@ const Profile = () => {
                     <div
                       key={badge.id}
                       className={`relative p-4 rounded-2xl border transition-all ${earned
-                          ? "bg-gradient-to-br from-[#1e2e26] to-[#141e16] border-[#254238] shadow-lg"
-                          : "bg-[#0e1710] border-slate-800/50 opacity-50"
+                          ? "bg-gradient-to-br from-[#253510] to-[#1C2210] border-[#365A08] shadow-lg"
+                          : "bg-[#1B1D24] border-slate-800/50 opacity-50"
                         }`}
                     >
                       {earned && (
@@ -771,7 +771,7 @@ const Profile = () => {
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
                         style={{
-                          backgroundColor: earned ? badge.color + "20" : "#1e2e26",
+                          backgroundColor: earned ? badge.color + "20" : "#253510",
                           boxShadow: earned ? `0 0 15px ${badge.color}30` : "none"
                         }}
                       >
@@ -792,17 +792,17 @@ const Profile = () => {
       </div>
 
       {/* Fixed Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0e1710]/95 backdrop-blur-xl border-t border-[#1a261d] px-6 py-4 flex justify-between items-center z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
         {bottomNavItems.map((item, i) => {
           const isActive = location.pathname === item.path || (item.title === 'Perfil' && true);
           return (
             <Link
               key={i}
               to={item.path}
-              className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#4ade80]" : "text-slate-500 hover:text-slate-300"}`}
+              className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#72EB3A]" : "text-slate-500 hover:text-slate-300"}`}
             >
               <item.icon className={`h-[22px] w-[22px] ${isActive ? "stroke-[2.5]" : "stroke-2"}`} />
-              <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#4ade80]" : ""}`}>
+              <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#72EB3A]" : ""}`}>
                 {item.title}
               </span>
             </Link>

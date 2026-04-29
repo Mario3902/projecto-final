@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Play, ExternalLink, X, Link as LinkIcon } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -49,7 +49,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ topic, subject, storageKey })
   };
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-[#254238] bg-[#141e16]">
+    <div className="w-full rounded-2xl overflow-hidden border border-[#365A08] bg-[#1C2210]">
       {/* Video area */}
       {embedUrl ? (
         <div className="relative">
@@ -71,8 +71,8 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ topic, subject, storageKey })
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-8 px-4 gap-3">
-          <div className="w-14 h-14 bg-[#1e2e26] rounded-2xl flex items-center justify-center mb-1">
-            <Play className="h-7 w-7 text-[#4ade80] ml-1" />
+          <div className="w-14 h-14 bg-[#253510] rounded-2xl flex items-center justify-center mb-1">
+            <Play className="h-7 w-7 text-[#72EB3A] ml-1" />
           </div>
           <p className="text-sm font-bold text-white text-center">{topic}</p>
           <p className="text-xs text-slate-500 text-center">Nenhum vídeo adicionado</p>
@@ -100,18 +100,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ topic, subject, storageKey })
 
       {/* URL input */}
       {showInput && (
-        <div className="p-3 border-t border-[#254238] flex gap-2 animate-fade-in">
+        <div className="p-3 border-t border-[#365A08] flex gap-2 animate-fade-in">
           <input
             type="text"
             value={inputUrl}
             onChange={(e) => setInputUrl(e.target.value)}
             placeholder="Cola URL do YouTube..."
-            className="flex-1 bg-[#0e1710] border border-[#254238] rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 outline-none focus:border-[#4ade80]/50"
+            className="flex-1 bg-[#1B1D24] border border-[#365A08] rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 outline-none focus:border-[#72EB3A]/50"
           />
           <button
             onClick={saveVideo}
             disabled={!inputUrl.trim()}
-            className="px-3 py-2 bg-[#4ade80] text-[#0e1710] rounded-xl text-xs font-bold disabled:opacity-40 transition-colors hover:bg-[#22c55e]"
+            className="px-3 py-2 bg-[#72EB3A] text-[#1B1D24] rounded-xl text-xs font-bold disabled:opacity-40 transition-colors hover:bg-[#5D9D0B]"
           >
             OK
           </button>
@@ -119,10 +119,10 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ topic, subject, storageKey })
       )}
 
       {/* Label bar */}
-      <div className="px-4 py-2.5 flex items-center justify-between border-t border-[#254238]/50">
+      <div className="px-4 py-2.5 flex items-center justify-between border-t border-[#365A08]/50">
         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{subject} · {topic}</span>
         {savedUrl && (
-          <button onClick={() => setShowInput((v) => !v)} className="text-[10px] font-bold text-[#4ade80]">
+          <button onClick={() => setShowInput((v) => !v)} className="text-[10px] font-bold text-[#72EB3A]">
             Trocar
           </button>
         )}

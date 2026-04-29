@@ -294,19 +294,18 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const completeQuiz = async (score: number, total: number) => {
-        // Save to backend
+        // Save to backend and increment counter — XP is handled by LessonFlow directly
         const pct = score / total;
-        const earnedXP = Math.max(5, Math.round(pct * 10)); // Mínimo 5, máximo 10
+        const earnedXP = Math.max(5, Math.round(pct * 10));
         try {
             await api.saveQuizResult({
-                subject: "Geral", 
-                score, 
-                total, 
+                subject: "Geral",
+                score,
+                total,
                 xpEarned: earnedXP,
                 isVocational: false
             });
             setQuizzesCompleted((prev) => prev + 1);
-            addXP(earnedXP, `Quiz finalizado com ${Math.round(pct * 100)}% de acerto!`);
         } catch (e) { toast.error("Erro ao guardar resultado."); }
     };
 

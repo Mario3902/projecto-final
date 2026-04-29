@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Minus, Crown, ChevronUp, ChevronDown } from "lucide-react";
 import { useGame } from "@/context/GameContext";
@@ -122,7 +122,7 @@ const LeaguePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24">
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-24">
       <div className="max-w-md mx-auto w-full px-5 py-6">
 
         {/* Header */}
@@ -131,7 +131,7 @@ const LeaguePage = () => {
             <ArrowLeft className="h-5 w-5 text-slate-400" />
           </button>
           <div>
-            <p className="text-[#4ade80] text-[10px] font-black tracking-widest uppercase">Nzila</p>
+            <p className="text-[#72EB3A] text-[10px] font-black tracking-widest uppercase">Nzila</p>
             <h1 className="text-2xl font-bold">Ligas</h1>
           </div>
         </div>
@@ -160,7 +160,7 @@ const LeaguePage = () => {
                 </div>
                 <div className="h-3 bg-black/30 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r from-[#4ade80] to-[#22c55e]`}
+                    className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r from-[#72EB3A] to-[#5D9D0B]`}
                     style={{ width: `${xpProgress}%` }}
                   />
                 </div>
@@ -176,9 +176,9 @@ const LeaguePage = () => {
         </div>
 
         {/* Reset countdown */}
-        <div className="bg-[#141e16] border border-[#254238] rounded-2xl px-4 py-3 mb-6 flex items-center justify-between">
+        <div className="bg-[#1C2210] border border-[#365A08] rounded-2xl px-4 py-3 mb-6 flex items-center justify-between">
           <p className="text-xs text-slate-400 font-medium">Reset semanal em</p>
-          <p className="text-sm font-black text-[#4ade80]">{daysUntilReset} dias</p>
+          <p className="text-sm font-black text-[#72EB3A]">{daysUntilReset} dias</p>
         </div>
 
         {/* Tier progression ladder */}
@@ -191,8 +191,8 @@ const LeaguePage = () => {
                 l.id === tier.id
                   ? `${l.border} ${l.bg} scale-110 shadow-lg`
                   : i < tierIdx
-                  ? "border-[#254238] bg-[#141e16] opacity-70"
-                  : "border-slate-800 bg-[#141e16] opacity-50"
+                  ? "border-[#365A08] bg-[#1C2210] opacity-70"
+                  : "border-slate-800 bg-[#1C2210] opacity-50"
               }`}
             >
               <span className="text-xl mb-1">{l.emoji}</span>
@@ -221,8 +221,8 @@ const LeaguePage = () => {
                 key={player.name}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl border transition-colors ${
                   player.isUser
-                    ? "border-[#4ade80]/50 bg-[#4ade80]/10"
-                    : "border-[#1a261d] bg-[#141e16]"
+                    ? "border-[#72EB3A]/50 bg-[#72EB3A]/10"
+                    : "border-[#253510] bg-[#1C2210]"
                 }`}
               >
                 {/* Rank */}
@@ -234,18 +234,18 @@ const LeaguePage = () => {
 
                 {/* Promotion/demotion indicator */}
                 <div className="w-4">
-                  {isPromotion && <ChevronUp className="h-4 w-4 text-[#4ade80]" />}
+                  {isPromotion && <ChevronUp className="h-4 w-4 text-[#72EB3A]" />}
                   {isDemotion && !isPromotion && <ChevronDown className="h-4 w-4 text-red-500" />}
                 </div>
 
                 {/* Name */}
-                <p className={`flex-1 text-sm font-bold ${player.isUser ? "text-[#4ade80]" : "text-slate-200"}`}>
+                <p className={`flex-1 text-sm font-bold ${player.isUser ? "text-[#72EB3A]" : "text-slate-200"}`}>
                   {player.name}
                 </p>
 
                 {/* XP */}
                 <div className="text-right">
-                  <span className={`text-sm font-black ${player.isUser ? "text-[#4ade80]" : "text-slate-300"}`}>
+                  <span className={`text-sm font-black ${player.isUser ? "text-[#72EB3A]" : "text-slate-300"}`}>
                     {player.xp.toLocaleString()}
                   </span>
                   <span className="text-[10px] text-slate-500 ml-1">XP</span>
@@ -258,7 +258,7 @@ const LeaguePage = () => {
         {/* Promotion/demotion legend */}
         <div className="mt-4 flex gap-4 justify-center text-xs font-bold text-slate-500">
           <span className="flex items-center gap-1">
-            <ChevronUp className="h-3.5 w-3.5 text-[#4ade80]" /> Promoção (top 3)
+            <ChevronUp className="h-3.5 w-3.5 text-[#72EB3A]" /> Promoção (top 3)
           </span>
           <span className="flex items-center gap-1">
             <ChevronDown className="h-3.5 w-3.5 text-red-500" /> Descida (últimos 3)

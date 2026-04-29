@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { NziExpression } from '@/context/NziContext';
 
 interface NziSVGProps {
@@ -6,7 +6,7 @@ interface NziSVGProps {
   size?: number;
 }
 
-const NziSVG: React.FC<NziSVGProps> = ({ expression, size = 90 }) => {
+export const NziSVG: React.FC<NziSVGProps> = ({ expression, size = 90 }) => {
   const isCelebrate = expression === 'celebrate';
   const isSad = expression === 'sad';
   const isThinking = expression === 'thinking';
@@ -25,18 +25,18 @@ const NziSVG: React.FC<NziSVGProps> = ({ expression, size = 90 }) => {
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* Body - green uniform */}
-      <path d="M22 80 Q45 92 68 80 L65 102 Q45 110 25 102 Z" fill="#16a34a" />
+      <path d="M22 80 Q45 92 68 80 L65 102 Q45 110 25 102 Z" fill="#5D9D0B" />
       <ellipse cx="45" cy="102" rx="22" ry="8" fill="#0d1f14" />
 
       {/* Shirt collar */}
       <path d="M38 72 L45 80 L52 72" stroke="white" strokeWidth="1.5" fill="none" />
 
       {/* Arms — waving raises right arm */}
-      <ellipse cx="16" cy="84" rx="5.5" ry="11" fill="#16a34a" transform="rotate(-18 16 84)" />
+      <ellipse cx="16" cy="84" rx="5.5" ry="11" fill="#5D9D0B" transform="rotate(-18 16 84)" />
       {isWaving ? (
-        <ellipse cx="76" cy="62" rx="5.5" ry="11" fill="#16a34a" transform="rotate(-60 76 62)" />
+        <ellipse cx="76" cy="62" rx="5.5" ry="11" fill="#5D9D0B" transform="rotate(-60 76 62)" />
       ) : (
-        <ellipse cx="74" cy="84" rx="5.5" ry="11" fill="#16a34a" transform="rotate(18 74 84)" />
+        <ellipse cx="74" cy="84" rx="5.5" ry="11" fill="#5D9D0B" transform="rotate(18 74 84)" />
       )}
 
       {/* Hands */}
@@ -144,8 +144,8 @@ const NziSVG: React.FC<NziSVGProps> = ({ expression, size = 90 }) => {
       {isThinking && <text x="62" y="18" fontSize="14">🤔</text>}
 
       {/* Nzila badge on shirt */}
-      <circle cx="45" cy="88" r="5.5" fill="#0d1f14" stroke="#4ade80" strokeWidth="1" />
-      <text x="42" y="92" fontSize="7" fill="#4ade80" fontWeight="bold">N</text>
+      <circle cx="45" cy="88" r="5.5" fill="#0d1f14" stroke="#72EB3A" strokeWidth="1" />
+      <text x="42" y="92" fontSize="7" fill="#72EB3A" fontWeight="bold">N</text>
     </svg>
   );
 };

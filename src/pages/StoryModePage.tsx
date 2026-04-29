@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, CheckCircle2, BookOpen, Star, X } from "lucide-react";
+import { ArrowLeft, Lock, CheckCircle2, BookOpen, Star, X, Play } from "lucide-react";
 import { useNzi } from "@/context/NziContext";
 import NziCharacter from "@/components/nzi/NziCharacter";
+import { StoryVideoLoader } from "@/components/story/StoryVideoPlayer";
 
 interface Chapter {
   id: string;
@@ -27,7 +28,7 @@ const STORIES: StoryArc[] = [
     subjectId: "matematica",
     subjectName: "Matemática",
     emoji: "🔢",
-    color: "#4ade80",
+    color: "#72EB3A",
     intro: "Bem-vindo ao Reino dos Números! Junta-te ao Nzi para dominar os segredos da Matemática.",
     chapters: [
       { id: "mat_1", title: "Os Algarismos Mágicos", description: "Descobre o poder dos números inteiros e decimais.", topic: "Números Inteiros", emoji: "1️⃣", nziDialogue: "Os números são a linguagem do universo! Vamos aprender juntos! 🔢" },
@@ -103,11 +104,14 @@ function isUnlocked(arc: StoryArc, chapterIdx: number): boolean {
   return isCompleted(arc.chapters[chapterIdx - 1].id);
 }
 
+interface VideoState { arc: StoryArc; chapter: Chapter }
+
 const StoryModePage: React.FC = () => {
   const navigate = useNavigate();
   const { showMessage } = useNzi();
   const [selectedArc, setSelectedArc] = useState<StoryArc | null>(null);
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
+  const [videoState, setVideoState] = useState<VideoState | null>(null);
 
   const handleArcSelect = (arc: StoryArc) => {
     setSelectedArc(arc);
@@ -124,7 +128,12 @@ const StoryModePage: React.FC = () => {
     setTimeout(() => showMessage(chapter.nziDialogue, "hint", 5000), 200);
   };
 
-  const startChapter = (arc: StoryArc, chapter: Chapter) => {
+  const openVideo = (arc: StoryArc, chapter: Chapter) => {
+    setVideoState({ arc, chapter });
+  };
+
+  const goToQuiz = (arc: StoryArc, chapter: Chapter) => {
+    setVideoState(null);
     navigate(
       `/dashboard/lesson?subject=${encodeURIComponent(arc.subjectName)}&topic=${encodeURIComponent(chapter.topic)}&n=5&storyChapter=${chapter.id}`
     );
@@ -133,7 +142,7 @@ const StoryModePage: React.FC = () => {
   // ── Arc picker ────────────────────────────────────────────────────────────────
   if (!selectedArc) {
     return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-10">
+      <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-10">
         <div className="max-w-md mx-auto w-full px-5 py-6">
           <div className="flex items-center gap-3 mb-6">
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-xl hover:bg-white/5 transition-colors">
@@ -146,7 +155,7 @@ const StoryModePage: React.FC = () => {
           </div>
 
           {/* Nzi intro */}
-          <div className="flex items-center gap-4 bg-[#141e16] border border-[#254238] rounded-2xl p-4 mb-6">
+          <div className="flex items-center gap-4 bg-[#1C2210] border border-[#365A08] rounded-2xl p-4 mb-6">
             <NziCharacter expression="hint" size={60} />
             <div>
               <p className="text-sm font-bold text-white mb-1">Olá, aventureiro!</p>
@@ -165,7 +174,7 @@ const StoryModePage: React.FC = () => {
                 <button
                   key={arc.subjectId}
                   onClick={() => handleArcSelect(arc)}
-                  className="w-full bg-[#141e16] border border-[#254238] p-4 rounded-2xl text-left hover:border-[#4ade80]/30 transition-colors group"
+                  className="w-full bg-[#1C2210] border border-[#365A08] p-4 rounded-2xl text-left hover:border-[#72EB3A]/30 transition-colors group"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-4xl">{arc.emoji}</div>
@@ -176,7 +185,7 @@ const StoryModePage: React.FC = () => {
                           {completedCount}/{arc.chapters.length} cap.
                         </span>
                       </div>
-                      <div className="h-1.5 bg-[#0e1710] rounded-full overflow-hidden">
+                      <div className="h-1.5 bg-[#1B1D24] rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{ width: `${pct}%`, backgroundColor: arc.color }}
@@ -197,7 +206,8 @@ const StoryModePage: React.FC = () => {
   const completedCount = selectedArc.chapters.filter((c) => isCompleted(c.id)).length;
 
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-10">
+    <>
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-10">
       <div className="max-w-md mx-auto w-full px-5 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
@@ -215,7 +225,7 @@ const StoryModePage: React.FC = () => {
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 bg-[#1a261d] rounded-full overflow-hidden mb-6">
+        <div className="h-2 bg-[#253510] rounded-full overflow-hidden mb-6">
           <div
             className="h-full rounded-full transition-all duration-700"
             style={{
@@ -228,7 +238,7 @@ const StoryModePage: React.FC = () => {
         {/* Chapters */}
         <div className="relative">
           {/* Vertical path line */}
-          <div className="absolute left-[27px] top-8 bottom-8 w-0.5 bg-[#254238]" />
+          <div className="absolute left-[27px] top-8 bottom-8 w-0.5 bg-[#365A08]" />
 
           <div className="space-y-4">
             {selectedArc.chapters.map((chapter, idx) => {
@@ -246,14 +256,14 @@ const StoryModePage: React.FC = () => {
                     <div
                       className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 text-2xl border-2 z-10 transition-all ${
                         done
-                          ? "bg-[#4ade80]/10 border-[#4ade80]"
+                          ? "bg-[#72EB3A]/10 border-[#72EB3A]"
                           : unlocked
-                          ? "bg-[#141e16] border-[#254238] group-hover:border-[#4ade80]/40"
-                          : "bg-[#0e1710] border-[#1a261d]"
+                          ? "bg-[#1C2210] border-[#365A08] group-hover:border-[#72EB3A]/40"
+                          : "bg-[#1B1D24] border-[#253510]"
                       }`}
                     >
                       {done ? (
-                        <CheckCircle2 className="h-6 w-6 text-[#4ade80]" />
+                        <CheckCircle2 className="h-6 w-6 text-[#72EB3A]" />
                       ) : unlocked ? (
                         chapter.emoji
                       ) : (
@@ -264,7 +274,7 @@ const StoryModePage: React.FC = () => {
                     {/* Text */}
                     <div className="flex-1 text-left">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <p className={`font-black text-sm ${done ? "text-[#4ade80]" : unlocked ? "text-white" : "text-slate-600"}`}>
+                        <p className={`font-black text-sm ${done ? "text-[#72EB3A]" : unlocked ? "text-white" : "text-slate-600"}`}>
                           {chapter.title}
                         </p>
                         {done && (
@@ -281,19 +291,26 @@ const StoryModePage: React.FC = () => {
 
                   {/* Expanded panel */}
                   {isActive && unlocked && (
-                    <div className="ml-[72px] mt-2 bg-[#141e16] border border-[#254238] rounded-xl p-4 animate-fade-in">
+                    <div className="ml-[72px] mt-2 bg-[#1C2210] border border-[#365A08] rounded-xl p-4 animate-fade-in">
                       <p className="text-xs text-slate-400 mb-3 leading-relaxed">{chapter.nziDialogue}</p>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => startChapter(selectedArc, chapter)}
-                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#4ade80] text-[#0e1710] font-black text-xs rounded-xl active:scale-95 transition-transform"
+                          onClick={() => openVideo(selectedArc, chapter)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#72EB3A] text-[#1B1D24] font-black text-xs rounded-xl active:scale-95 transition-transform"
+                        >
+                          <Play className="h-3.5 w-3.5 fill-[#1B1D24]" />
+                          Ver Animação
+                        </button>
+                        <button
+                          onClick={() => goToQuiz(selectedArc, chapter)}
+                          className="flex items-center justify-center gap-1.5 px-3 py-2.5 border border-[#365A08] text-slate-300 rounded-xl text-xs"
                         >
                           <BookOpen className="h-3.5 w-3.5" />
-                          {done ? "Repetir Capítulo" : "Iniciar Capítulo"}
+                          Quiz direto
                         </button>
                         <button
                           onClick={() => setActiveChapter(null)}
-                          className="px-3 py-2.5 border border-slate-700 text-slate-400 rounded-xl text-xs"
+                          className="px-3 py-2.5 border border-slate-700 text-slate-500 rounded-xl text-xs"
                         >
                           <X className="h-3.5 w-3.5" />
                         </button>
@@ -308,14 +325,26 @@ const StoryModePage: React.FC = () => {
 
         {/* All done */}
         {completedCount === selectedArc.chapters.length && (
-          <div className="mt-6 bg-[#4ade80]/10 border border-[#4ade80]/30 rounded-2xl p-4 text-center animate-fade-in">
+          <div className="mt-6 bg-[#72EB3A]/10 border border-[#72EB3A]/30 rounded-2xl p-4 text-center animate-fade-in">
             <div className="text-3xl mb-2">🏆</div>
-            <p className="font-black text-[#4ade80] mb-1">Aventura Completa!</p>
+            <p className="font-black text-[#72EB3A] mb-1">Aventura Completa!</p>
             <p className="text-xs text-slate-400">Dominaste toda a jornada de {selectedArc.subjectName}!</p>
           </div>
         )}
       </div>
     </div>
+
+    {/* Remotion animated video overlay */}
+    {videoState && (
+      <StoryVideoLoader
+        subject={videoState.arc.subjectName}
+        topic={videoState.chapter.topic}
+        topicDescription={videoState.chapter.description}
+        onClose={() => setVideoState(null)}
+        onFinished={() => goToQuiz(videoState.arc, videoState.chapter)}
+      />
+    )}
+    </>
   );
 };
 

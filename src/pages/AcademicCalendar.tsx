@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Calendar, Plus, Trash2, Send, ChevronLeft, ChevronRight,
@@ -45,7 +45,7 @@ interface DraftClass {
 const EVENT_TYPES = [
   { value: "prova", label: "Prova", color: "#ef4444", icon: FileText, emoji: "📝" },
   { value: "entrega", label: "Entrega", color: "#f59e0b", icon: Send, emoji: "📦" },
-  { value: "feriado", label: "Feriado", color: "#22c55e", icon: PartyPopper, emoji: "🎉" },
+  { value: "feriado", label: "Feriado", color: "#5D9D0B", icon: PartyPopper, emoji: "🎉" },
   { value: "evento", label: "Evento", color: "#3b82f6", icon: Flag, emoji: "📌" },
   { value: "outro", label: "Outro", color: "#8b5cf6", icon: AlertCircle, emoji: "📎" },
 ];
@@ -476,9 +476,9 @@ const AcademicCalendar = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#1B1D24] text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin" />
+          <div className="h-8 w-8 border-2 border-[#72EB3A] border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-slate-400 font-bold">A carregar calendário...</p>
         </div>
       </div>
@@ -486,27 +486,27 @@ const AcademicCalendar = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
       <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
 
         {/* Header */}
         <div className="flex items-center justify-between mt-2 mb-6">
           <div>
-            <h3 className="text-[#4ade80] text-[10px] font-black tracking-[0.2em] uppercase mb-0.5">ANO LECTIVO</h3>
+            <h3 className="text-[#72EB3A] text-[10px] font-black tracking-[0.2em] uppercase mb-0.5">ANO LECTIVO</h3>
             <h1 className="text-2xl font-bold text-white">Calendário Acadêmico</h1>
           </div>
-          <div className="h-11 w-11 rounded-full bg-[#1a261d] border-2 border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.15)] flex items-center justify-center">
-            <Calendar className="h-5 w-5 text-[#4ade80]" />
+          <div className="h-11 w-11 rounded-full bg-[#253510] border-2 border-[#72EB3A]/30 shadow-[0_0_15px_rgba(74,222,128,0.15)] flex items-center justify-center">
+            <Calendar className="h-5 w-5 text-[#72EB3A]" />
           </div>
         </div>
 
         {/* Action Tabs */}
-        <div className="flex bg-[#141e16] p-1.5 rounded-xl border border-[#254238] mb-6 shadow-sm">
+        <div className="flex bg-[#1C2210] p-1.5 rounded-xl border border-[#365A08] mb-6 shadow-sm">
           <button
             onClick={() => setActiveTab("aulas")}
             className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 ${
               activeTab === "aulas" 
-                ? "bg-[#4ade80] text-[#0e1710] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
+                ? "bg-[#72EB3A] text-[#1B1D24] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -516,7 +516,7 @@ const AcademicCalendar = () => {
             onClick={() => setActiveTab("provas")}
             className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all duration-300 ${
               activeTab === "provas" 
-                ? "bg-[#4ade80] text-[#0e1710] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
+                ? "bg-[#72EB3A] text-[#1B1D24] shadow-[0_2px_10px_rgba(74,222,128,0.2)]" 
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -530,10 +530,10 @@ const AcademicCalendar = () => {
               /* ══════════ STATE 1: SUBMIT CALENDAR (PROVAS) ══════════ */
               <div className="space-y-5">
             {/* Instructions */}
-            <div className="bg-[#141e16] border border-[#254238]/60 rounded-2xl p-5 shadow-lg">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 rounded-2xl p-5 shadow-lg">
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 bg-[#4ade80]/10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
-                  <GraduationCap className="h-5 w-5 text-[#4ade80]" />
+                <div className="w-10 h-10 bg-[#72EB3A]/10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
+                  <GraduationCap className="h-5 w-5 text-[#72EB3A]" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-white mb-1">Submete o teu Calendário Escolar</h3>
@@ -546,12 +546,12 @@ const AcademicCalendar = () => {
             </div>
 
             {/* PDF Upload Section */}
-            <div className="bg-gradient-to-br from-[#141e16] to-[#1a261d] border border-[#4ade80]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-              <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#4ade80]/5 rounded-full blur-2xl" />
+            <div className="bg-gradient-to-br from-[#1C2210] to-[#253510] border border-[#72EB3A]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+              <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#72EB3A]/5 rounded-full blur-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-[#4ade80]/15 rounded-xl flex items-center justify-center shrink-0">
-                    <Sparkles className="h-5 w-5 text-[#4ade80]" />
+                  <div className="w-10 h-10 bg-[#72EB3A]/15 rounded-xl flex items-center justify-center shrink-0">
+                    <Sparkles className="h-5 w-5 text-[#72EB3A]" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-white">Importar do PDF</h3>
@@ -572,10 +572,10 @@ const AcademicCalendar = () => {
                   disabled={isParsing}
                   className={`w-full py-3.5 border-2 border-dashed rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
                     isParsing
-                      ? "border-[#4ade80]/30 text-[#4ade80] bg-[#4ade80]/5"
+                      ? "border-[#72EB3A]/30 text-[#72EB3A] bg-[#72EB3A]/5"
                       : pdfFileName
-                      ? "border-[#4ade80]/40 text-[#4ade80] hover:bg-[#4ade80]/5"
-                      : "border-slate-700 text-slate-400 hover:border-[#4ade80]/40 hover:text-[#4ade80]"
+                      ? "border-[#72EB3A]/40 text-[#72EB3A] hover:bg-[#72EB3A]/5"
+                      : "border-slate-700 text-slate-400 hover:border-[#72EB3A]/40 hover:text-[#72EB3A]"
                   }`}
                 >
                   {isParsing ? (
@@ -608,7 +608,7 @@ const AcademicCalendar = () => {
             {/* Event type legend */}
             <div className="flex flex-wrap gap-2">
               {EVENT_TYPES.map(t => (
-                <span key={t.value} className="flex items-center gap-1.5 bg-[#141e16] border border-slate-800 px-2.5 py-1.5 rounded-lg">
+                <span key={t.value} className="flex items-center gap-1.5 bg-[#1C2210] border border-slate-800 px-2.5 py-1.5 rounded-lg">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
                   <span className="text-[10px] font-bold text-slate-400">{t.label}</span>
                 </span>
@@ -620,11 +620,11 @@ const AcademicCalendar = () => {
               {drafts.map((draft, idx) => (
                 <div
                   key={draft.uid}
-                  className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 space-y-3 relative group"
+                  className="bg-[#1C2210] border border-slate-800/60 rounded-2xl p-4 space-y-3 relative group"
                 >
                   {/* Row number + delete */}
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-[#4ade80] tracking-widest uppercase">
+                    <span className="text-[10px] font-black text-[#72EB3A] tracking-widest uppercase">
                       Evento {idx + 1}
                     </span>
                     {drafts.length > 1 && (
@@ -643,7 +643,7 @@ const AcademicCalendar = () => {
                     placeholder="Ex: Prova de Matemática, Entrega de Projeto..."
                     value={draft.title}
                     onChange={e => updateDraft(draft.uid, "title", e.target.value)}
-                    className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-[#4ade80] outline-none transition-colors"
+                    className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-[#72EB3A] outline-none transition-colors"
                   />
 
                   <div className="grid grid-cols-2 gap-3">
@@ -654,7 +654,7 @@ const AcademicCalendar = () => {
                         type="date"
                         value={draft.event_date}
                         onChange={e => updateDraft(draft.uid, "event_date", e.target.value)}
-                        className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#4ade80] outline-none transition-colors [color-scheme:dark]"
+                        className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors [color-scheme:dark]"
                       />
                     </div>
 
@@ -664,7 +664,7 @@ const AcademicCalendar = () => {
                       <select
                         value={draft.event_type}
                         onChange={e => updateDraft(draft.uid, "event_type", e.target.value as DraftEvent["event_type"])}
-                        className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#4ade80] outline-none transition-colors appearance-none"
+                        className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors appearance-none"
                       >
                         {EVENT_TYPES.map(t => (
                           <option key={t.value} value={t.value}>{t.emoji} {t.label}</option>
@@ -680,7 +680,7 @@ const AcademicCalendar = () => {
                       <select
                         value={draft.subject_name}
                         onChange={e => updateDraft(draft.uid, "subject_name", e.target.value)}
-                        className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#4ade80] outline-none transition-colors appearance-none"
+                        className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#72EB3A] outline-none transition-colors appearance-none"
                       >
                         <option value="">Nenhuma</option>
                         {subjects.map(s => (
@@ -696,7 +696,7 @@ const AcademicCalendar = () => {
             {/* Add more + Submit */}
             <button
               onClick={addDraft}
-              className="w-full py-3 border-2 border-dashed border-[#254238] hover:border-[#4ade80]/50 rounded-2xl text-sm font-bold text-slate-400 hover:text-[#4ade80] transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-[#365A08] hover:border-[#72EB3A]/50 rounded-2xl text-sm font-bold text-slate-400 hover:text-[#72EB3A] transition-colors flex items-center justify-center gap-2"
             >
               <Plus className="h-4 w-4" /> Adicionar Mais Eventos
             </button>
@@ -704,11 +704,11 @@ const AcademicCalendar = () => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full py-4 bg-[#4ade80] text-[#0e1710] font-black text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 shadow-[0_5px_25px_rgba(74,222,128,0.2)]"
+              className="w-full py-4 bg-[#72EB3A] text-[#1B1D24] font-black text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 shadow-[0_5px_25px_rgba(74,222,128,0.2)]"
             >
               {isSubmitting ? (
                 <>
-                  <div className="h-4 w-4 border-2 border-[#0e1710] border-t-transparent rounded-full animate-spin" />
+                  <div className="h-4 w-4 border-2 border-[#1B1D24] border-t-transparent rounded-full animate-spin" />
                   A submeter...
                 </>
               ) : (
@@ -730,13 +730,13 @@ const AcademicCalendar = () => {
               <div className="flex gap-2">
                 <button
                   onClick={prevMonth}
-                  className="h-9 w-9 rounded-full bg-[#141e16] border border-slate-800 flex items-center justify-center hover:text-[#4ade80] text-slate-400 transition-colors"
+                  className="h-9 w-9 rounded-full bg-[#1C2210] border border-slate-800 flex items-center justify-center hover:text-[#72EB3A] text-slate-400 transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <button
                   onClick={nextMonth}
-                  className="h-9 w-9 rounded-full bg-[#141e16] border border-slate-800 flex items-center justify-center hover:text-[#4ade80] text-slate-400 transition-colors"
+                  className="h-9 w-9 rounded-full bg-[#1C2210] border border-slate-800 flex items-center justify-center hover:text-[#72EB3A] text-slate-400 transition-colors"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -754,7 +754,7 @@ const AcademicCalendar = () => {
             </div>
 
             {/* Calendar grid */}
-            <div className="bg-[#141e16] border border-[#254238]/60 rounded-3xl p-4 shadow-lg">
+            <div className="bg-[#1C2210] border border-[#365A08]/60 rounded-3xl p-4 shadow-lg">
               {/* Weekday headers */}
               <div className="grid grid-cols-7 gap-1 mb-2">
                 {WEEKDAYS.map(d => (
@@ -775,7 +775,7 @@ const AcademicCalendar = () => {
                   // Determine dominant event type for highlight color
                   const hasProva = dayEvents.some(e => e.event_type === 'prova');
                   const hasEvento = dayEvents.some(e => e.event_type === 'evento');
-                  const dominantColor = hasProva ? '#ef4444' : hasEvento ? '#3b82f6' : getTypeConfig(dayEvents[0]?.event_type)?.color || '#4ade80';
+                  const dominantColor = hasProva ? '#ef4444' : hasEvento ? '#3b82f6' : getTypeConfig(dayEvents[0]?.event_type)?.color || '#72EB3A';
 
                   return (
                     <button
@@ -792,7 +792,7 @@ const AcademicCalendar = () => {
                           : isSelected
                           ? 'text-white scale-95'
                           : isToday && !hasEvents
-                          ? 'bg-[#4ade80]/15 text-[#4ade80] ring-1 ring-[#4ade80]/40'
+                          ? 'bg-[#72EB3A]/15 text-[#72EB3A] ring-1 ring-[#72EB3A]/40'
                           : hasEvents
                           ? 'text-white hover:scale-105 cursor-pointer'
                           : 'text-slate-400 cursor-default'
@@ -838,14 +838,14 @@ const AcademicCalendar = () => {
                   className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 animate-slide-up"
                   style={{ animation: 'slideUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards' }}
                 >
-                  <div className="bg-[#141e16] border-t-2 border-[#254238] rounded-t-3xl p-5 pb-8 shadow-2xl">
+                  <div className="bg-[#1C2210] border-t-2 border-[#365A08] rounded-t-3xl p-5 pb-8 shadow-2xl">
                     {/* Handle bar */}
                     <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-5" />
 
                     {/* Date header */}
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-[10px] font-black text-[#4ade80] uppercase tracking-[0.2em] mb-0.5">Eventos do Dia</p>
+                        <p className="text-[10px] font-black text-[#72EB3A] uppercase tracking-[0.2em] mb-0.5">Eventos do Dia</p>
                         <h3 className="text-lg font-bold text-white">
                           {new Date(selectedDay + 'T00:00:00').toLocaleDateString('pt-PT', {
                             weekday: 'long', day: 'numeric', month: 'long'
@@ -854,7 +854,7 @@ const AcademicCalendar = () => {
                       </div>
                       <button
                         onClick={() => setModalOpen(false)}
-                        className="w-9 h-9 rounded-full bg-[#0e1710] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                        className="w-9 h-9 rounded-full bg-[#1B1D24] border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
                       >
                         ✕
                       </button>
@@ -912,10 +912,10 @@ const AcademicCalendar = () => {
             {/* Upcoming events */}
             <div>
               <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-[#4ade80]" /> Próximos Eventos
+                <AlertCircle className="h-4 w-4 text-[#72EB3A]" /> Próximos Eventos
               </h3>
               {upcomingEvents.length === 0 ? (
-                <div className="text-center py-6 border border-slate-800 border-dashed rounded-2xl bg-[#0e1710]">
+                <div className="text-center py-6 border border-slate-800 border-dashed rounded-2xl bg-[#1B1D24]">
                   <p className="text-sm font-bold text-slate-400">Nenhum evento próximo 🎉</p>
                 </div>
               ) : (
@@ -932,7 +932,7 @@ const AcademicCalendar = () => {
                     return (
                       <div
                         key={i}
-                        className="flex items-center gap-3 bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 hover:border-[#254238] transition-colors"
+                        className="flex items-center gap-3 bg-[#1C2210] border border-slate-800/60 rounded-2xl p-4 hover:border-[#365A08] transition-colors"
                       >
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -952,7 +952,7 @@ const AcademicCalendar = () => {
                             ? "bg-red-500/15 text-red-400"
                             : diffDays <= 3
                             ? "bg-amber-500/15 text-amber-400"
-                            : "bg-[#4ade80]/10 text-[#4ade80]"
+                            : "bg-[#72EB3A]/10 text-[#72EB3A]"
                         }`}>
                           {urgencyLabel}
                         </span>
@@ -968,9 +968,9 @@ const AcademicCalendar = () => {
               {[
                 { label: "Provas", count: events.filter(e => e.event_type === "prova").length, color: "#ef4444" },
                 { label: "Entregas", count: events.filter(e => e.event_type === "entrega").length, color: "#f59e0b" },
-                { label: "Total", count: events.length, color: "#4ade80" },
+                { label: "Total", count: events.length, color: "#72EB3A" },
               ].map((s, i) => (
-                <div key={i} className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-4 text-center">
+                <div key={i} className="bg-[#1C2210] border border-slate-800/60 rounded-2xl p-4 text-center">
                   <p className="text-2xl font-black" style={{ color: s.color }}>{s.count}</p>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">{s.label}</p>
                 </div>
@@ -980,7 +980,7 @@ const AcademicCalendar = () => {
             {/* Resubmit button */}
             <button
               onClick={handleClear}
-              className="w-full py-3 bg-[#141e16] border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors"
+              className="w-full py-3 bg-[#1C2210] border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors"
             >
               <RefreshCw className="h-4 w-4" /> Resubmeter Calendário
             </button>
@@ -995,12 +995,12 @@ const AcademicCalendar = () => {
             {!hasSchedule ? (
               <div className="space-y-5">
                 {/* Upload Section */}
-                <div className="bg-gradient-to-br from-[#141e16] to-[#1a261d] border border-[#4ade80]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                  <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#4ade80]/5 rounded-full blur-2xl" />
+                <div className="bg-gradient-to-br from-[#1C2210] to-[#253510] border border-[#72EB3A]/20 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                  <div className="absolute -top-8 -right-8 w-24 h-24 bg-[#72EB3A]/5 rounded-full blur-2xl" />
                   <div className="relative z-10">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-[#4ade80]/15 rounded-xl flex items-center justify-center shrink-0">
-                        <Sparkles className="h-5 w-5 text-[#4ade80]" />
+                      <div className="w-10 h-10 bg-[#72EB3A]/15 rounded-xl flex items-center justify-center shrink-0">
+                        <Sparkles className="h-5 w-5 text-[#72EB3A]" />
                       </div>
                       <div>
                         <h3 className="text-sm font-bold text-white">Importar Horário Escolar</h3>
@@ -1022,16 +1022,16 @@ const AcademicCalendar = () => {
                     <button
                       disabled={isParsingSchedule}
                       onClick={() => scheduleFileInputRef.current?.click()}
-                      className="w-full mt-2 py-3 bg-[#0e1710] border border-[#254238] hover:border-[#4ade80]/50 rounded-xl text-sm font-bold text-[#4ade80] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      className="w-full mt-2 py-3 bg-[#1B1D24] border border-[#365A08] hover:border-[#72EB3A]/50 rounded-xl text-sm font-bold text-[#72EB3A] transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       {isParsingSchedule ? (
-                        <><div className="h-4 w-4 border-2 border-[#4ade80] border-t-transparent rounded-full animate-spin" />A analisar...</>
+                        <><div className="h-4 w-4 border-2 border-[#72EB3A] border-t-transparent rounded-full animate-spin" />A analisar...</>
                       ) : (
                         <><Upload className="h-4 w-4" /> Selecionar PDF ou Imagem</>
                       )}
                     </button>
                     {schedulePdfName && !isParsingSchedule && (
-                      <p className="text-[10px] text-center text-[#4ade80] font-bold mt-3">✓ {schedulePdfName}</p>
+                      <p className="text-[10px] text-center text-[#72EB3A] font-bold mt-3">✓ {schedulePdfName}</p>
                     )}
                   </div>
                 </div>
@@ -1044,9 +1044,9 @@ const AcademicCalendar = () => {
 
                 <div className="space-y-3">
                   {draftClasses.map((d, index) => (
-                    <div key={d.uid} className="bg-[#141e16] border border-slate-800/60 rounded-2xl p-4">
+                    <div key={d.uid} className="bg-[#1C2210] border border-slate-800/60 rounded-2xl p-4">
                       <div className="flex justify-between items-center mb-3">
-                        <span className="text-[10px] font-black tracking-widest text-[#4ade80] uppercase">Aula {index + 1}</span>
+                        <span className="text-[10px] font-black tracking-widest text-[#72EB3A] uppercase">Aula {index + 1}</span>
                         {draftClasses.length > 1 && (
                           <button onClick={() => removeDraftClass(d.uid)} className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors">
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1060,53 +1060,53 @@ const AcademicCalendar = () => {
                           <select
                             value={d.day_of_week}
                             onChange={(e) => updateDraftClass(d.uid, "day_of_week", e.target.value)}
-                            className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#4ade80] outline-none"
+                            className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:border-[#72EB3A] outline-none"
                           >
                             {WEEKDAYS.map(w => <option key={w} value={w}>{w}</option>)}
                           </select>
                         </div>
                         <div>
                           <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Disciplina</label>
-                          <input type="text" value={d.subject_name} onChange={(e) => updateDraftClass(d.uid, "subject_name", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[#4ade80] outline-none" placeholder="Ex: Matemática" />
+                          <input type="text" value={d.subject_name} onChange={(e) => updateDraftClass(d.uid, "subject_name", e.target.value)} className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-slate-600 focus:border-[#72EB3A] outline-none" placeholder="Ex: Matemática" />
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Início</label>
-                          <input type="time" value={d.start_time} onChange={(e) => updateDraftClass(d.uid, "start_time", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#4ade80] outline-none" />
+                          <input type="time" value={d.start_time} onChange={(e) => updateDraftClass(d.uid, "start_time", e.target.value)} className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#72EB3A] outline-none" />
                         </div>
                         <div>
                           <label className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Fim</label>
-                          <input type="time" value={d.end_time} onChange={(e) => updateDraftClass(d.uid, "end_time", e.target.value)} className="w-full bg-[#0e1710] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#4ade80] outline-none" />
+                          <input type="time" value={d.end_time} onChange={(e) => updateDraftClass(d.uid, "end_time", e.target.value)} className="w-full bg-[#1B1D24] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-300 focus:border-[#72EB3A] outline-none" />
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <button onClick={addDraftClass} className="w-full py-3 border-2 border-dashed border-[#254238] rounded-2xl text-sm font-bold text-slate-400 hover:text-[#4ade80] transition-colors flex items-center justify-center gap-2">
+                <button onClick={addDraftClass} className="w-full py-3 border-2 border-dashed border-[#365A08] rounded-2xl text-sm font-bold text-slate-400 hover:text-[#72EB3A] transition-colors flex items-center justify-center gap-2">
                   <Plus className="h-4 w-4" /> Adicionar Bloco
                 </button>
 
-                <button onClick={handleScheduleSubmit} disabled={isSubmittingSchedule} className="w-full py-4 bg-[#4ade80] text-[#0e1710] font-black text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 shadow-[0_5px_25px_rgba(74,222,128,0.2)]">
-                  {isSubmittingSchedule ? <><div className="h-4 w-4 border-2 border-[#0e1710] border-t-transparent rounded-full animate-spin" />A submeter...</> : <><Send className="h-4 w-4" /> Gravar Horário Escolar</>}
+                <button onClick={handleScheduleSubmit} disabled={isSubmittingSchedule} className="w-full py-4 bg-[#72EB3A] text-[#1B1D24] font-black text-[15px] rounded-2xl flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 shadow-[0_5px_25px_rgba(74,222,128,0.2)]">
+                  {isSubmittingSchedule ? <><div className="h-4 w-4 border-2 border-[#1B1D24] border-t-transparent rounded-full animate-spin" />A submeter...</> : <><Send className="h-4 w-4" /> Gravar Horário Escolar</>}
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="bg-[#141e16] border border-[#254238] rounded-2xl p-5 shadow-lg overflow-hidden">
+                <div className="bg-[#1C2210] border border-[#365A08] rounded-2xl p-5 shadow-lg overflow-hidden">
                   <h3 className="text-white font-bold mb-4">O Meu Horário Semanal</h3>
                   <div className="space-y-4">
                     {WEEKDAYS.map(day => {
                       const dayClasses = schedule.filter(c => c.day_of_week === day).sort((a,b) => a.start_time.localeCompare(b.start_time));
                       if (dayClasses.length === 0) return null;
                       return (
-                        <div key={day} className="bg-[#0e1710] border border-slate-800/80 rounded-xl p-3">
-                          <h4 className="text-[10px] font-black tracking-widest text-[#4ade80] uppercase mb-2 ml-1">{day}</h4>
+                        <div key={day} className="bg-[#1B1D24] border border-slate-800/80 rounded-xl p-3">
+                          <h4 className="text-[10px] font-black tracking-widest text-[#72EB3A] uppercase mb-2 ml-1">{day}</h4>
                           <div className="space-y-2">
                             {dayClasses.map((c, i) => (
-                              <div key={i} className="flex items-center gap-3 px-2 py-1.5 hover:bg-[#1a261d] rounded-lg transition-colors">
+                              <div key={i} className="flex items-center gap-3 px-2 py-1.5 hover:bg-[#253510] rounded-lg transition-colors">
                                 <div className="text-[11px] font-mono text-slate-400 w-24 shrink-0">
                                   {c.start_time} - {c.end_time}
                                 </div>
@@ -1122,7 +1122,7 @@ const AcademicCalendar = () => {
                 
                 <button
                   onClick={handleClearSchedule}
-                  className="w-full py-3 bg-[#141e16] border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors"
+                  className="w-full py-3 bg-[#1C2210] border border-slate-800 text-slate-400 hover:text-red-400 hover:border-red-500/30 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" /> Limpar Horário
                 </button>
@@ -1134,17 +1134,17 @@ const AcademicCalendar = () => {
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#0e1710]/95 backdrop-blur-xl border-t border-[#1a261d] px-6 py-4 flex justify-between items-center z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
         {bottomNavItems.map((item, i) => {
           const isActive = location.pathname === item.path;
           return (
             <Link
               key={i}
               to={item.path}
-              className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#4ade80]" : "text-slate-500 hover:text-slate-300"}`}
+              className={`flex flex-col items-center gap-1.5 transition-colors ${isActive ? "text-[#72EB3A]" : "text-slate-500 hover:text-slate-300"}`}
             >
               <item.icon className={`h-[22px] w-[22px] ${isActive ? "stroke-[2.5]" : "stroke-2"}`} />
-              <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#4ade80]" : ""}`}>
+              <span className={`text-[10px] font-bold tracking-wide ${isActive ? "text-[#72EB3A]" : ""}`}>
                 {item.title}
               </span>
             </Link>

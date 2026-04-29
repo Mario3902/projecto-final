@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, Heart, CheckCircle2, XCircle, ArrowRight, Timer, Zap } from 'lucide-react';
 import { useGame } from '@/context/GameContext';
@@ -118,7 +118,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
     setLastCorrect(correct);
     if (correct) {
       setScore((s) => s + 1);
-      celebrate(correct ? undefined : undefined);
+      celebrate();
     } else {
       loseHeart();
       encourage();
@@ -168,7 +168,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
   // ── No Hearts Screen ─────────────────────────────────────────────────────────
   if (heartsFailed && !finished) {
     return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col items-center justify-center p-6">
         <div className="text-7xl mb-4">💔</div>
         <h1 className="text-2xl font-bold mb-2">Ficaste sem vidas!</h1>
         <p className="text-slate-400 text-center mb-8 text-sm">
@@ -176,7 +176,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
         </p>
         <button
           onClick={onExit}
-          className="w-full max-w-xs py-3 bg-[#4ade80] text-[#0e1710] font-bold rounded-2xl active:scale-95 transition-transform"
+          className="w-full max-w-xs py-3 bg-[#72EB3A] text-[#1B1D24] font-bold rounded-2xl active:scale-95 transition-transform"
         >
           Voltar aos Quizzes
         </button>
@@ -202,7 +202,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
     const pct = Math.round((score / questions.length) * 100);
     const passed = pct >= 60;
     return (
-      <div className="min-h-screen bg-[#0e1710] text-white flex flex-col items-center justify-center p-6 animate-fade-in">
+      <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col items-center justify-center p-6 animate-fade-in">
         {showConfetti && (
           <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
             {Array.from({ length: 20 }).map((_, i) => (
@@ -229,19 +229,19 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
           {score} de {questions.length} corretas — {pct}%
         </p>
 
-        <div className="w-full max-w-xs bg-[#141e16] border border-[#254238] rounded-3xl p-5 mb-6 mt-4">
+        <div className="w-full max-w-xs bg-[#1C2210] border border-[#365A08] rounded-3xl p-5 mb-6 mt-4">
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Pontuação</span>
-            <span className={`text-2xl font-black ${passed ? 'text-[#4ade80]' : 'text-red-400'}`}>{pct}%</span>
+            <span className={`text-2xl font-black ${passed ? 'text-[#72EB3A]' : 'text-red-400'}`}>{pct}%</span>
           </div>
-          <div className="h-3 bg-[#0e1710] rounded-full overflow-hidden">
+          <div className="h-3 bg-[#1B1D24] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-700 ${passed ? 'bg-[#4ade80]' : 'bg-red-500'}`}
+              className={`h-full rounded-full transition-all duration-700 ${passed ? 'bg-[#72EB3A]' : 'bg-red-500'}`}
               style={{ width: `${pct}%` }}
             />
           </div>
           {passed && (
-            <p className="text-[#4ade80] text-xs font-bold mt-3 text-center">
+            <p className="text-[#72EB3A] text-xs font-bold mt-3 text-center">
               +{Math.round((score / questions.length) * 50)} XP ganhos!
             </p>
           )}
@@ -265,7 +265,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="flex-1 py-3 bg-[#4ade80] text-[#0e1710] font-bold rounded-2xl text-sm active:scale-95 transition-transform"
+            className="flex-1 py-3 bg-[#72EB3A] text-[#1B1D24] font-bold rounded-2xl text-sm active:scale-95 transition-transform"
           >
             Repetir
           </button>
@@ -276,7 +276,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
 
   // ── Active Lesson ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0e1710] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans">
       {/* Header */}
       <div className="max-w-md mx-auto w-full px-4 pt-5">
         <div className="flex items-center justify-between mb-4">
@@ -287,9 +287,9 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
 
           {/* Progress bar */}
           <div className="flex-1 mx-4">
-            <div className="h-3 bg-[#1a261d] rounded-full overflow-hidden">
+            <div className="h-3 bg-[#253510] rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#4ade80] rounded-full transition-all duration-500"
+                className="h-full bg-[#72EB3A] rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -324,7 +324,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
         {/* Question type badge */}
         <div className="mb-4">
           <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg ${
-            currentQ.lessonType === 'multiple_choice' ? 'bg-[#4ade80]/10 text-[#4ade80]' :
+            currentQ.lessonType === 'multiple_choice' ? 'bg-[#72EB3A]/10 text-[#72EB3A]' :
             currentQ.lessonType === 'true_false' ? 'bg-blue-500/10 text-blue-400' :
             currentQ.lessonType === 'fill_blank' ? 'bg-purple-500/10 text-purple-400' :
             'bg-yellow-500/10 text-yellow-400'
@@ -337,7 +337,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
         </div>
 
         {/* ── Question component ── */}
-        <div className="bg-[#141e16] border border-[#254238] rounded-3xl p-5 mb-4">
+        <div className="bg-[#1C2210] border border-[#365A08] rounded-3xl p-5 mb-4">
           {currentQ.lessonType === 'multiple_choice' && (
             <div>
               <div className="flex items-start gap-2 mb-5">
@@ -346,13 +346,13 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
               </div>
               <div className="space-y-3">
                 {currentQ.options.map((opt, idx) => {
-                  let style = 'border-slate-700 bg-[#0e1710] text-slate-200 hover:border-[#4ade80]/40';
+                  let style = 'border-slate-700 bg-[#1B1D24] text-slate-200 hover:border-[#72EB3A]/40';
                   if (answered) {
-                    if (idx === currentQ.correct) style = 'border-[#4ade80] bg-[#4ade80]/15 text-[#4ade80]';
+                    if (idx === currentQ.correct) style = 'border-[#72EB3A] bg-[#72EB3A]/15 text-[#72EB3A]';
                     else if (idx === mcSelected) style = 'border-red-500 bg-red-500/10 text-red-400';
-                    else style = 'border-slate-800 bg-[#0e1710] text-slate-600 opacity-50';
+                    else style = 'border-slate-800 bg-[#1B1D24] text-slate-600 opacity-50';
                   } else if (idx === mcSelected) {
-                    style = 'border-[#4ade80]/50 bg-[#4ade80]/10 text-[#4ade80]';
+                    style = 'border-[#72EB3A]/50 bg-[#72EB3A]/10 text-[#72EB3A]';
                   }
                   return (
                     <button
@@ -405,8 +405,8 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
 
         {/* Explanation */}
         {answered && currentQ.explanation && (
-          <div className="flex items-start gap-3 bg-[#1e2e26] border border-[#4ade80]/20 px-4 py-3 rounded-2xl mb-4 animate-fade-in">
-            <Zap className="h-4 w-4 text-[#4ade80] shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 bg-[#253510] border border-[#72EB3A]/20 px-4 py-3 rounded-2xl mb-4 animate-fade-in">
+            <Zap className="h-4 w-4 text-[#72EB3A] shrink-0 mt-0.5" />
             <p className="text-[13px] text-slate-300 leading-relaxed">{currentQ.explanation}</p>
           </div>
         )}
@@ -421,11 +421,11 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
 
         {/* Correct/wrong banner */}
         {answered && !timedOut && lastCorrect !== null && (
-          <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl mb-4 animate-fade-in ${lastCorrect ? 'bg-[#4ade80]/10 border border-[#4ade80]/20' : 'bg-red-500/10 border border-red-500/20'}`}>
+          <div className={`flex items-center gap-2 px-4 py-3 rounded-2xl mb-4 animate-fade-in ${lastCorrect ? 'bg-[#72EB3A]/10 border border-[#72EB3A]/20' : 'bg-red-500/10 border border-red-500/20'}`}>
             {lastCorrect
-              ? <CheckCircle2 className="h-4 w-4 text-[#4ade80] shrink-0" />
+              ? <CheckCircle2 className="h-4 w-4 text-[#72EB3A] shrink-0" />
               : <XCircle className="h-4 w-4 text-red-500 shrink-0" />}
-            <p className={`text-[13px] font-bold ${lastCorrect ? 'text-[#4ade80]' : 'text-red-400'}`}>
+            <p className={`text-[13px] font-bold ${lastCorrect ? 'text-[#72EB3A]' : 'text-red-400'}`}>
               {lastCorrect ? 'Correto! +5 pontos' : `Errado. Resposta: ${currentQ.options[currentQ.correct]}`}
             </p>
           </div>
@@ -435,7 +435,7 @@ const LessonFlow: React.FC<LessonFlowProps> = ({ subjectName, questions: rawQues
         {answered && (
           <button
             onClick={next}
-            className="w-full py-4 bg-[#4ade80] text-[#0e1710] font-black text-base rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_8px_24px_rgba(74,222,128,0.2)]"
+            className="w-full py-4 bg-[#72EB3A] text-[#1B1D24] font-black text-base rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-[0_8px_24px_rgba(74,222,128,0.2)]"
           >
             {current + 1 >= questions.length ? 'Ver Resultado' : 'Próxima'} <ArrowRight className="h-5 w-5" />
           </button>

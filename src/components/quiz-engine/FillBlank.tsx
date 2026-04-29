@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface FillBlankProps {
@@ -42,9 +42,9 @@ const FillBlank: React.FC<FillBlankProps> = ({ sentence, correctAnswer, hints, o
       <div className="text-white font-bold text-lg mb-6 leading-relaxed flex flex-wrap items-center gap-1">
         {parts[0] && <span>{parts[0]}</span>}
         <span className={`inline-block min-w-[120px] border-b-2 px-2 py-0.5 text-center font-black transition-colors ${
-          result === 'correct' ? 'border-[#4ade80] text-[#4ade80]' :
+          result === 'correct' ? 'border-[#72EB3A] text-[#72EB3A]' :
           result === 'wrong' ? 'border-red-500 text-red-400' :
-          'border-[#4ade80]/50 text-[#4ade80]'
+          'border-[#72EB3A]/50 text-[#72EB3A]'
         }`}>
           {result ? (result === 'correct' ? value : correctAnswer) : (value || '?')}
         </span>
@@ -61,7 +61,7 @@ const FillBlank: React.FC<FillBlankProps> = ({ sentence, correctAnswer, hints, o
           onKeyDown={handleKeyDown}
           disabled={!!disabled}
           placeholder="Escreve a resposta..."
-          className="w-full bg-[#141e16] border-2 border-[#254238] focus:border-[#4ade80] text-white placeholder-slate-500 rounded-2xl px-4 py-3 text-base font-semibold outline-none transition-colors mb-4"
+          className="w-full bg-[#1C2210] border-2 border-[#365A08] focus:border-[#72EB3A] text-white placeholder-slate-500 rounded-2xl px-4 py-3 text-base font-semibold outline-none transition-colors mb-4"
         />
       )}
 
@@ -72,7 +72,7 @@ const FillBlank: React.FC<FillBlankProps> = ({ sentence, correctAnswer, hints, o
             <button
               key={i}
               onClick={() => setValue(h)}
-              className="bg-[#1e2e26] border border-[#254238] text-slate-300 px-3 py-1.5 rounded-xl text-sm font-semibold hover:border-[#4ade80]/50 transition-colors"
+              className="bg-[#253510] border border-[#365A08] text-slate-300 px-3 py-1.5 rounded-xl text-sm font-semibold hover:border-[#72EB3A]/50 transition-colors"
             >
               {h}
             </button>
@@ -82,11 +82,11 @@ const FillBlank: React.FC<FillBlankProps> = ({ sentence, correctAnswer, hints, o
 
       {/* Result feedback */}
       {result && (
-        <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#4ade80]/15' : 'bg-red-500/15'}`}>
+        <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#72EB3A]/15' : 'bg-red-500/15'}`}>
           {result === 'correct'
-            ? <CheckCircle2 className="h-5 w-5 text-[#4ade80] shrink-0" />
+            ? <CheckCircle2 className="h-5 w-5 text-[#72EB3A] shrink-0" />
             : <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
-          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#4ade80]' : 'text-red-400'}`}>
+          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#72EB3A]' : 'text-red-400'}`}>
             {result === 'correct' ? 'Correto!' : `A resposta certa era: "${correctAnswer}"`}
           </span>
         </div>
@@ -97,7 +97,7 @@ const FillBlank: React.FC<FillBlankProps> = ({ sentence, correctAnswer, hints, o
         <button
           onClick={check}
           disabled={!value.trim()}
-          className="w-full py-3 rounded-2xl font-bold text-sm bg-[#4ade80] text-[#0e1710] hover:bg-[#22c55e] transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-3 rounded-2xl font-bold text-sm bg-[#72EB3A] text-[#1B1D24] hover:bg-[#5D9D0B] transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Verificar
         </button>

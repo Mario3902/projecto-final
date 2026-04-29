@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface NziDialogProps {
@@ -39,7 +39,7 @@ const NziDialog: React.FC<NziDialogProps> = ({ message, onDismiss }) => {
       style={{ zIndex: 100 }}
     >
       {/* Bubble */}
-      <div className="bg-white text-[#0e1710] rounded-2xl rounded-br-sm px-4 py-3 shadow-xl relative">
+      <div className="bg-white text-[#1B1D24] rounded-2xl rounded-br-sm px-4 py-3 shadow-xl relative">
         <p className="text-[13px] font-semibold leading-snug">{displayed}</p>
         {onDismiss && (
           <button

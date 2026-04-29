@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 interface WordOrderProps {
@@ -60,10 +60,10 @@ const WordOrder: React.FC<WordOrderProps> = ({ question, correctWords, onAnswer,
       <div
         className={`min-h-[60px] rounded-2xl border-2 p-3 mb-5 flex flex-wrap gap-2 transition-colors ${
           result === 'correct'
-            ? 'border-[#4ade80] bg-[#4ade80]/10'
+            ? 'border-[#72EB3A] bg-[#72EB3A]/10'
             : result === 'wrong'
             ? 'border-red-500 bg-red-500/10'
-            : 'border-[#254238] bg-[#1a261d]'
+            : 'border-[#365A08] bg-[#253510]'
         }`}
       >
         {answer.length === 0 && (
@@ -73,7 +73,7 @@ const WordOrder: React.FC<WordOrderProps> = ({ question, correctWords, onAnswer,
           <button
             key={item.id}
             onClick={() => removeFromAnswer(item)}
-            className="bg-[#0e1710] border border-[#4ade80]/30 text-[#4ade80] px-3 py-1.5 rounded-xl text-sm font-bold transition-transform active:scale-95"
+            className="bg-[#1B1D24] border border-[#72EB3A]/30 text-[#72EB3A] px-3 py-1.5 rounded-xl text-sm font-bold transition-transform active:scale-95"
             disabled={!!result}
           >
             {item.word}
@@ -83,11 +83,11 @@ const WordOrder: React.FC<WordOrderProps> = ({ question, correctWords, onAnswer,
 
       {/* Result feedback */}
       {result && (
-        <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#4ade80]/15' : 'bg-red-500/15'}`}>
+        <div className={`flex items-center gap-2 mb-4 px-4 py-3 rounded-xl ${result === 'correct' ? 'bg-[#72EB3A]/15' : 'bg-red-500/15'}`}>
           {result === 'correct'
-            ? <CheckCircle2 className="h-5 w-5 text-[#4ade80] shrink-0" />
+            ? <CheckCircle2 className="h-5 w-5 text-[#72EB3A] shrink-0" />
             : <XCircle className="h-5 w-5 text-red-500 shrink-0" />}
-          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#4ade80]' : 'text-red-400'}`}>
+          <span className={`text-sm font-bold ${result === 'correct' ? 'text-[#72EB3A]' : 'text-red-400'}`}>
             {result === 'correct' ? 'Correto!' : `Errado. Correto: "${correctWords.join(' ')}"`}
           </span>
         </div>
@@ -100,7 +100,7 @@ const WordOrder: React.FC<WordOrderProps> = ({ question, correctWords, onAnswer,
             key={item.id}
             onClick={() => addToAnswer(item)}
             disabled={!!result}
-            className="bg-[#141e16] border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-sm font-semibold hover:border-[#4ade80]/40 transition-all active:scale-95 disabled:opacity-50"
+            className="bg-[#1C2210] border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-sm font-semibold hover:border-[#72EB3A]/40 transition-all active:scale-95 disabled:opacity-50"
           >
             {item.word}
           </button>
@@ -112,7 +112,7 @@ const WordOrder: React.FC<WordOrderProps> = ({ question, correctWords, onAnswer,
         <button
           onClick={checkAnswer}
           disabled={!canCheck}
-          className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-[#4ade80] text-[#0e1710] hover:bg-[#22c55e]"
+          className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-[#72EB3A] text-[#1B1D24] hover:bg-[#5D9D0B]"
         >
           Verificar
         </button>

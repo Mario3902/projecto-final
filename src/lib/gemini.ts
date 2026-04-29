@@ -58,45 +58,32 @@ export const buildStudentContext = async (): Promise<string> => {
                 calendarEvents.forEach((ev: any) => {
                     const d = new Date(ev.event_date.split("T")[0] + "T00:00:00");
                     const dateStr = d.toLocaleDateString("pt-PT");
-                    const subj = ev.subject_name ? ` (${ev.subject_name})` : "";
-                    lines.push(`  📅 ${dateStr}: ${ev.title}${subj} - ${ev.event_type}`);
+                    lines.push(`  [${ev.event_type}] ${ev.title} — ${ev.subject_name || "Geral"} — ${dateStr}`);
                 });
             }
-        } catch { /* calendar not available yet */ }
+        } catch { /* skip if no calendar */ }
 
-        // Weekly Schedule — full schedule
-        try {
-            const schedule = await api.getSchedule();
-            if (schedule && schedule.length > 0) {
-                lines.push(`\nHorário Semanal de Aulas:`);
-                schedule.forEach((c: any) => {
-                    lines.push(`  ⏰ ${c.day_of_week}: ${c.start_time} às ${c.end_time} - ${c.subject_name}`);
-                });
-            }
-        } catch { /* schedule not available yet */ }
-
-        lines.push("\nIMPORTANTE: cruza a informação das aulas de hoje com as provas que se aproximam para sugerir ao aluno o que ele deve estudar no Planner (método Pomodoro).");
-
-        return lines.length > 0
-            ? lines.join("\n")
-            : "Perfil ainda não configurado — pede ao aluno para completar o perfil.";
+        return lines.join("\n");
     } catch {
-        return "Erro ao carregar dados do aluno.";
+        return "";
     }
 };
 
-// Utility: General Chat with Nzila (with full student context)
 export const chatWithNzila = async (
     message: string,
-    history: { role: "user" | "model"; parts: { text: string }[] }[] = []
+    history: { role: string; content: string }[],
+    studentContext?: string
+): Promise<string> => nzilaChat(message, history, studentContext ?? "");
+
+export const nzilaChat = async (
+    message: string,
+    history: { role: string; content: string }[],
+    studentContext: string
 ): Promise<string> => {
     try {
-        const studentContext = await buildStudentContext();
-
-        // Sanitize history: Gemini requires first message to be "user" role
-        // and all messages must have non-empty text
-        const cleanHistory = history.filter(m => m.parts?.[0]?.text?.trim());
-        while (cleanHistory.length > 0 && cleanHistory[0].role === "model") {
+        const MAX_HISTORY = 20;
+        const cleanHistory = history.slice(-MAX_HISTORY);
+        while (cleanHistory.length > MAX_HISTORY) {
             cleanHistory.shift();
         }
 
@@ -386,6 +373,235 @@ export const generateTopicsForSubject = async (subject: string): Promise<SkillTo
         { id: "pratica", name: "Prática e Exercícios", emoji: "✏️", description: "Aplicação prática dos conhecimentos", difficulty: "médio" },
         { id: "revisao", name: "Revisão Geral", emoji: "🔄", description: "Consolidação de todos os tópicos", difficulty: "básico" },
     ];
+};
+
+// ── Flashcard Q&A generation ────────────────────────────────────────────────────
+
+export interface FlashcardQA {
+    id: string;
+    emoji: string;
+    question: string;
+    answer: string;
+}
+
+const FALLBACK_QA: Record<string, FlashcardQA[]> = {
+    "matemática": [
+        { id: "fq_eq1",  emoji: "➕", question: "O que é uma equação do 1º grau?", answer: "É uma equação da forma ax + b = 0 (a ≠ 0). Resolve-se isolando x: x = −b/a." },
+        { id: "fq_func", emoji: "📈", question: "O que é uma função linear?", answer: "É uma função f(x) = mx + b cujo gráfico é uma reta com declive m e ordenada na origem b." },
+        { id: "fq_pit",  emoji: "📐", question: "Enuncia o Teorema de Pitágoras.", answer: "Num triângulo retângulo, o quadrado da hipotenusa é igual à soma dos quadrados dos catetos: a² = b² + c²." },
+        { id: "fq_prog", emoji: "🔢", question: "Qual a diferença entre progressão aritmética e geométrica?", answer: "Na PA, a diferença entre termos consecutivos é constante. Na PG, a razão entre termos consecutivos é constante." },
+        { id: "fq_log",  emoji: "📊", question: "O que é um logaritmo?", answer: "log_b(x) = y significa que b^y = x. O logaritmo é o expoente a que se eleva a base b para obter x." },
+        { id: "fq_prob", emoji: "🎲", question: "Como se calcula a probabilidade de um evento?", answer: "P(A) = número de casos favoráveis / número de casos possíveis, com 0 ≤ P(A) ≤ 1." },
+        { id: "fq_mat",  emoji: "🗂️", question: "O que é o determinante de uma matriz 2×2?", answer: "Para A = [[a,b],[c,d]], det(A) = ad − bc. Indica se a matriz é invertível (det ≠ 0)." },
+        { id: "fq_der",  emoji: "∫", question: "O que mede a derivada de uma função?", answer: "A derivada f'(x) mede a taxa de variação (declive) da função nesse ponto. Geometricamente, é o declive da tangente ao gráfico." },
+    ],
+    "física": [
+        { id: "fq_new1", emoji: "⚡", question: "Enuncia a 1ª Lei de Newton.", answer: "Um corpo em repouso ou em movimento retilíneo uniforme permanece assim a menos que uma força resultante não nula atue sobre ele (Princípio da Inércia)." },
+        { id: "fq_new2", emoji: "🏃", question: "O que diz a 2ª Lei de Newton?", answer: "A força resultante é igual à massa vezes a aceleração: F = ma. Quanto maior a massa, menor a aceleração para a mesma força." },
+        { id: "fq_ener", emoji: "🔋", question: "O que é energia cinética?", answer: "É a energia associada ao movimento: Ec = ½mv². Depende da massa e do quadrado da velocidade." },
+        { id: "fq_grav", emoji: "🌍", question: "O que é a Lei da Gravitação Universal?", answer: "Dois corpos atraem-se com uma força F = G·m₁·m₂/r², proporcional às massas e inversamente proporcional ao quadrado da distância." },
+        { id: "fq_ohm",  emoji: "💡", question: "O que afirma a Lei de Ohm?", answer: "A tensão (U) é igual ao produto da corrente (I) pela resistência (R): U = R·I. A corrente é diretamente proporcional à tensão." },
+        { id: "fq_ond",  emoji: "〰️", question: "Qual a relação entre frequência, comprimento de onda e velocidade?", answer: "v = f·λ. A velocidade da onda é o produto da frequência pelo comprimento de onda." },
+    ],
+    "química": [
+        { id: "fq_tab",  emoji: "🧪", question: "O que representa o número atómico de um elemento?", answer: "O número atómico (Z) é o número de protões no núcleo. Identifica o elemento e determina a sua posição na tabela periódica." },
+        { id: "fq_lig",  emoji: "🔗", question: "Qual a diferença entre ligação iónica e covalente?", answer: "Na ligação iónica há transferência de eletrões entre metais e não-metais. Na covalente há partilha de eletrões entre não-metais." },
+        { id: "fq_ph",   emoji: "🧫", question: "O que mede o pH de uma solução?", answer: "O pH mede a acidez: pH < 7 é ácido, pH = 7 é neutro, pH > 7 é básico/alcalino. É a escala logarítmica da concentração de H⁺." },
+        { id: "fq_reac", emoji: "⚗️", question: "O que é uma reação de oxidação-redução?", answer: "É uma reação onde há transferência de eletrões: o agente redutor oxida-se (perde e⁻) e o oxidante reduz-se (ganha e⁻)." },
+        { id: "fq_mol",  emoji: "⚖️", question: "O que é um mol em química?", answer: "Um mol equivale a 6,02×10²³ partículas (Número de Avogadro). É a unidade de quantidade de matéria no SI." },
+    ],
+    "biologia": [
+        { id: "fq_cel",  emoji: "🦠", question: "Qual a diferença entre célula procariótica e eucariótica?", answer: "Procarióticas (bactérias) não têm núcleo definido. Eucarióticas (animais, plantas) têm núcleo com membrana nuclear e organelos membranares." },
+        { id: "fq_dna",  emoji: "🧬", question: "O que é o DNA e qual a sua função?", answer: "O DNA (ácido desoxirribonucleico) é a molécula que contém a informação genética, codificada em sequências de nucleótidos, que dirige todas as funções celulares." },
+        { id: "fq_foto", emoji: "🌿", question: "O que é a fotossíntese?", answer: "É o processo pelo qual as plantas convertem luz solar, CO₂ e H₂O em glicose e O₂: 6CO₂ + 6H₂O + luz → C₆H₁₂O₆ + 6O₂." },
+        { id: "fq_mit",  emoji: "⚡", question: "Qual o papel da mitose?", answer: "A mitose é a divisão celular que produz duas células-filhas geneticamente idênticas à célula-mãe. É responsável pelo crescimento e regeneração dos tecidos." },
+        { id: "fq_evo",  emoji: "🦕", question: "O que é a seleção natural segundo Darwin?", answer: "Os organismos com características mais adaptadas ao ambiente sobrevivem e reproduzem-se mais, transmitindo essas características à descendência — motor da evolução." },
+    ],
+    "história": [
+        { id: "fq_ind",  emoji: "🇦🇴", question: "Quando e como Angola obteve a independência?", answer: "Angola proclamou a independência a 11 de novembro de 1975, após a Revolução dos Cravos em Portugal (1974) e acordos de paz com os movimentos de libertação (MPLA, FNLA, UNITA)." },
+        { id: "fq_2gm",  emoji: "🕊️", question: "Quais foram as principais causas da II Guerra Mundial?", answer: "O ascenso do nazismo na Alemanha, as políticas expansionistas de Hitler, o fracasso das políticas de apaziguamento e os conflitos económicos e territoriais pós-WWI." },
+        { id: "fq_col",  emoji: "⚓", question: "O que foi o colonialismo português em Angola?", answer: "Foi o domínio político e económico exercido por Portugal em Angola desde o século XV até 1975, marcado pela exploração de recursos, trabalho forçado e subordinação cultural." },
+        { id: "fq_gf",   emoji: "🌐", question: "O que foi a Guerra Fria?", answer: "Conflito geopolítico (1947–1991) entre os EUA (capitalismo) e a URSS (comunismo), travado por meios ideológicos, tecnológicos e proxy wars, sem confronto direto." },
+    ],
+    "geografia": [
+        { id: "fq_clim", emoji: "☀️", question: "Quais os principais fatores que influenciam o clima?", answer: "Latitude, altitude, distância ao mar, correntes oceânicas, vegetação e relevo são os principais fatores determinantes do clima de uma região." },
+        { id: "fq_ang",  emoji: "🗺️", question: "Descreve o relevo de Angola.", answer: "Angola tem uma faixa costeira baixa, uma planalto central elevado (1000–2000m), destacando-se a Serra da Chela e o Morro do Môco (2620m, ponto mais alto)." },
+        { id: "fq_pop",  emoji: "👥", question: "O que é a taxa de natalidade?", answer: "É o número de nascimentos por cada 1000 habitantes num ano. Países em desenvolvimento têm geralmente taxas mais elevadas que os países industrializados." },
+        { id: "fq_urb",  emoji: "🏙️", question: "O que é o êxodo rural?", answer: "É a migração em massa da população do campo para a cidade, geralmente em busca de emprego e melhores condições de vida, causando o crescimento urbano acelerado." },
+    ],
+    "português": [
+        { id: "fq_gram", emoji: "📝", question: "O que é um advérbio e qual a sua função?", answer: "O advérbio é uma palavra invariável que modifica um verbo, adjetivo ou outro advérbio, indicando circunstâncias de modo, tempo, lugar, negação, entre outras." },
+        { id: "fq_tex",  emoji: "📖", question: "Qual a diferença entre texto narrativo e descritivo?", answer: "O narrativo conta uma história com personagens, ações e sequência temporal. O descritivo apresenta características de pessoas, objetos ou lugares sem ação progressiva." },
+        { id: "fq_fig",  emoji: "✍️", question: "O que é uma metáfora?", answer: "É uma figura de linguagem que estabelece uma comparação implícita entre dois elementos com características em comum, sem usar 'como' ou 'tal qual'." },
+        { id: "fq_lit",  emoji: "📚", question: "Cita um autor da literatura angolana e a sua obra.", answer: "Pepetela é um dos maiores escritores angolanos. 'Mayombe' (1980) é a sua obra mais conhecida, ambientada na luta de libertação de Angola." },
+    ],
+};
+
+export interface SubjectMaterial {
+    id?: string;
+    name: string;
+    content: string;
+    type: 'proof' | 'summary' | 'exercises' | 'other' | string;
+}
+
+export const generateFlashcardsForSubject = async (
+    subject: string,
+    materials: SubjectMaterial[] = []
+): Promise<FlashcardQA[]> => {
+    // Only use materials that have real text content (not just links/empty)
+    const richMaterials = materials.filter(m => m.content && m.content.trim().length > 20);
+
+    // If student has real materials → always call AI with that context (skip fallback)
+    if (richMaterials.length > 0) {
+        try {
+            const res = await fetch(`${PROXY_URL}/api/generate-flashcards`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ subject, materials: richMaterials }),
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            if (Array.isArray(data.cards) && data.cards.length > 0) return data.cards;
+        } catch { /* fall through to subject fallback */ }
+    }
+
+    // No materials or API failed → use pre-built subject fallback (instant, no API)
+    const key = subject.toLowerCase().trim();
+    for (const [k, cards] of Object.entries(FALLBACK_QA)) {
+        if (key.includes(k) || k.includes(key)) return cards;
+    }
+
+    // Unknown subject with no materials → generic AI generation
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-flashcards`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subject, materials: [] }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (Array.isArray(data.cards) && data.cards.length > 0) return data.cards;
+    } catch { /* fall through */ }
+
+    // Last resort
+    return [
+        { id: "gq1", emoji: "❓", question: `O que é ${subject}?`, answer: `${subject} é uma área de estudo com conceitos e princípios fundamentais do ensino secundário.` },
+        { id: "gq2", emoji: "🔑", question: `Quais são os conceitos fundamentais de ${subject}?`, answer: `Incluem os princípios básicos, terminologia específica e métodos de análise próprios de ${subject}.` },
+        { id: "gq3", emoji: "📊", question: `Como se aplica ${subject} no dia-a-dia?`, answer: `${subject} tem diversas aplicações práticas no quotidiano, na ciência e na sociedade.` },
+    ];
+};
+
+// ── Interactive Story Slides ────────────────────────────────────────────────────
+
+export interface StoryQuizOption {
+    text: string;
+    correct: boolean;
+}
+
+export interface StorySlide {
+    id: string;
+    type: 'intro' | 'concept' | 'example' | 'quiz' | 'deepdive' | 'summary';
+    title: string;
+    body: string;
+    emoji: string;
+    highlight: string;
+    nziExpression: 'idle' | 'hint' | 'thinking' | 'excited' | 'waving' | 'celebrate' | 'determined';
+    nziSpeech: string;
+    imageKeyword: string;
+    funFact?: string;
+    quizQuestion?: string;
+    quizOptions?: StoryQuizOption[];
+    keyPoints?: string[];
+}
+
+export interface StoryScript {
+    subject: string;
+    topic: string;
+    slides: StorySlide[];
+}
+
+export const generateStoryScript = async (
+    subject: string,
+    topic: string,
+    topicDescription?: string
+): Promise<StoryScript> => {
+    try {
+        const res = await fetch(`${PROXY_URL}/api/generate-story-script`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subject, topic, topicDescription }),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.script?.slides?.length > 0) return data.script;
+    } catch (error) {
+        console.error("Story Script Error:", error);
+    }
+
+    // Fallback
+    return {
+        subject,
+        topic,
+        slides: [
+            {
+                id: "intro", type: "intro",
+                title: topic, body: `Bem-vindo à lição de ${topic}! O Nzi vai guiar-te nesta aventura de aprendizagem.`,
+                emoji: "🎯", highlight: topic,
+                nziExpression: "waving", nziSpeech: "Olá! Vamos aprender juntos!",
+                imageKeyword: `${topic} education concept`,
+                funFact: `${topic} é um dos tópicos mais importantes de ${subject}.`,
+            },
+            {
+                id: "concept", type: "concept",
+                title: `O que é ${topic}?`,
+                body: topicDescription || `${topic} é um conceito fundamental de ${subject} que todos os alunos devem dominar.`,
+                emoji: "💡", highlight: topic,
+                nziExpression: "hint", nziSpeech: "Esta definição é essencial!",
+                imageKeyword: `${subject} education diagram`,
+            },
+            {
+                id: "example", type: "example",
+                title: "Vês isto no dia-a-dia!",
+                body: `No quotidiano encontramos ${topic} em muitas situações práticas: na tecnologia, na natureza e no desporto.`,
+                emoji: "🔍", highlight: topic,
+                nziExpression: "excited", nziSpeech: "Olha este exemplo incrível!",
+                imageKeyword: `${topic} real world practical`,
+            },
+            {
+                id: "quiz", type: "quiz",
+                title: "Testa o teu conhecimento!",
+                body: "", emoji: "🧠", highlight: topic,
+                nziExpression: "determined", nziSpeech: "Consegues responder?",
+                imageKeyword: "",
+                quizQuestion: `O que é ${topic}?`,
+                quizOptions: [
+                    { text: `Um conceito fundamental de ${subject}`, correct: true },
+                    { text: "Uma regra gramatical", correct: false },
+                    { text: "Um tipo de animal", correct: false },
+                ],
+            },
+            {
+                id: "deepdive", type: "deepdive",
+                title: "Como funciona?",
+                body: `O funcionamento de ${topic} envolve vários processos interligados que se complementam para produzir o resultado final.`,
+                emoji: "⚙️", highlight: "processo",
+                nziExpression: "thinking", nziSpeech: "Vamos analisar em detalhe...",
+                imageKeyword: `${topic} process mechanism`,
+            },
+            {
+                id: "summary", type: "summary",
+                title: "Resumo da lição",
+                body: "", emoji: "🏆", highlight: topic,
+                nziExpression: "celebrate", nziSpeech: "Fantástico! Aprendeste muito!",
+                imageKeyword: "",
+                keyPoints: [
+                    `${topic} é um conceito central de ${subject}`,
+                    `Aplicações práticas de ${topic} no mundo real`,
+                    "Dominar este tema abre portas para o teu futuro",
+                ],
+            },
+        ],
+    };
 };
 
 // Utility: Parse Weekly Schedule from PDF text
