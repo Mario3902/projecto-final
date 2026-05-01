@@ -82,7 +82,7 @@ const DesktopLayout = ({ children }: { children: ReactNode }) => {
             {/* Main content */}
             <main className={`flex-1 transition-all duration-300 ${collapsed ? "ml-16" : "ml-64"}`}>
                 {/* Top Header */}
-                <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-4 border-b border-border bg-background/80 px-6 backdrop-blur w-full">
+                <header className="sticky top-0 z-30 flex h-16 items-center justify-end gap-4 border-b border-border bg-background w-full">
                     <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-full border border-border">
                         <span className="text-orange-500 flex items-center gap-1 text-sm font-bold">
                             🔥 {streak}

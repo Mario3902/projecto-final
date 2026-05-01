@@ -6,32 +6,14 @@ import { NziAnimator, NziPose, poseToPose } from "./scenes/NziAnimator";
 import { SceneBackground, getSceneForSubject } from "./scenes/SceneBackgrounds";
 
 // ── TTS ────────────────────────────────────────────────────────────────────────
-
-function getBestPtVoice(): SpeechSynthesisVoice | null {
-  const vs = window.speechSynthesis?.getVoices() ?? [];
-  const rank = [
-    (v: SpeechSynthesisVoice) => /francisca|helia/i.test(v.name) && v.lang === "pt-PT",
-    (v: SpeechSynthesisVoice) => /natural|neural/i.test(v.name) && v.lang === "pt-PT",
-    (v: SpeechSynthesisVoice) => v.lang === "pt-PT",
-    (v: SpeechSynthesisVoice) => /natural|neural/i.test(v.name) && v.lang.startsWith("pt"),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith("pt"),
-  ];
-  for (const fn of rank) { const f = vs.find(fn); if (f) return f; }
-  return null;
-}
+import { speak as ttsSpeak, stopSpeech as ttsStop } from "@/lib/tts";
 
 function narrate(text: string, muted: boolean, onEnd?: () => void) {
-  if (muted || !window.speechSynthesis) { onEnd?.(); return; }
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  const voice = getBestPtVoice();
-  if (voice) utt.voice = voice;
-  utt.lang = "pt-PT"; utt.rate = 0.8; utt.pitch = 1.06; utt.volume = 1;
-  if (onEnd) utt.onend = onEnd;
-  window.speechSynthesis.speak(utt);
+  if (muted) { onEnd?.(); return; }
+  ttsSpeak(text, onEnd);
 }
 
-function stopNarration() { window.speechSynthesis?.cancel(); }
+function stopNarration() { ttsStop(); }
 
 function getSlideNarration(slide: StorySlide): string {
   if (slide.type === "quiz") return `Desafio! ${slide.quizQuestion ?? ""}`;

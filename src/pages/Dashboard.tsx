@@ -309,7 +309,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Bottom Navigation ── */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24] border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
         {bottomNavItems.map((item, i) => {
           const isActive = location.pathname === item.path;
           return (

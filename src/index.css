@@ -183,6 +183,8 @@
 
 .animate-slide-up {
   animation: slide-up 0.6s ease-out forwards;
+  opacity: 1;
+  will-change: transform, opacity;
 }
 
 .animate-logo-reveal {
@@ -224,6 +226,8 @@
 
 .animate-fade-in {
   animation: fade-in 0.4s ease-out forwards;
+  opacity: 1;
+  will-change: transform, opacity;
 }
 
 @keyframes confetti {

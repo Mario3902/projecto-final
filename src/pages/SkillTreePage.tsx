@@ -306,7 +306,7 @@ const SkillTreePage = () => {
       </div>
 
       {/* Fixed bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24] border-t border-[#253510] px-6 py-4 z-50">
         <button
           onClick={() => navigate("/dashboard/quizzes")}
           className="w-full py-3 bg-[#253510] border border-[#72EB3A]/20 text-[#72EB3A] font-bold rounded-2xl text-sm flex items-center justify-center gap-2"

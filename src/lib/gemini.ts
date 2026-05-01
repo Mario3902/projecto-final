@@ -2,7 +2,8 @@ import { api } from "./api";
 
 // All AI calls go through the local proxy server (port 3001)
 // Uses dynamic hostname so it works both on PC (localhost) and on mobile over local network (e.g. 192.168.x.x)
-const PROXY_URL = `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:3001`;
+const PROXY_URL = import.meta.env.VITE_PROXY_URL ||
+  `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:3001`;
 
 // Build a rich context string from real MySQL backend so Nzila truly knows the student
 export const buildStudentContext = async (): Promise<string> => {

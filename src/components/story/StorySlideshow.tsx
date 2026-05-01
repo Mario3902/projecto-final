@@ -4,40 +4,15 @@ import { StorySlide, StoryScript, StoryQuizOption } from "@/lib/gemini";
 import { NziSVG } from "@/components/nzi/NziCharacter";
 import type { NziExpression } from "@/context/NziContext";
 
-// ── TTS — smart voice selection ────────────────────────────────────────────────
-
-function getPortugueseVoice(): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis?.getVoices() ?? [];
-  const priority = [
-    (v: SpeechSynthesisVoice) => /francisca|helia|vitoria/i.test(v.name) && /pt/i.test(v.lang),
-    (v: SpeechSynthesisVoice) => /natural|neural|online/i.test(v.name) && v.lang === "pt-PT",
-    (v: SpeechSynthesisVoice) => v.lang === "pt-PT",
-    (v: SpeechSynthesisVoice) => /natural|neural/i.test(v.name) && /pt/i.test(v.lang),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith("pt"),
-  ];
-  for (const test of priority) {
-    const found = voices.find(test);
-    if (found) return found;
-  }
-  return null;
-}
+// ── TTS ────────────────────────────────────────────────────────────────────────
+import { speak as ttsSpeak, stopSpeech as ttsStop } from "@/lib/tts";
 
 function speakText(text: string, muted: boolean, onEnd?: () => void) {
-  if (muted || !window.speechSynthesis) { onEnd?.(); return; }
-  window.speechSynthesis.cancel();
-
-  const utt = new SpeechSynthesisUtterance(text);
-  const voice = getPortugueseVoice();
-  if (voice) utt.voice = voice;
-  utt.lang = "pt-PT";
-  utt.rate = 0.82;
-  utt.pitch = 1.08;
-  utt.volume = 1;
-  if (onEnd) utt.onend = onEnd;
-  window.speechSynthesis.speak(utt);
+  if (muted) { onEnd?.(); return; }
+  ttsSpeak(text, onEnd);
 }
 
-function stopSpeech() { window.speechSynthesis?.cancel(); }
+function stopSpeech() { ttsStop(); }
 
 function getNarration(slide: StorySlide): string {
   if (slide.type === "intro") return `${slide.title}. ${slide.body}. ${slide.funFact ? "Facto curioso: " + slide.funFact : ""}`;

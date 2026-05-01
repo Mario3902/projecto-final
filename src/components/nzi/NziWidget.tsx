@@ -3,7 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { useNzi } from '@/context/NziContext';
 import NziCharacter from './NziCharacter';
 import NziDialog from './NziDialog';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Loader2, Send } from 'lucide-react';
+import { SpeechRecognition as CapSpeech } from '@capacitor-community/speech-recognition';
+import { speak, stopSpeech } from '@/lib/tts';
 
 interface NziWidgetProps {
   className?: string;
@@ -19,44 +21,18 @@ const ROUTE_GREETINGS: Record<string, { msg: string; exp: Parameters<ReturnType<
   '/dashboard/performance':  { msg: "Olha para o teu progresso — estás a crescer! 📈", exp: 'celebrate' },
 };
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = import.meta.env.VITE_PROXY_URL || `http://${window.location.hostname}:3001`;
 
-function getBestPtVoice(): SpeechSynthesisVoice | null {
-  const vs = window.speechSynthesis?.getVoices() ?? [];
-  const rank = [
-    (v: SpeechSynthesisVoice) => /francisca|helia/i.test(v.name) && v.lang === 'pt-PT',
-    (v: SpeechSynthesisVoice) => /natural|neural/i.test(v.name) && v.lang === 'pt-PT',
-    (v: SpeechSynthesisVoice) => v.lang === 'pt-PT',
-    (v: SpeechSynthesisVoice) => /natural|neural/i.test(v.name) && v.lang.startsWith('pt'),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith('pt'),
-  ];
-  for (const fn of rank) { const f = vs.find(fn); if (f) return f; }
-  return null;
-}
+const isCapacitor = typeof window !== 'undefined' && !!(window as any).Capacitor;
 
-function speak(text: string) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.lang = 'pt-PT';
-  utt.rate = 0.88;
-  utt.pitch = 1.05;
-  utt.volume = 1;
-  const v = getBestPtVoice();
-  if (v) utt.voice = v;
-  window.speechSynthesis.speak(utt);
-}
-
-// Ensure voices are loaded
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-}
-
-const SpeechRecognitionAPI =
+const WebSpeechAPI =
   typeof window !== 'undefined'
     ? (window.SpeechRecognition ?? (window as any).webkitSpeechRecognition ?? null)
     : null;
+
+// ── TTS via unified wrapper (native on Capacitor, speechSynthesis on web) ──
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
   const { expression, message, hideMessage, showMessage, setExpression } = useNzi();
@@ -64,8 +40,12 @@ const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
   const prevPath = useRef<string>('');
 
   const [isListening, setIsListening] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
-  const recRef = useRef<any>(null);
+  const [isSpeaking, setIsSpeaking]   = useState(false);
+  const [isThinking, setIsThinking]   = useState(false);
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textInput, setTextInput]     = useState('');
+  const recRef   = useRef<any>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Route greetings
   useEffect(() => {
@@ -74,10 +54,16 @@ const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
     prevPath.current = path;
     const greeting = ROUTE_GREETINGS[path];
     if (greeting) {
-      const delay = setTimeout(() => showMessage(greeting.msg, greeting.exp, 4000), 800);
-      return () => clearTimeout(delay);
+      const t = setTimeout(() => {
+        showMessage(greeting.msg, greeting.exp, 4000);
+        speak(greeting.msg);
+      }, 800);
+      return () => clearTimeout(t);
     }
   }, [location.pathname, showMessage]);
+
+  // Cleanup TTS on unmount
+  useEffect(() => () => { stopSpeech(); }, []);
 
   const askAI = useCallback(async (transcript: string) => {
     setIsThinking(true);
@@ -92,64 +78,107 @@ const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
       });
       const data = await res.json();
       const reply: string = data.reply ?? data.response ?? 'Não consegui obter resposta agora. Tenta novamente!';
-      showMessage(reply, 'excited', 8000);
-      speak(reply);
+      showMessage(reply, 'excited', 10000);
+      setIsSpeaking(true);
+      speak(reply, () => setIsSpeaking(false));
     } catch {
-      const err = 'Sem conexão com a IA. Verifica se o servidor está ligado!';
-      showMessage(err, 'hint', 5000);
+      showMessage('Sem conexão com a IA. Verifica se o servidor está ligado!', 'hint', 5000);
     } finally {
       setIsThinking(false);
       setExpression('idle');
     }
   }, [showMessage, setExpression]);
 
-  const startListening = useCallback(() => {
-    if (!SpeechRecognitionAPI) {
-      showMessage('O teu navegador não suporta reconhecimento de voz 😔', 'hint', 4000);
-      return;
-    }
-    if (isListening || isThinking) return;
+  // ── STT: Capacitor native ────────────────────────────────────────────────
 
-    window.speechSynthesis?.cancel();
-    const rec = new SpeechRecognitionAPI();
+  const startCapacitorListening = useCallback(async () => {
+    try {
+      const perm = await CapSpeech.requestPermissions();
+      if (perm.speechRecognition !== 'granted') {
+        showMessage('Permissão de microfone negada 😔', 'hint', 3000);
+        return;
+      }
+
+      await stopSpeech();
+      setIsListening(true);
+      showMessage('A ouvir... fala comigo! 🎙️', 'excited', 0);
+
+      const result = await CapSpeech.start({
+        language: 'pt-PT',
+        maxResults: 1,
+        popup: false,
+        partialResults: false,
+      });
+
+      setIsListening(false);
+      const transcript = result.matches?.[0];
+      if (transcript) {
+        askAI(transcript);
+      } else {
+        showMessage('Não ouvi bem, tenta de novo! 🎙️', 'hint', 3000);
+      }
+    } catch {
+      setIsListening(false);
+      showMessage('Erro ao aceder ao microfone 😔', 'hint', 3000);
+    }
+  }, [askAI, showMessage]);
+
+  const stopCapacitorListening = useCallback(async () => {
+    try { await CapSpeech.stop(); } catch {}
+    setIsListening(false);
+  }, []);
+
+  // ── STT: Web browser ─────────────────────────────────────────────────────
+
+  const startWebListening = useCallback(() => {
+    if (!WebSpeechAPI || isListening) return;
+
+    stopSpeech();
+    const rec = new WebSpeechAPI();
     recRef.current = rec;
     rec.lang = 'pt-PT';
     rec.continuous = false;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
 
-    rec.onstart = () => {
-      setIsListening(true);
-      showMessage('A ouvir... fala comigo! 🎙️', 'excited', 0);
-    };
+    rec.onstart  = () => { setIsListening(true); showMessage('A ouvir... fala comigo! 🎙️', 'excited', 0); };
+    rec.onresult = (e: any) => { setIsListening(false); askAI(e.results[0][0].transcript); };
+    rec.onerror  = () => { setIsListening(false); showMessage('Não ouvi bem, tenta de novo! 🎙️', 'hint', 3000); };
+    rec.onend    = () => setIsListening(false);
 
-    rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      setIsListening(false);
-      askAI(transcript);
-    };
+    try { rec.start(); } catch { setIsListening(false); }
+  }, [isListening, askAI, showMessage]);
 
-    rec.onerror = () => {
-      setIsListening(false);
-      showMessage('Não ouvi bem, tenta de novo! 🎙️', 'hint', 3000);
-    };
+  // ── Unified mic button handler ────────────────────────────────────────────
 
-    rec.onend = () => setIsListening(false);
+  const handleMicPress = useCallback(() => {
+    if (isThinking) return;
 
-    try {
-      rec.start();
-    } catch {
-      setIsListening(false);
+    if (isListening) {
+      isCapacitor ? stopCapacitorListening() : (recRef.current?.stop?.(), setIsListening(false));
+      return;
     }
-  }, [isListening, isThinking, askAI, showMessage]);
 
-  const stopListening = useCallback(() => {
-    try { recRef.current?.stop(); } catch {}
-    setIsListening(false);
-  }, []);
+    if (isCapacitor) {
+      startCapacitorListening();
+    } else if (WebSpeechAPI) {
+      startWebListening();
+    } else {
+      setShowTextInput(true);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isThinking, isListening, startCapacitorListening, stopCapacitorListening, startWebListening]);
+
+  const submitText = useCallback(() => {
+    const msg = textInput.trim();
+    if (!msg) return;
+    setShowTextInput(false);
+    setTextInput('');
+    askAI(msg);
+  }, [textInput, askAI]);
 
   const handleNziClick = () => {
-    if (isListening) { stopListening(); return; }
+    if (isListening) { handleMicPress(); return; }
     if (isThinking) return;
     if (message && message !== 'A ouvir... fala comigo! 🎙️' && message !== 'A pensar...') {
       hideMessage();
@@ -165,42 +194,66 @@ const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
     }
   };
 
-  const micBtnBg = isListening ? '#ef4444' : isThinking ? '#365A08' : '#1B1D24';
-  const micBtnBorder = isListening ? '#ef4444' : isThinking ? '#5D9D0B' : '#365A08';
+  const micBg     = isListening ? '#ef4444' : isThinking ? '#365A08' : '#1B1D24';
+  const micBorder = isListening ? '#ef4444' : isSpeaking  ? '#72EB3A' : isThinking ? '#5D9D0B' : '#365A08';
 
   return (
     <div
       className={`fixed bottom-24 right-4 z-50 flex flex-col items-end select-none ${className}`}
       style={{ pointerEvents: 'none' }}
     >
+      {/* Text input fallback */}
+      {showTextInput && (
+        <div style={{ pointerEvents: 'auto', marginBottom: 8, display: 'flex', gap: 6 }}>
+          <input
+            ref={inputRef}
+            type="text"
+            value={textInput}
+            onChange={e => setTextInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') submitText();
+              if (e.key === 'Escape') setShowTextInput(false);
+            }}
+            placeholder="Escreve a tua pergunta..."
+            style={{
+              width: 200, background: '#1B1D24', border: '1.5px solid #365A08',
+              borderRadius: 12, color: '#fff', fontSize: 13, padding: '6px 10px', outline: 'none',
+            }}
+          />
+          <button
+            onClick={submitText}
+            style={{
+              width: 34, height: 34, borderRadius: '50%',
+              background: '#365A08', border: '2px solid #72EB3A',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}
+          >
+            <Send size={14} color="#72EB3A" />
+          </button>
+        </div>
+      )}
+
       <div className="relative" style={{ pointerEvents: 'auto' }}>
         <NziDialog message={message} onDismiss={hideMessage} />
         <NziCharacter
-          expression={isListening ? 'excited' : isThinking ? 'thinking' : expression}
+          expression={isListening ? 'excited' : isThinking ? 'thinking' : isSpeaking ? 'waving' : expression}
           size={72}
           onClick={handleNziClick}
         />
 
         {/* Mic button */}
         <button
-          onClick={isListening ? stopListening : startListening}
+          onClick={handleMicPress}
           disabled={isThinking}
           style={{
-            position: 'absolute',
-            bottom: -4,
-            left: -4,
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: micBtnBg,
-            border: `2px solid ${micBtnBorder}`,
+            position: 'absolute', bottom: -4, left: -4,
+            width: 32, height: 32, borderRadius: '50%',
+            background: micBg, border: `2px solid ${micBorder}`,
             cursor: isThinking ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: isListening ? '0 0 0 4px #ef444440' : '0 2px 8px #00000060',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: isListening ? '0 0 0 4px #ef444440' : isSpeaking ? '0 0 0 4px #72EB3A30' : '0 2px 8px #00000060',
             transition: 'all 0.2s',
-            animation: isListening ? 'nzi-pulse 1s ease-in-out infinite' : 'none',
+            animation: isListening ? 'nzi-pulse 1s ease-in-out infinite' : isSpeaking ? 'nzi-speak 1.2s ease-in-out infinite' : 'none',
           }}
           title={isListening ? 'Parar' : 'Falar com o Nzi'}
         >
@@ -216,6 +269,10 @@ const NziWidget: React.FC<NziWidgetProps> = ({ className = '' }) => {
         @keyframes nzi-pulse {
           0%, 100% { box-shadow: 0 0 0 4px #ef444440; }
           50%       { box-shadow: 0 0 0 8px #ef444420; }
+        }
+        @keyframes nzi-speak {
+          0%, 100% { box-shadow: 0 0 0 4px #72EB3A30; }
+          50%       { box-shadow: 0 0 0 8px #72EB3A15; }
         }
         @keyframes spin {
           from { transform: rotate(0deg); }

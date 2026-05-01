@@ -1,5 +1,6 @@
-// Base URL for the new Node.js backend
-const API_URL = `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:4000/api`;
+// Base URL — em produção/Capacitor usa a variável de ambiente VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL ||
+  `http://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:4000/api`;
 
 // Helper to get auth headers
 const getHeaders = () => {

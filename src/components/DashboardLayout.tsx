@@ -21,7 +21,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
   return (
     <div className="flex flex-col min-h-screen w-full bg-background max-w-md mx-auto relative">
       {/* Top Header */}
-      <header className="sticky top-0 z-40 flex h-14 items-center justify-between px-4 border-b border-border bg-background/95 backdrop-blur-md">
+      <header className="sticky top-0 z-40 flex h-14 items-center justify-between px-4 border-b border-border bg-background">
         <div className="flex items-center gap-1.5">
           {/* Logo */}
           <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
@@ -48,7 +48,7 @@ const DashboardLayout = ({ children }: { children: ReactNode }) => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-background/95 backdrop-blur-md border-t border-border">
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-background border-t border-border">
         <div className="flex items-center justify-around py-2 px-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;

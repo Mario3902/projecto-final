@@ -59,10 +59,11 @@ const MONTHS_PT = [
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
 ];
 
+const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+
 const AcademicCalendar = () => {
   const location = useLocation();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [hasCalendar, setHasCalendar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -77,7 +78,7 @@ const AcademicCalendar = () => {
 
   // Draft events for bulk submission
   const [drafts, setDrafts] = useState<DraftEvent[]>([
-    { uid: crypto.randomUUID(), title: "", event_date: "", event_type: "prova", subject_name: "" }
+    { uid: uid(), title: "", event_date: "", event_type: "prova", subject_name: "" }
   ]);
   
   // Weekly Schedule State
@@ -89,38 +90,33 @@ const AcademicCalendar = () => {
   const [isSubmittingSchedule, setIsSubmittingSchedule] = useState(false);
   const scheduleFileInputRef = useRef<HTMLInputElement>(null);
   const [draftClasses, setDraftClasses] = useState<DraftClass[]>([
-    { uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
+    { uid: uid(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
   ]);
 
   // Subjects from localStorage
   const [subjects, setSubjects] = useState<{ id: string; name: string; emoji: string }[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("nzila_course_data");
-    if (stored) {
-      const data = JSON.parse(stored);
-      if (data.subjects) setSubjects(data.subjects);
-    }
+    try {
+      const stored = localStorage.getItem("nzila_course_data");
+      if (stored) {
+        const data = JSON.parse(stored);
+        if (data.subjects) setSubjects(data.subjects);
+      }
+    } catch {}
     loadEvents();
   }, []);
 
   const loadEvents = async () => {
     try {
-      const data = await api.getCalendarEvents();
-      setEvents(data);
-      setHasCalendar(data.length > 0);
+      const [evData, sData] = await Promise.allSettled([
+        api.getCalendarEvents(),
+        api.getSchedule(),
+      ]);
+      if (evData.status === 'fulfilled') { setEvents(evData.value); setHasCalendar(evData.value.length > 0); }
+      if (sData.status === 'fulfilled') { setSchedule(sData.value); setHasSchedule(sData.value.length > 0); }
     } catch (e) {
       console.error("Erro ao carregar calendário", e);
-    }
-    
-    try {
-      const sData = await api.getSchedule();
-      setSchedule(sData);
-      setHasSchedule(sData.length > 0);
-    } catch (e) {
-      console.error("Erro ao carregar horário", e);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -172,7 +168,7 @@ const AcademicCalendar = () => {
           }
 
           const newDrafts = parsed.map((p: any) => ({
-            uid: crypto.randomUUID(),
+            uid: uid(),
             title: p.title,
             event_date: p.event_date,
             event_type: p.event_type as any,
@@ -215,7 +211,7 @@ const AcademicCalendar = () => {
   const addDraft = () => {
     setDrafts(prev => [
       ...prev,
-      { uid: crypto.randomUUID(), title: "", event_date: "", event_type: "prova", subject_name: "" }
+      { uid: uid(), title: "", event_date: "", event_type: "prova", subject_name: "" }
     ]);
   };
 
@@ -260,7 +256,7 @@ const AcademicCalendar = () => {
       await api.clearCalendar();
       setEvents([]);
       setHasCalendar(false);
-      setDrafts([{ uid: crypto.randomUUID(), title: "", event_date: "", event_type: "prova", subject_name: "" }]);
+      setDrafts([{ uid: uid(), title: "", event_date: "", event_type: "prova", subject_name: "" }]);
       toast.success("Calendário limpo. Podes submeter um novo.");
     } catch (e) {
       toast.error("Erro ao limpar calendário.");
@@ -318,7 +314,7 @@ const AcademicCalendar = () => {
           }
 
           const newDrafts: DraftClass[] = parsed.map(c => ({
-            uid: crypto.randomUUID(),
+            uid: uid(),
             day_of_week: c.day_of_week as any,
             start_time: c.start_time,
             end_time: c.end_time,
@@ -355,7 +351,7 @@ const AcademicCalendar = () => {
   const addDraftClass = () => {
     setDraftClasses(prev => [
       ...prev,
-      { uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
+      { uid: uid(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }
     ]);
   };
   const removeDraftClass = (uid: string) => {
@@ -398,7 +394,7 @@ const AcademicCalendar = () => {
       await api.clearSchedule();
       setSchedule([]);
       setHasSchedule(false);
-      setDraftClasses([{ uid: crypto.randomUUID(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }]);
+      setDraftClasses([{ uid: uid(), day_of_week: "Seg", start_time: "08:00", end_time: "09:30", subject_name: "" }]);
       toast.success("Horário limpo.");
     } catch (e) {
       toast.error("Erro ao limpar horário.");
@@ -474,20 +470,9 @@ const AcademicCalendar = () => {
     { title: "Perfil", path: "/dashboard/performance", icon: User },
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#1B1D24] text-white flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 border-2 border-[#72EB3A] border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-400 font-bold">A carregar calendário...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#1B1D24] text-white flex flex-col font-sans pb-24 relative overflow-x-hidden">
-      <div className="max-w-md mx-auto w-full px-5 py-6 animate-fade-in">
+      <div className="max-w-md mx-auto w-full px-5 py-6">
 
         {/* Header */}
         <div className="flex items-center justify-between mt-2 mb-6">
@@ -830,13 +815,12 @@ const AcademicCalendar = () => {
               <>
                 {/* Backdrop */}
                 <div
-                  className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+                  className="fixed inset-0 bg-black/70 z-40"
                   onClick={() => setModalOpen(false)}
                 />
                 {/* Panel */}
                 <div
-                  className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50 animate-slide-up"
-                  style={{ animation: 'slideUp 0.3s cubic-bezier(0.32,0.72,0,1) forwards' }}
+                  className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-50"
                 >
                   <div className="bg-[#1C2210] border-t-2 border-[#365A08] rounded-t-3xl p-5 pb-8 shadow-2xl">
                     {/* Handle bar */}
@@ -991,7 +975,7 @@ const AcademicCalendar = () => {
 
         {/* ══════════ TAB: HORÁRIO SEMANAL DE AULAS ══════════ */}
         {activeTab === "aulas" && (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-6">
             {!hasSchedule ? (
               <div className="space-y-5">
                 {/* Upload Section */}
@@ -1134,7 +1118,7 @@ const AcademicCalendar = () => {
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24] border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
         {bottomNavItems.map((item, i) => {
           const isActive = location.pathname === item.path;
           return (

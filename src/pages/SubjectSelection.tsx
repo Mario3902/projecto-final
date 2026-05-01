@@ -370,7 +370,7 @@ const SubjectSelection = () => {
   ];
 
   const renderBottomNav = () => (
-    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24]/95 backdrop-blur-xl border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
+    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#1B1D24] border-t border-[#253510] px-6 py-4 flex justify-between items-center z-50">
       {bottomNavItems.map((item, i) => {
         const isActive = location.pathname === item.path || (item.title === 'Cursos' && true);
         return (
@@ -741,7 +741,7 @@ const SubjectSelection = () => {
 
       {/* ── EDIT SUBJECT MODAL ── */}
       {editingSubject && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingSubject(null)}>
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-end justify-center" onClick={() => setEditingSubject(null)}>
           <div className="bg-[#1C2210] border-t border-[#365A08] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-white">Editar Disciplina</h3>
@@ -781,7 +781,7 @@ const SubjectSelection = () => {
 
       {/* ── EDIT MATERIAL MODAL ── */}
       {editingMaterial && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[60] flex items-end justify-center" onClick={() => setEditingMaterial(null)}>
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-end justify-center" onClick={() => setEditingMaterial(null)}>
           <div className="bg-[#1C2210] border-t border-[#365A08] rounded-t-3xl w-full max-w-md p-6 animate-slide-up" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-5">
               <h3 className="text-lg font-bold text-white">Editar Material</h3>

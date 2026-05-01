@@ -66,7 +66,7 @@ const SistemaSolar = () => {
             {/* Voltar para a secção anterior */}
             <button
                 onClick={() => setSelectedDevice(null)}
-                className="absolute top-6 left-6 z-50 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full p-3 backdrop-blur-md transition-all shadow-lg flex items-center justify-center group"
+                className="absolute top-6 left-6 z-50 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-full p-3 transition-all shadow-lg flex items-center justify-center group"
                 title="Voltar à Sala de Seleção"
                 style={{ zIndex: isDiving ? 0 : 50 }}
             >
